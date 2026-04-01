@@ -23,16 +23,15 @@ def fetch_with_playwright(url, max_attempts=3):
     """Fetch URL using Playwright with retries."""
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching with Playwright (attempt {attempt+1}): {url}")
+            print(f"[*] Fetching article with Playwright (attempt {attempt+1}, wait: commit): {url}")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
-                # Set a realistic user agent
                 context = browser.new_context(
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
                 )
                 page = context.new_page()
-                # Wait for network idle to ensure page is loaded
-                response = page.goto(url, wait_until="networkidle", timeout=60000)
+                # Relaxed wait condition to avoid timeouts on slow trackers
+                response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 
                 if response and response.status == 200:
                     content = page.content()
@@ -46,7 +45,7 @@ def fetch_with_playwright(url, max_attempts=3):
         except Exception as e:
             print(f"[!] Attempt {attempt+1} failed: {e}")
             if attempt < max_attempts - 1:
-                time.sleep(5)
+                time.sleep(10)
     return None
 
 def extract_pdf_urls(page_url, soup):
@@ -75,7 +74,7 @@ def main():
 
     soup = fetch_with_playwright(args.url)
     if not soup:
-        print("[!] Could not fetch article page with Playwright.")
+        print("[!] Could not fetch article page with Playwright after retries.")
         sys.exit(1)
 
     # 1. Extract PDFs
@@ -146,6 +145,8 @@ def main():
             print(f"\n[🎉 SUCCESS] Podcast summary saved to: {os.path.abspath(final_output)}")
             # Rename if needed by user but for now keep it simple for Actions
             if args.output != final_output:
+                if os.path.exists(args.output):
+                    os.remove(args.output)
                 os.rename(final_output, args.output)
                 print(f"[*] Renamed to user requested: {args.output}")
         else:

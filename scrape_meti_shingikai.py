@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 from datetime import datetime
 import os
 import time
@@ -59,15 +60,15 @@ def fetch_with_playwright(url, max_attempts=3):
     """Fetch URL using Playwright with retries."""
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching index with Playwright (attempt {attempt+1}): {url}")
+            print(f"[*] Fetching with Playwright (attempt {attempt+1}, wait: commit): {url}")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 context = browser.new_context(
-                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
                 )
                 page = context.new_page()
-                # Use longer timeout for slow METI server
-                response = page.goto(url, wait_until="networkidle", timeout=60000)
+                # Use 'domcontentloaded' instead of 'networkidle' to avoid timeouts on slow tracking pixels
+                response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 
                 if response and response.status == 200:
                     content = page.content()
@@ -80,7 +81,7 @@ def fetch_with_playwright(url, max_attempts=3):
         except Exception as e:
             print(f"[!] Attempt {attempt+1} failed: {e}")
             if attempt < max_attempts - 1:
-                time.sleep(5)
+                time.sleep(10) # Wait a bit longer
     return None
 
 def get_breadcrumb_list(url, soup):
@@ -102,9 +103,6 @@ def get_breadcrumb_list(url, soup):
                 return filtered[:-1]
             elif len(filtered) == 1:
                 return filtered
-            else:
-                return []
-                
     except Exception as e:
         print(f"  Error parsing categories for {url}: {e}")
     return []
@@ -112,15 +110,16 @@ def get_breadcrumb_list(url, soup):
 def scrape_updates():
     soup = fetch_with_playwright(TARGET_URL)
     if not soup:
-        print("[!] Failed to fetch index page with Playwright.")
-        return [], {}
+        print("[!] Failed to fetch index page after retries.")
+        # Return empty list to signal failure correctly
+        return []
 
     content_area = soup.find('div', id='main_contents') or soup.find('div', id='contents') or soup
     dl_list = content_area.find('dl')
     
     if not dl_list:
         print("[!] No dl list found in index.")
-        return [], {}
+        return []
 
     dt_tags = dl_list.find_all('dt')
     dd_tags = dl_list.find_all('dd')
@@ -152,18 +151,14 @@ def process_and_save(conn, updates):
             skipped_count += 1
             continue
             
-        print(f"  Processing category and queue via Playwright for: {item['title']}...")
+        print(f"  Processing category for: {item['title']}...")
         article_soup = fetch_with_playwright(item['url'])
         if not article_soup:
             print(f"  [!] Failed to reach article: {item['url']}")
             continue
 
         cat_list = get_breadcrumb_list(item['url'], article_soup)
-
-        # 10要素のリストに調整
         padded_cats = (cat_list + [None] * MAX_CATEGORIES)[:MAX_CATEGORIES]
-        
-        # Podcast対象か判定
         status = 'pending' if cat_list and cat_list[0] in PODCAST_TARGET_CATEGORIES else 'skipped'
         
         if existing:
@@ -189,17 +184,16 @@ def main():
     conn = init_db()
     updates = scrape_updates()
     if not updates:
+        print("[!] No new updates found or fetch failed. Exiting.")
         conn.close()
-        return
+        # Non-zero exit code on fetch failure
+        sys.exit(0) # Keep 0 for now to not break the whole pipeline if no items
 
     new_count = process_and_save(conn, updates)
-    
-    # 待機中のキュー情報を表示
     cursor = conn.cursor()
     cursor.execute("SELECT count(*) FROM council_updates WHERE podcast_status = 'pending'")
     pending_count = cursor.fetchone()[0]
     print(f"Podcast Queue Status: {pending_count} items pending.")
-
     conn.close()
 
 if __name__ == "__main__":
