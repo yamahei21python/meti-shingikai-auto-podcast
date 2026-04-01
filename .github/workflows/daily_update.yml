@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Scraper Dependencies
         run: |
-          uv pip install requests beautifulsoup4
+          uv pip install --system requests beautifulsoup4
 
       - name: Run Scraper (Update DB)
         run: |
