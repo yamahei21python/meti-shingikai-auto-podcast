@@ -23,9 +23,13 @@ jobs:
         with:
           version: "latest"
 
+      - name: Install Playwright Browsers
+        run: |
+          uv run --with playwright playwright install --with-deps chromium
+
       - name: Run Scraper (Update DB)
         run: |
-          uv run --with requests --with beautifulsoup4 python3 scrape_meti_shingikai.py
+          uv run --with playwright --with beautifulsoup4 python3 scrape_meti_shingikai.py
 
       - name: Setup NotebookLM Lab (Install dependencies)
         working-directory: notebooklm-podcast-lab
@@ -41,7 +45,8 @@ jobs:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
           # 実行ログから生成されたファイル名を抽出する
-          python3 daily_podcast_worker.py > worker_output.log
+          # workerの中で playwright を使うため、uv run を経由させる
+          uv run python3 daily_podcast_worker.py > worker_output.log
           cat worker_output.log
           
           # PODCAST_ASSET_PATH=... という行を探して、GitHubの環境変数に保存する
@@ -67,7 +72,7 @@ jobs:
           name: "Podcast [${{ steps.podcast_gen.outputs.filename }}]"
           body: "METI Council Audio Summary."
           files: |
-            notebooklm-podcast-lab/${{ steps.podcast_gen.outputs.filename }}
+            notebooklm-podcast-lab/podcast_summary.mp3
           draft: false
           prerelease: false
         env:

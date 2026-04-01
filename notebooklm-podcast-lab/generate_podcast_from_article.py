@@ -1,12 +1,11 @@
 import os
 import sys
 import argparse
-import requests
-from bs4 import BeautifulSoup
 import subprocess
 import time
 from datetime import datetime
 from urllib.parse import urljoin
+from playwright.sync_api import sync_playwright
 
 # Configurations
 # Use system 'uv' in GitHub Actions, local path otherwise
@@ -20,21 +19,34 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
-def fetch_with_retry(url, headers, max_attempts=3):
-    """Fetch URL with retries on timeout or connection error."""
+def fetch_with_playwright(url, max_attempts=3):
+    """Fetch URL using Playwright with retries."""
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching (attempt {attempt+1}): {url}")
-            response = requests.get(url, headers=headers, timeout=30)
-            response.raise_for_status()
-            response.encoding = 'utf-8'
-            return BeautifulSoup(response.text, 'html.parser')
+            print(f"[*] Fetching with Playwright (attempt {attempt+1}): {url}")
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                # Set a realistic user agent
+                context = browser.new_context(
+                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
+                # Wait for network idle to ensure page is loaded
+                response = page.goto(url, wait_until="networkidle", timeout=60000)
+                
+                if response and response.status == 200:
+                    content = page.content()
+                    browser.close()
+                    from bs4 import BeautifulSoup
+                    return BeautifulSoup(content, 'html.parser')
+                else:
+                    status = response.status if response else "No response"
+                    print(f"[!] Received status {status} for {url}")
+                    browser.close()
         except Exception as e:
             print(f"[!] Attempt {attempt+1} failed: {e}")
             if attempt < max_attempts - 1:
                 time.sleep(5)
-            else:
-                print(f"[!] Max attempts reached for: {url}")
     return None
 
 def extract_pdf_urls(page_url, soup):
@@ -61,13 +73,9 @@ def main():
     parser.add_argument("--output", default=OUTPUT_MP3, help="Output filename for the MP3")
     args = parser.parse_args()
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-
-    soup = fetch_with_retry(args.url, headers)
+    soup = fetch_with_playwright(args.url)
     if not soup:
-        print("[!] Could not fetch article page.")
+        print("[!] Could not fetch article page with Playwright.")
         sys.exit(1)
 
     # 1. Extract PDFs

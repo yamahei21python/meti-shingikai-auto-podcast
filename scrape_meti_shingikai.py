@@ -1,10 +1,10 @@
-import requests
-from bs4 import BeautifulSoup
 import sqlite3
 from datetime import datetime
 import os
 import time
 from urllib.parse import urljoin
+from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
 
 # --- 設定 / Configuration ---
 TARGET_URL = "https://www.meti.go.jp/shingikai/index.html"
@@ -55,14 +55,37 @@ def init_db():
     conn.commit()
     return conn
 
-def get_breadcrumb_list(url, headers):
+def fetch_with_playwright(url, max_attempts=3):
+    """Fetch URL using Playwright with retries."""
+    for attempt in range(max_attempts):
+        try:
+            print(f"[*] Fetching index with Playwright (attempt {attempt+1}): {url}")
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                context = browser.new_context(
+                    user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                )
+                page = context.new_page()
+                # Use longer timeout for slow METI server
+                response = page.goto(url, wait_until="networkidle", timeout=60000)
+                
+                if response and response.status == 200:
+                    content = page.content()
+                    browser.close()
+                    return BeautifulSoup(content, 'html.parser')
+                else:
+                    status = response.status if response else "No response"
+                    print(f"[!] Received status {status} for {url}")
+                    browser.close()
+        except Exception as e:
+            print(f"[!] Attempt {attempt+1} failed: {e}")
+            if attempt < max_attempts - 1:
+                time.sleep(5)
+    return None
+
+def get_breadcrumb_list(url, soup):
+    """Extract breadcrumbs from article page soup."""
     try:
-        time.sleep(0.3)
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        response.encoding = 'utf-8'
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
         breadcrumb_div = soup.find('div', class_='pan')
         if breadcrumb_div:
             items = breadcrumb_div.find_all('li')
@@ -83,29 +106,20 @@ def get_breadcrumb_list(url, headers):
                 return []
                 
     except Exception as e:
-        print(f"  Error fetching categories for {url}: {e}")
-        return None
+        print(f"  Error parsing categories for {url}: {e}")
     return []
 
 def scrape_updates():
-    print(f"Fetching index from {TARGET_URL}...")
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
-    try:
-        response = requests.get(TARGET_URL, headers=headers, timeout=30)
-        response.raise_for_status()
-        response.encoding = 'utf-8'
-    except Exception as e:
-        print(f"Error fetching index page: {e}")
+    soup = fetch_with_playwright(TARGET_URL)
+    if not soup:
+        print("[!] Failed to fetch index page with Playwright.")
         return [], {}
 
-    soup = BeautifulSoup(response.text, 'html.parser')
     content_area = soup.find('div', id='main_contents') or soup.find('div', id='contents') or soup
     dl_list = content_area.find('dl')
     
     if not dl_list:
+        print("[!] No dl list found in index.")
         return [], {}
 
     dt_tags = dl_list.find_all('dt')
@@ -119,14 +133,12 @@ def scrape_updates():
         title = link_tag.get_text(strip=True)
         relative_url = link_tag.get('href')
         
-        # FIXED: Use urljoin to handle all relative path types (e.g., ../../)
         abs_url = urljoin(TARGET_URL, relative_url)
-        
         updates.append({"date": date_str, "title": title, "url": abs_url})
     
-    return updates, headers
+    return updates
 
-def process_and_save(conn, updates, headers):
+def process_and_save(conn, updates):
     cursor = conn.cursor()
     new_count = 0
     skipped_count = 0
@@ -140,9 +152,13 @@ def process_and_save(conn, updates, headers):
             skipped_count += 1
             continue
             
-        print(f"  Processing category and queue for: {item['title']}...")
-        cat_list = get_breadcrumb_list(item['url'], headers)
-        if cat_list is None: continue
+        print(f"  Processing category and queue via Playwright for: {item['title']}...")
+        article_soup = fetch_with_playwright(item['url'])
+        if not article_soup:
+            print(f"  [!] Failed to reach article: {item['url']}")
+            continue
+
+        cat_list = get_breadcrumb_list(item['url'], article_soup)
 
         # 10要素のリストに調整
         padded_cats = (cat_list + [None] * MAX_CATEGORIES)[:MAX_CATEGORIES]
@@ -171,12 +187,12 @@ def process_and_save(conn, updates, headers):
 
 def main():
     conn = init_db()
-    updates, headers = scrape_updates()
+    updates = scrape_updates()
     if not updates:
         conn.close()
         return
 
-    new_count = process_and_save(conn, updates, headers)
+    new_count = process_and_save(conn, updates)
     
     # 待機中のキュー情報を表示
     cursor = conn.cursor()
