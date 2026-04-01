@@ -93,7 +93,7 @@ def scrape_updates():
     }
     
     try:
-        response = requests.get(TARGET_URL, headers=headers, timeout=15)
+        response = requests.get(TARGET_URL, headers=headers, timeout=30)
         response.raise_for_status()
         response.encoding = 'utf-8'
     except Exception as e:
