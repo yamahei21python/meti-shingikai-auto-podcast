@@ -19,21 +19,26 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
-def fetch_with_playwright(url, max_attempts=3):
-    """Fetch URL using Playwright with retries."""
+def fetch_with_playwright_lite(url, max_attempts=3):
+    """Fetch URL using Playwright with ultra-lightweight settings."""
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching article with Playwright (attempt {attempt+1}, wait: commit): {url}")
+            print(f"[*] Fetching article with Playwright (attempt {attempt+1}, lite mode): {url}")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 context = browser.new_context(
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
                 )
+                
+                # Disable expensive resources
                 page = context.new_page()
-                # Relaxed wait condition to avoid timeouts on slow trackers
-                response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                page.route("**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2,js}", lambda route: route.abort())
+                
+                # Wait for 'commit' to get response as fast as possible
+                response = page.goto(url, wait_until="commit", timeout=60000)
                 
                 if response and response.status == 200:
+                    time.sleep(1) # Tiny buffer for body
                     content = page.content()
                     browser.close()
                     from bs4 import BeautifulSoup
@@ -72,10 +77,23 @@ def main():
     parser.add_argument("--output", default=OUTPUT_MP3, help="Output filename for the MP3")
     args = parser.parse_args()
 
-    soup = fetch_with_playwright(args.url)
+    soup = fetch_with_playwright_lite(args.url)
     if not soup:
-        print("[!] Could not fetch article page with Playwright after retries.")
-        sys.exit(1)
+        print("[!] Could not fetch article page with Playwright lite after retries.")
+        # Final requests fallback
+        print("[*] Trying final fallback with requests...")
+        try:
+            import requests
+            r = requests.get(args.url, timeout=15)
+            if r.status_code == 200:
+                print("[+] Fallback success.")
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(r.text, 'html.parser')
+        except:
+            pass
+            
+        if not soup:
+            sys.exit(1)
 
     # 1. Extract PDFs
     pdf_urls = extract_pdf_urls(args.url, soup)
@@ -101,7 +119,7 @@ def main():
         else:
             notebook_id = res.stdout.split()[-1].strip()
         
-        if not notebook_id or len(notebook_id) < 10: # Basic validation
+        if not notebook_id or len(notebook_id) < 10: 
             raise ValueError("Invalid ID format")
             
         print(f"[+] Notebook created ID: {notebook_id}")
@@ -135,7 +153,6 @@ def main():
         sys.exit(1)
     
     # 7. Download
-    # Ensure simpler filename for upload reliability
     final_output = "podcast_summary.mp3"
     print(f"[*] Attempting to download podcast to: {final_output}")
     dl_res = run_notebooklm(["download", "audio", final_output])
@@ -143,7 +160,6 @@ def main():
     if dl_res.returncode == 0:
         if os.path.exists(final_output):
             print(f"\n[🎉 SUCCESS] Podcast summary saved to: {os.path.abspath(final_output)}")
-            # Rename if needed by user but for now keep it simple for Actions
             if args.output != final_output:
                 if os.path.exists(args.output):
                     os.remove(args.output)

@@ -57,20 +57,26 @@ def init_db():
     return conn
 
 def fetch_with_playwright(url, max_attempts=3):
-    """Fetch URL using Playwright with retries."""
+    """Fetch URL using Playwright with ultra-lightweight settings."""
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching with Playwright (attempt {attempt+1}, wait: commit): {url}")
+            print(f"[*] Fetching (attempt {attempt+1}, lite mode): {url}")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 context = browser.new_context(
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
                 )
+                
+                # Disable images and other heavy resources to bypass slow/throttled connections
                 page = context.new_page()
-                # Use 'domcontentloaded' instead of 'networkidle' to avoid timeouts on slow tracking pixels
-                response = page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                page.route("**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2,js}", lambda route: route.abort())
+                
+                # 'commit' means wait for the first byte of the response
+                response = page.goto(url, wait_until="commit", timeout=60000)
                 
                 if response and response.status == 200:
+                    # Give it a tiny bit of time to get the HTML body if it's exceptionally slow
+                    time.sleep(1)
                     content = page.content()
                     browser.close()
                     return BeautifulSoup(content, 'html.parser')
@@ -81,7 +87,7 @@ def fetch_with_playwright(url, max_attempts=3):
         except Exception as e:
             print(f"[!] Attempt {attempt+1} failed: {e}")
             if attempt < max_attempts - 1:
-                time.sleep(10) # Wait a bit longer
+                time.sleep(10)
     return None
 
 def get_breadcrumb_list(url, soup):
@@ -111,7 +117,16 @@ def scrape_updates():
     soup = fetch_with_playwright(TARGET_URL)
     if not soup:
         print("[!] Failed to fetch index page after retries.")
-        # Return empty list to signal failure correctly
+        # Try a direct requests fallback as a last resort
+        print("[*] Trying final fallback with requests...")
+        try:
+            import requests
+            r = requests.get(TARGET_URL, timeout=15)
+            if r.status_code == 200:
+                print("[+] Fallback success.")
+                return BeautifulSoup(r.text, 'html.parser')
+        except:
+             pass
         return []
 
     content_area = soup.find('div', id='main_contents') or soup.find('div', id='contents') or soup
@@ -183,11 +198,32 @@ def process_and_save(conn, updates):
 def main():
     conn = init_db()
     updates = scrape_updates()
+    
+    # If using direct BeautifulSoup fallback
+    if isinstance(updates, BeautifulSoup):
+        # We need to extract the updates list from the soup
+        soup = updates
+        content_area = soup.find('div', id='main_contents') or soup.find('div', id='contents') or soup
+        dl_list = content_area.find('dl')
+        if not dl_list:
+            updates = []
+        else:
+            dt_tags = dl_list.find_all('dt')
+            dd_tags = dl_list.find_all('dd')
+            updates = []
+            for dt, dd in zip(dt_tags, dd_tags):
+                date_str = dt.get_text(strip=True)
+                link_tag = dd.find('a')
+                if not link_tag: continue
+                title = link_tag.get_text(strip=True)
+                relative_url = link_tag.get('href')
+                abs_url = urljoin(TARGET_URL, relative_url)
+                updates.append({"date": date_str, "title": title, "url": abs_url})
+
     if not updates:
         print("[!] No new updates found or fetch failed. Exiting.")
         conn.close()
-        # Non-zero exit code on fetch failure
-        sys.exit(0) # Keep 0 for now to not break the whole pipeline if no items
+        sys.exit(0)
 
     new_count = process_and_save(conn, updates)
     cursor = conn.cursor()
