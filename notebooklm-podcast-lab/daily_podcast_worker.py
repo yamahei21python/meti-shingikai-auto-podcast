@@ -79,9 +79,9 @@ def main():
     safe_title = sanitize_filename(title)
     output_filename = f"Podcast_{clean_date}_{safe_title}.mp3"
     
-    # 音声生成スクリプトの呼び出し
+    # 音声生成スクリプトの呼び出し (uv run を使用して仮想環境を確実に使う)
     cmd = [
-        "python3", "generate_podcast_from_article.py",
+        "uv", "run", "python3", "generate_podcast_from_article.py",
         "--url", url,
         "--output", output_filename
     ]
