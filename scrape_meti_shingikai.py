@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 import os
 import time
+from urllib.parse import urljoin
 
 # --- 設定 / Configuration ---
 TARGET_URL = "https://www.meti.go.jp/shingikai/index.html"
@@ -117,7 +118,10 @@ def scrape_updates():
         if not link_tag: continue
         title = link_tag.get_text(strip=True)
         relative_url = link_tag.get('href')
-        abs_url = BASE_URL + relative_url if relative_url.startswith('/') else (relative_url if relative_url.startswith('http') else TARGET_URL.rsplit('/', 1)[0] + '/' + relative_url)
+        
+        # FIXED: Use urljoin to handle all relative path types (e.g., ../../)
+        abs_url = urljoin(TARGET_URL, relative_url)
+        
         updates.append({"date": date_str, "title": title, "url": abs_url})
     
     return updates, headers

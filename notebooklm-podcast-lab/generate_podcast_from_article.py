@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import subprocess
 import time
 from datetime import datetime
+from urllib.parse import urljoin
 
 # Configurations
 # Use system 'uv' in GitHub Actions, local path otherwise
@@ -19,22 +20,26 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
-def extract_pdf_urls(page_url):
-    """Extract all PDF links from a METI article page."""
-    print(f"[*] Extracting PDF links from: {page_url}")
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    
-    try:
-        response = requests.get(page_url, headers=headers, timeout=15)
-        response.raise_for_status()
-        response.encoding = 'utf-8'
-    except Exception as e:
-        print(f"[!] Error fetching article page: {e}")
-        return []
+def fetch_with_retry(url, headers, max_attempts=3):
+    """Fetch URL with retries on timeout or connection error."""
+    for attempt in range(max_attempts):
+        try:
+            print(f"[*] Fetching (attempt {attempt+1}): {url}")
+            response = requests.get(url, headers=headers, timeout=30)
+            response.raise_for_status()
+            response.encoding = 'utf-8'
+            return BeautifulSoup(response.text, 'html.parser')
+        except Exception as e:
+            print(f"[!] Attempt {attempt+1} failed: {e}")
+            if attempt < max_attempts - 1:
+                time.sleep(5)
+            else:
+                print(f"[!] Max attempts reached for: {url}")
+    return None
 
-    soup = BeautifulSoup(response.text, 'html.parser')
+def extract_pdf_urls(page_url, soup):
+    """Extract all PDF links from a METI article page."""
+    print(f"[*] Extracting PDF links from soup...")
     # Look for any link that looks like a PDF
     links = soup.find_all('a', href=True)
     pdf_urls = []
@@ -43,13 +48,7 @@ def extract_pdf_urls(page_url):
         href = link.get('href')
         # Check for .pdf extension or 'pdf' in the text/href as a fallback
         if href and (href.lower().endswith('.pdf') or '/pdf/' in href.lower()):
-            if href.startswith('/'):
-                abs_url = BASE_URL + href
-            elif href.startswith('http'):
-                abs_url = href
-            else:
-                # Relative to current page
-                abs_url = page_url.rsplit('/', 1)[0] + '/' + href
+            abs_url = urljoin(page_url, href)
             pdf_urls.append(abs_url)
 
     # Unique
@@ -62,11 +61,20 @@ def main():
     parser.add_argument("--output", default=OUTPUT_MP3, help="Output filename for the MP3")
     args = parser.parse_args()
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    soup = fetch_with_retry(args.url, headers)
+    if not soup:
+        print("[!] Could not fetch article page.")
+        sys.exit(1)
+
     # 1. Extract PDFs
-    pdf_urls = extract_pdf_urls(args.url)
+    pdf_urls = extract_pdf_urls(args.url, soup)
     if not pdf_urls:
         print("[!] No PDF links found on the page.")
-        return
+        sys.exit(1)
 
     print(f"[+] Found {len(pdf_urls)} PDF documents.")
 
@@ -76,28 +84,24 @@ def main():
     # 3. Create Notebook
     print(f"[*] Creating notebook: {notebook_name}")
     res = run_notebooklm(["create", notebook_name])
-    if res.returncode != 0:
-        print(f"[!] Error creating notebook: {res.stderr}")
-        return
     
+    notebook_id = None
     try:
         # Expected output: "Created notebook: <ID> - <Name>"
-        # Handle cases where the output might vary
         if ":" in res.stdout:
             parts = res.stdout.split(":")[1].split("-")
             notebook_id = parts[0].strip()
         else:
-            # Fallback for different CLI output versions
             notebook_id = res.stdout.split()[-1].strip()
         
-        if not notebook_id:
-            raise ValueError("Empty ID")
+        if not notebook_id or len(notebook_id) < 10: # Basic validation
+            raise ValueError("Invalid ID format")
             
         print(f"[+] Notebook created ID: {notebook_id}")
     except Exception as e:
-        print(f"[!] Could not parse notebook ID from: {res.stdout}")
+        print(f"[!] Error creating/parsing notebook: {res.stdout}")
         print(f"[!] Stderr: {res.stderr}")
-        return
+        sys.exit(1)
 
     # 4. Select Notebook
     run_notebooklm(["use", notebook_id])
@@ -121,17 +125,27 @@ def main():
     
     if gen_res.returncode != 0:
         print(f"[!] Audio generation issue: {gen_res.stderr}")
+        sys.exit(1)
     
     # 7. Download
-    print(f"[*] Attempting to download podcast to: {args.output}")
-    dl_res = run_notebooklm(["download", "audio", args.output])
+    # Ensure simpler filename for upload reliability
+    final_output = "podcast_summary.mp3"
+    print(f"[*] Attempting to download podcast to: {final_output}")
+    dl_res = run_notebooklm(["download", "audio", final_output])
     
     if dl_res.returncode == 0:
-        print(f"\n[🎉 SUCCESS] Podcast summary saved to: {os.path.abspath(args.output)}")
-        # GitHub Actions用にファイル名を出力
-        print(f"EXPORT_FILENAME={args.output}")
+        if os.path.exists(final_output):
+            print(f"\n[🎉 SUCCESS] Podcast summary saved to: {os.path.abspath(final_output)}")
+            # Rename if needed by user but for now keep it simple for Actions
+            if args.output != final_output:
+                os.rename(final_output, args.output)
+                print(f"[*] Renamed to user requested: {args.output}")
+        else:
+            print("[!] Download reported success but file not found.")
+            sys.exit(1)
     else:
         print(f"[!] Download failed: {dl_res.stderr}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
