@@ -30,6 +30,7 @@ jobs:
         working-directory: notebooklm-podcast-lab
         run: |
           uv sync
+          uv run playwright install chromium
 
       - name: Run Podcast Worker (Process pending items)
         id: podcast_gen
