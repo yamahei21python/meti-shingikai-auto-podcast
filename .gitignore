@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+*.mp3
+*.log
+.python-version
+.idea/
+.vscode/
