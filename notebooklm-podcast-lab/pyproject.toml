@@ -1,0 +1,9 @@
+[project]
+name = "notebooklm-podcast-lab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "notebooklm-py[browser]>=0.3.4",
+]

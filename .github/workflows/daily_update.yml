@@ -1,0 +1,80 @@
+name: Daily METI Scraper and Podcast Generator
+
+on:
+  schedule:
+    # 毎日 15:00 UTC (JST 24:00) に起動
+    - cron: '0 15 * * *'
+  workflow_dispatch: # 手動実行用
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Release作成とCommitプッシュ用
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install Scraper Dependencies
+        run: |
+          uv pip install requests beautifulsoup4
+
+      - name: Run Scraper (Update DB)
+        run: |
+          python3 scrape_meti_shingikai.py
+
+      - name: Setup NotebookLM Lab (Install dependencies)
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv sync
+
+      - name: Run Podcast Worker (Max 1 item per day)
+        id: podcast_gen
+        working-directory: notebooklm-podcast-lab
+        env:
+          # Google認証情報を環境変数に注入
+          # 事前に GitHub Repository Secrets に NOTEBOOKLM_AUTH_JSON を設定する必要があります
+          NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
+        run: |
+          # 実行ログから生成されたファイル名を抽出する
+          python3 daily_podcast_worker.py > worker_output.log
+          cat worker_output.log
+          
+          # PODCAST_ASSET_PATH=... という行を探して、GitHubの環境変数に保存する
+          if grep -q "PODCAST_ASSET_PATH=" worker_output.log; then
+            FILENAME=$(grep "PODCAST_ASSET_PATH=" worker_output.log | cut -d'=' -f2)
+            echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+            echo "has_asset=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_asset=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push DB updates
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Automated: DB update [skip ci]"
+          file_pattern: 'meti_shingikai.db'
+
+      - name: Create Release and Upload Asset
+        if: steps.podcast_gen.outputs.has_asset == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "podcast-${{ github.event.schedule && github.event.schedule || 'manual' }}-${{ github.run_number }}"
+          name: "Podcast [${{ steps.podcast_gen.outputs.filename }}]"
+          body: "METI Council Audio Summary."
+          files: |
+            notebooklm-podcast-lab/${{ steps.podcast_gen.outputs.filename }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
