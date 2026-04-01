@@ -8,7 +8,8 @@ import time
 from datetime import datetime
 
 # Configurations
-UV_PATH = "/Users/kohei/.local/bin/uv"
+# Use system 'uv' in GitHub Actions, local path otherwise
+UV_PATH = "uv" if os.getenv("GITHUB_ACTIONS") else "/Users/kohei/.local/bin/uv"
 BASE_URL = "https://www.meti.go.jp"
 OUTPUT_MP3 = "podcast_summary.mp3"
 
@@ -34,17 +35,20 @@ def extract_pdf_urls(page_url):
         return []
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    links = soup.find_all('a')
+    # Look for any link that looks like a PDF
+    links = soup.find_all('a', href=True)
     pdf_urls = []
 
     for link in links:
         href = link.get('href')
-        if href and href.lower().endswith('.pdf'):
+        # Check for .pdf extension or 'pdf' in the text/href as a fallback
+        if href and (href.lower().endswith('.pdf') or '/pdf/' in href.lower()):
             if href.startswith('/'):
                 abs_url = BASE_URL + href
             elif href.startswith('http'):
                 abs_url = href
             else:
+                # Relative to current page
                 abs_url = page_url.rsplit('/', 1)[0] + '/' + href
             pdf_urls.append(abs_url)
 
@@ -78,10 +82,21 @@ def main():
     
     try:
         # Expected output: "Created notebook: <ID> - <Name>"
-        notebook_id = res.stdout.split(":")[1].split("-")[0].strip()
+        # Handle cases where the output might vary
+        if ":" in res.stdout:
+            parts = res.stdout.split(":")[1].split("-")
+            notebook_id = parts[0].strip()
+        else:
+            # Fallback for different CLI output versions
+            notebook_id = res.stdout.split()[-1].strip()
+        
+        if not notebook_id:
+            raise ValueError("Empty ID")
+            
         print(f"[+] Notebook created ID: {notebook_id}")
-    except:
-        print(f"[!] Could not parse notebook ID: {res.stdout}")
+    except Exception as e:
+        print(f"[!] Could not parse notebook ID from: {res.stdout}")
+        print(f"[!] Stderr: {res.stderr}")
         return
 
     # 4. Select Notebook
