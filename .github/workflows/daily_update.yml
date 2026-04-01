@@ -25,13 +25,9 @@ jobs:
           enable-cache: true
           python-version: "3.12"
 
-      - name: Install Scraper Dependencies
-        run: |
-          uv pip install --system requests beautifulsoup4
-
       - name: Run Scraper (Update DB)
         run: |
-          python3 scrape_meti_shingikai.py
+          uv run --with requests --with beautifulsoup4 python3 scrape_meti_shingikai.py
 
       - name: Setup NotebookLM Lab (Install dependencies)
         working-directory: notebooklm-podcast-lab
