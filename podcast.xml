@@ -7,26 +7,17 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Thu, 02 Apr 2026 04:08:27 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 03 Apr 2026 06:55:50 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>2026226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ</title>
-      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/Podcast_2026226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3</link>
-      <description>2026226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ</description>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/Podcast_2026226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/Podcast_2026226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3" length="35781221" type="audio/mpeg"/>
-      <pubDate>Thu, 02 Apr 2026 00:10:39 +0000</pubDate>
-      <itunes:explicit>no</itunes:explicit>
-    </item>
-    <item>
-      <title>202636_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_省エネルギー小委員会／_省エネルギー・新エネルギー分科会／電</title>
-      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/Podcast_202636_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_省エネルギー小委員会／_省エネルギー・新エネルギー分科会／電.mp3</link>
-      <description>202636_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_省エネルギー小委員会／_省エネルギー・新エネルギー分科会／電</description>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/Podcast_202636_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_省エネルギー小委員会／_省エネルギー・新エネルギー分科会／電.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/Podcast_202636_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_省エネルギー小委員会／_省エネルギー・新エネルギー分科会／電.mp3" length="27988319" type="audio/mpeg"/>
-      <pubDate>Thu, 02 Apr 2026 00:28:15 +0000</pubDate>
+      <title>20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小</title>
+      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小.mp3</link>
+      <description>20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小</description>
+      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小.mp3</guid>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小.mp3" length="31990850" type="audio/mpeg"/>
+      <pubDate>Fri, 03 Apr 2026 06:54:18 +0000</pubDate>
       <itunes:explicit>no</itunes:explicit>
     </item>
   </channel>
