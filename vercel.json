@@ -8,6 +8,10 @@
     {
       "source": "/rss",
       "destination": "/podcast.xml"
+    },
+    {
+      "source": "/lp",
+      "destination": "/lp.html"
     }
   ],
   "headers": [
