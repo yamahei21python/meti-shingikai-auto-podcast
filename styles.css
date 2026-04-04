@@ -165,48 +165,73 @@ body {
     background: var(--border);
     border-radius: 4px;
 }
-/* LP Specific Styles */
-.lp-section {
-    padding: 6rem 0;
+/* Marketing LP Refinements */
+.hero-copy {
+    font-size: 3.5rem;
+    line-height: 1.1;
+    letter-spacing: -0.05em;
 }
 
-.feature-step {
+.problem-card {
+    background: rgba(244, 63, 94, 0.05);
+    border: 1px solid rgba(244, 63, 94, 0.1);
+    border-radius: 1.5rem;
+    padding: 2rem;
+}
+
+.check-item {
     display: flex;
-    gap: 3rem;
-    align-items: center;
-    margin-bottom: 4rem;
-}
-
-.feature-step:nth-child(even) {
-    flex-direction: row-reverse;
-}
-
-.step-number {
-    font-family: 'Outfit', sans-serif;
-    font-size: 4rem;
-    font-weight: 700;
-    color: rgba(56, 189, 248, 0.2);
-    line-height: 1;
-}
-
-.tech-tag {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    background: rgba(148, 163, 184, 0.1);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    gap: 1rem;
+    align-items: flex-start;
     color: var(--muted);
 }
 
-.system-viz {
-    border-radius: 2rem;
-    box-shadow: 0 0 50px rgba(56, 189, 248, 0.15);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    transition: transform 0.5s ease;
+.check-icon {
+    color: #f43f5e;
+    flex-shrink: 0;
 }
 
-.system-viz:hover {
-    transform: scale(1.02);
+.benefit-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    padding: 2.5rem;
+    transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+    border-color: var(--accent);
+    background: rgba(56, 189, 248, 0.05);
+    transform: translateY(-5px);
+}
+
+.persona-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Platform Colors */
+.btn-spotify { background: #1DB954; color: white; }
+.btn-apple { background: #FC3C44; color: white; }
+.btn-yt { background: #FF0000; color: white; }
+
+.platform-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s;
+}
+
+.platform-icon:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .gradient-text {
