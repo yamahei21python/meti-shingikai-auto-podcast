@@ -1,0 +1,52 @@
+name: Test Python Sync Script (Isolated)
+
+on:
+  workflow_dispatch: # 手動実行専用
+
+jobs:
+  test-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Setup Lab (Install dependencies)
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv sync
+          uv run playwright install --with-deps chromium
+
+      - name: Run Python Sync Test
+        run: |
+          # 隔離フォルダのPython版Syncスクリプトを実行
+          # このスクリプトはシミュレーションモードで動作し、本番DBを汚染しません
+          uv run python3 test_scripts/sync_meti.py
+
+      - name: Check Isolation (Ensure root DB is untouched)
+        run: |
+          # ルートのDBが変更されていないことを明示的に確認
+          if git status --porcelain councils.db meti_shingikai.db | grep -q '.'; then
+            echo "[!] WARNING: Root databases were modified during test!"
+            git status --porcelain councils.db meti_shingikai.db
+            exit 1
+          else
+            echo "[🎉 SUCCESS] Root environment is clean and safe."
+          fi
+
+      - name: Show Test Artifacts
+        run: |
+          # テスト用の成果物（DB）が生成されているか確認
+          if [ -f "test_scripts/test_councils.db" ]; then
+            echo "[+] Test database found: test_scripts/test_councils.db"
+            ls -lh test_scripts/test_councils.db
+          fi
