@@ -10,8 +10,29 @@
     <lastBuildDate>Sat, 04 Apr 2026 10:14:00 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:image href="https://energy-audio.vercel.app/cover.png"/>
-    <itunes:category text="News"/>
     <itunes:explicit>no</itunes:explicit>
+    <item>
+      <title>20260226_第12回_総合資源エネルギー調査会_原子力小委員会_革新炉ワーキンググループ</title>
+      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3</link>
+      <description>### ポッドキャスト解説ガイド
+本セクションでは、革新炉の開発プロセスや安全性向上に向けた具体的ロードマップについて解説します。</description>
+      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3</guid>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3" length="36000000" type="audio/mpeg"/>
+      <pubDate>Mon, 06 Apr 2026 00:00:00 +0000</pubDate>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>革新炉の開発および導入に向けた技術・規制面の検討状況についての要約解説です。</itunes:summary>
+    </item>
+    <item>
+      <title>20260224_第98回_広域系統整備委員会</title>
+      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</link>
+      <description>### ポッドキャスト解説ガイド
+第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</description>
+      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</guid>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3" length="36640664" type="audio/mpeg"/>
+      <pubDate>Mon, 06 Apr 2026 00:00:00 +0000</pubDate>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>広域系統整備に向けた最新の進捗と計画についての要約解説です。</itunes:summary>
+    </item>
     <item>
       <title>20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小委員会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_次世代電力系統ワーキンググループ</title>
       <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260209_第7回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー大量導入・次世代電力ネットワーク小委員会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_次世代電力系統ワーキンググループ.mp3</link>
