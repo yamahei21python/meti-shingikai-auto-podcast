@@ -27,7 +27,7 @@ def main():
     # 1. 隔離フォルダ内のスクレイパーを実行
     # 注: このスクレイパーは内部で test_scripts/test_councils.db を参照するように書き換え済み
     print(f"[*] Running scraper: {os.path.basename(SCRAPER_PATH)}")
-    run_result = run_command(["uv", "run", "python3", SCRAPER_PATH])
+    run_result = run_command(["uv", "run", "--project", "notebooklm-podcast-lab", "python3", SCRAPER_PATH])
     
     if run_result.stdout:
         print(run_result.stdout)

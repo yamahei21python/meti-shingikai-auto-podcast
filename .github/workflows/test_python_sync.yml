@@ -29,8 +29,8 @@ jobs:
       - name: Run Python Sync Test
         run: |
           # 隔離フォルダのPython版Syncスクリプトを実行
-          # このスクリプトはシミュレーションモードで動作し、本番DBを汚染しません
-          uv run python3 test_scripts/sync_meti.py
+          # このスクリプトはシミュレーションモードで動作し、本編プロジェクトの環境を使用します
+          uv run --project notebooklm-podcast-lab python3 test_scripts/sync_meti.py
 
       - name: Check Isolation (Ensure root DB is untouched)
         run: |
