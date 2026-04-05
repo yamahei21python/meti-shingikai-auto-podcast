@@ -109,7 +109,7 @@ def generate_rss(files_info):
     fg.link(href=PODCAST_LINK)
     fg.language('ja')
     fg.podcast.itunes_author(os.getenv("PODCAST_AUTHOR", "Kohei"))
-    fg.podcast.itunes_image(url=f"{PODCAST_LINK.rstrip('/')}/cover.png")
+    fg.podcast.itunes_image(f"{PODCAST_LINK.rstrip('/')}/cover.png")
     fg.podcast.itunes_explicit('no')
     fg.podcast.itunes_category('News')
 
