@@ -76,24 +76,63 @@ def normalize_date(date_str):
     return date_str
 
 def fetch_with_requests(url, max_attempts=3):
-    """Fetch URL using simple requests (very fast)."""
+    """Fetch URL using requests with detailed logging."""
     import requests
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching (attempt {attempt+1}): {url}")
+            print(f"[*] Fetching with requests (attempt {attempt+1}): {url}")
             headers = {
-                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
             }
-            response = requests.get(url, headers=headers, timeout=20)
+            response = requests.get(url, headers=headers, timeout=60) # Timeout extended to 60s
             if response.status_code == 200:
+                print(f"  [+] Success (requests): {url}")
                 return BeautifulSoup(response.content, 'html.parser')
             else:
-                print(f"[!] Received status {response.status_code} for {url}")
-        except Exception as e:
-            print(f"[!] Attempt {attempt+1} failed: {e}")
-            if attempt < max_attempts - 1:
-                time.sleep(2)
+                print(f"  [!] Received status {response.status_code} for {url}")
+                if response.status_code == 403:
+                    print("  [DEBUG] 403 Forbidden: Potential Bot Protection (WAF) detected.")
+        except requests.exceptions.Timeout:
+            print(f"  [!] Timeout error (60s) on attempt {attempt+1}")
+        except requests.exceptions.RequestException as e:
+            print(f"  [!] Request error on attempt {attempt+1}: {type(e).__name__}: {e}")
+        
+        if attempt < max_attempts - 1:
+            time.sleep(5)
     return None
+
+def fetch_with_playwright(url):
+    """Fallback: Fetch URL using a real browser (Playwright)."""
+    from playwright.sync_api import sync_playwright
+    print(f"[*] Falling back to Playwright: {url}")
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page(
+                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+            )
+            print(f"  [*] Navigating with headless browser...")
+            page.goto(url, wait_until="networkidle", timeout=60000)
+            content = page.content()
+            browser.close()
+            
+            if len(content) < 500:
+                print(f"  [!] Warning: Received very short content ({len(content)} bytes).")
+            else:
+                print(f"  [+] Success (playwright): Received {len(content)} bytes.")
+                return BeautifulSoup(content, 'html.parser')
+    except Exception as e:
+        print(f"  [!] Playwright error: {type(e).__name__}: {e}")
+    return None
+
+def fetch_page(url):
+    """Try requests first, then fallback to playwright."""
+    soup = fetch_with_requests(url)
+    if not soup:
+        soup = fetch_with_playwright(url)
+    return soup
 
 def extract_pdf_urls(page_url, soup):
     """Extract all PDF links from a METI article page."""
@@ -131,7 +170,7 @@ def get_breadcrumb_list(url, soup):
     return []
 
 def scrape_updates():
-    soup = fetch_with_requests(TARGET_URL)
+    soup = fetch_page(TARGET_URL)
     if not soup:
         print("[!] Failed to fetch index page after retries.")
         return []
@@ -174,7 +213,7 @@ def process_and_save(conn, updates):
             continue
             
         print(f"  Processing category and PDFs for: {item['title']}...")
-        article_soup = fetch_with_requests(item['url'])
+        article_soup = fetch_page(item['url'])
         if not article_soup:
             print(f"  [!] Failed to reach article: {item['url']}")
             continue
