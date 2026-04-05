@@ -41,6 +41,7 @@ jobs:
           # DB内のpendingアイテムを検知してPodcastを生成
           # 成功すると、podcast_status が 'done' に更新され、
           # PODCAST_ASSET_PATH=... というログが出力される
+          set -o pipefail
           uv run python3 daily_podcast_worker.py 2>&1 | tee worker_output.log
           
           if grep -q "PODCAST_ASSET_PATH=" worker_output.log; then
