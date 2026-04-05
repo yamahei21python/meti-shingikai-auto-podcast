@@ -39,15 +39,12 @@ jobs:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
           # DB内のpendingアイテムを検知してPodcastを生成
-          # 成功すると、podcast_status が 'done' に更新され、
-          # PODCAST_ASSET_PATH=... というログが出力される
           set -o pipefail
           uv run python3 daily_podcast_worker.py 2>&1 | tee worker_output.log
           
           if grep -q "PODCAST_ASSET_PATH=" worker_output.log; then
-            # Extract absolute path and convert to repo-relative
+            # Extract relative path to repo root
             raw_path=$(grep "PODCAST_ASSET_PATH=" worker_output.log | cut -d'=' -f2)
-            # Remove '../' prefix to get repo-relative path (since we're in notebooklm-podcast-lab)
             filename=$(echo $raw_path | sed 's|^\.\./||')
             echo "filename=$filename" >> $GITHUB_OUTPUT
             echo "has_asset=true" >> $GITHUB_OUTPUT
@@ -55,12 +52,26 @@ jobs:
             echo "has_asset=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit and Push DB status updates
-        # 生成完了後の 'done' ステータスをDBに保存
+      - name: Update RSS and Upload to R2
+        if: steps.podcast_gen.outputs.has_asset == 'true'
+        working-directory: notebooklm-podcast-lab
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          # アセットのアップロードとRSSフィードの更新
+          # --file で新しく生成されたMP3を指定し、既存のpodcast.xmlに追記
+          uv run python3 upload_and_rss.py --file "../${{ steps.podcast_gen.outputs.filename }}"
+
+      - name: Commit and Push updates
+        # 生成完了後の 'done' ステータス、更新されたRSS、およびスクリプト自身を保存
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Automated: Podcast generation complete [skip ci]"
-          file_pattern: 'councils.db'
+          commit_message: "Automated: Podcast generation and RSS update [skip ci]"
+          file_pattern: 'councils.db podcast.xml notebooklm-podcast-lab/upload_and_rss.py'
 
       - name: Create Release and Upload Asset
         if: steps.podcast_gen.outputs.has_asset == 'true'
