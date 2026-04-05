@@ -45,8 +45,38 @@ jobs:
 
       - name: Show Test Artifacts
         run: |
-          # テスト用の成果物（DB）が生成されているか確認
           if [ -f "test_scripts/test_councils.db" ]; then
             echo "[+] Test database found: test_scripts/test_councils.db"
             ls -lh test_scripts/test_councils.db
+          fi
+
+  test-impersonate:
+    name: Test curl-cffi Impersonation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Setup Lab (Install dependencies)
+        working-directory: notebooklm-podcast-lab
+        run: uv sync
+
+      - name: Run Impersonate Scraper Test
+        run: |
+          # 指紋偽装版のスクレイパーを直接実行して検証
+          uv run --project notebooklm-podcast-lab python3 test_scripts/scrape_meti_shingikai_impersonate.py
+
+      - name: Verify Result
+        run: |
+          if [ -f "test_scripts/test_councils_impersonate.db" ]; then
+            echo "[🎉 SUCCESS] Impersonate DB was generated successfully."
+            ls -lh test_scripts/test_councils_impersonate.db
+          else
+            echo "[!] FAILED: Impersonate DB was not created."
+            exit 1
           fi
