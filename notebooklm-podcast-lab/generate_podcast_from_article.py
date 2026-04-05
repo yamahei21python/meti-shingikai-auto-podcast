@@ -9,14 +9,34 @@ from urllib.parse import urljoin
 from playwright.sync_api import sync_playwright
 
 # Configurations
-# Use system 'uv' in GitHub Actions, local path otherwise
-UV_PATH = "uv" if os.getenv("GITHUB_ACTIONS") else "/Users/kohei/.local/bin/uv"
+# Use system 'uv' by default, fallback to known local path
+UV_PATH = "uv"
+if not os.getenv("GITHUB_ACTIONS"):
+    # Check if 'uv' is in PATH, if not use specific local path
+    import shutil
+    if not shutil.which("uv"):
+        UV_PATH = "/Users/kohei/.local/bin/uv"
 BASE_URL = "https://www.meti.go.jp"
 OUTPUT_MP3 = "podcast_summary.mp3"
 
 def run_notebooklm(args):
-    """Run notebooklm command using uv run"""
-    cmd = [UV_PATH, "run", "notebooklm"] + args
+    """Run notebooklm command using direct path if available, or uv run as fallback."""
+    # Try to find the exact path for notebooklm in the local .venv
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    venv_bin_path = os.path.join(base_dir, ".venv", "bin", "notebooklm")
+    python_bin = sys.executable # Use current python
+    
+    if os.path.exists(venv_bin_path):
+        # Using [python, script_path] to bypass broken shebangs
+        cmd = [python_bin, venv_bin_path] + args
+    else:
+        # Fallback to uv run if uv is available, or just 'notebooklm'
+        import shutil
+        if shutil.which("uv"):
+            cmd = ["uv", "run", "notebooklm"] + args
+        else:
+            cmd = ["notebooklm"] + args
+        
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
@@ -94,19 +114,33 @@ def main():
     print(f"[*] Creating notebook: {notebook_name}")
     res = run_notebooklm(["create", notebook_name])
     
+    if res.returncode != 0:
+        print(f"[!] Failed to create notebook (Return code {res.returncode})")
+        print(f"STDOUT: {res.stdout}")
+        print(f"STDERR: {res.stderr}")
+        sys.exit(1)
+
     notebook_id = None
     try:
-        if ":" in res.stdout:
-            parts = res.stdout.split(":")[1].split("-")
-            notebook_id = parts[0].strip()
+        import re
+        # Look for UUID format: 8-4-4-4-12 hex chars
+        match = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', res.stdout, re.IGNORECASE)
+        if match:
+            notebook_id = match.group(1)
         else:
-            notebook_id = res.stdout.split()[-1].strip()
+            # Fallback for simpler IDs
+            parts = res.stdout.strip().split()
+            if parts:
+                notebook_id = parts[-1]
         
         if not notebook_id or len(notebook_id) < 10: 
-            raise ValueError("Invalid ID format")
+            raise ValueError(f"Invalid ID format in: {res.stdout}")
         print(f"[+] Notebook created ID: {notebook_id}")
+        # PRINT ID to stdout for the worker to capture
+        print(f"NOTEBOOK_ID={notebook_id}")
     except Exception as e:
-        print(f"[!] Error creating/parsing notebook: {res.stdout}")
+        print(f"[!] Error parsing notebook ID: {e}")
+        print(f"Full output: {res.stdout}")
         sys.exit(1)
 
     # 3. Select Notebook
@@ -121,18 +155,51 @@ def main():
     time.sleep(30)
 
     # 5. Generate Podcast Audio
-    prompt = """
+    # Use the provided name to anchor the start of the podcast
+    title_context = args.name if args.name else "今回の資料"
+    prompt = f"""
+まず最初に、資料のタイトル『{title_context}』をはっきりと明示して、すぐに本題の解析に入ってください。
+前置きや一般的な背景説明は最小限に留め、資料の内容に直接関わる核心部分から解説を開始してください。
+
 この審議会資料（PDF）の全内容を技術面・政策面から統合・分析し、日本のエネルギー業界で働く従業員の方々の「知識アップ」に資するポッドキャスト音声を作成してください。
 今日の世界的なエネルギー情勢の中で、この会議で議論された技術開発の進展、法規制や基準の改正、現場レベルでの対応が必要なリスク、および今後の具体的スケジュールを多角的に要約・解説してください。
 """
     
     print(f"[*] Generating podcast audio with analyst prompt...")
-    gen_res = run_notebooklm(["generate", "audio", prompt, "--wait"])
+    # Normalize prompt: remove newlines for CLI stability
+    normalized_prompt = " ".join(prompt.strip().split())
+    # Start generation in non-blocking mode to get the task ID
+    gen_res = run_notebooklm(["generate", "audio", normalized_prompt, "--no-wait"])
     
     if gen_res.returncode != 0:
-        print(f"[!] Audio generation issue: {gen_res.stderr}")
+        print(f"[!] Audio generation start failed (Return code {gen_res.returncode})")
+        print(f"STDOUT: {gen_res.stdout}")
+        print(f"STDERR: {gen_res.stderr}")
         sys.exit(1)
     
+    # Extract task/artifact ID from output
+    import re
+    # Handle both "Task: ID" and direct "ID" output
+    task_match = re.search(r'(?:Task: )?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', gen_res.stdout, re.IGNORECASE)
+    if not task_match:
+        print(f"[!] Could not extract Task ID from output: {gen_res.stdout}")
+        sys.exit(1)
+        
+    task_id = task_match.group(1)
+    print(f"[*] Audio generation started. Task ID: {task_id}")
+    print(f"[*] Waiting for completion (Extended timeout: 1200s)...")
+    
+    # Wait for completion with extended timeout (20 minutes)
+    wait_res = run_notebooklm(["artifact", "wait", task_id, "--timeout", "1200"])
+    
+    if wait_res.returncode != 0:
+        print(f"[!] Audio generation failed or timed out (Return code {wait_res.returncode})")
+        print(f"STDOUT: {wait_res.stdout}")
+        print(f"STDERR: {wait_res.stderr}")
+        sys.exit(1)
+    
+    print("[+] Audio generation completed successfully.")
+
     # 6. Download
     final_output = "podcast_summary.mp3"
     print(f"[*] Attempting to download podcast to: {final_output}")
