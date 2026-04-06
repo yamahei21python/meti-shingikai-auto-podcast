@@ -57,6 +57,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Cloudflare WARP
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update && sudo apt-get install cloudflare-warp -y
+
+      - name: Connect WARP (Proxy Mode)
+        run: |
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos mode proxy
+          warp-cli --accept-tos connect
+          # 接続待ち
+          sleep 5
+          warp-cli --accept-tos status
+
+      - name: Verify WARP IP
+        run: |
+          echo "Original IP:"
+          curl -s ifconfig.me
+          echo -e "\nWARP (SOCKS5) IP:"
+          curl -s -x socks5://127.0.0.1:40000 ifconfig.me || echo "WARP Proxy not reachable"
+
       - name: Install uv and Setup Python
         uses: astral-sh/setup-uv@v3
         with:

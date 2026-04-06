@@ -46,11 +46,17 @@ def init_db():
 
 def fetch_page_impersonate(url, max_attempts=3):
     """Fetch URL using curl-cffi (impersonate chrome120)."""
+    # WARP SOCKS5 プロキシの設定
+    proxies = {
+        "http": "socks5://127.0.0.1:40000",
+        "https": "socks5://127.0.0.1:40000"
+    }
+    
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching with curl-cffi (Chrome 120) (attempt {attempt+1}): {url}")
-            # Chrome 120 の指紋とヘッダーを完全に偽装
-            response = requests.get(url, impersonate="chrome120", timeout=60)
+            print(f"[*] Fetching with curl-cffi (Chrome 120) + WARP Proxy (attempt {attempt+1}): {url}")
+            # Chrome 120 の指紋とヘッダーを完全に偽装し、WARP経由でアクセス
+            response = requests.get(url, impersonate="chrome120", timeout=60, proxies=proxies)
             
             if response.status_code == 200:
                 print(f"  [+] Success: Received {len(response.content)} bytes.")
