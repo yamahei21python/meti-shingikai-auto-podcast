@@ -50,7 +50,7 @@ jobs:
           # 統合本番スクレイパーを実行
           uv run --project notebooklm-podcast-lab python3 sync_all_production.py
 
-      - name: Run Podcast Generation Worker (2 items per day)
+      - name: Run Podcast Generation Worker (1 item per day - TEST)
         env:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
@@ -73,12 +73,13 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # councils.db, podcasts/*.md, podcast.xml をコミット
-          git pull --rebase origin main
+          # 変更をステージング
           git add councils.db podcasts/*.md podcast.xml 2>/dev/null || true
           
           if git status --porcelain | grep -q '.'; then
+            # ローカルでコミットを作成してからリベース
             git commit -m "chore: daily sync, podcast update, and R2 synchronization [skip ci]"
+            git pull --rebase origin main
             git push
           else
             echo "No changes to commit."

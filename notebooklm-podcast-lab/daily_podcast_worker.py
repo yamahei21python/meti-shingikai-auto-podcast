@@ -8,7 +8,7 @@ from datetime import datetime
 
 # --- 設定 ---
 DB_PATH = "../councils.db"
-MAX_PROCESS_PER_RUN = 2 # 1回の実行で処理する最大件数
+MAX_PROCESS_PER_RUN = 1 # 1回の実行で処理する最大件数
 
 def init_notebooklm_auth():
     """Ensure notebooklm auth file exists if secret is provided in ENV."""
