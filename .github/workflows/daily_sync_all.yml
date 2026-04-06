@@ -57,17 +57,28 @@ jobs:
           # ポッドキャスト生成ワーカーを実行
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py
 
+      - name: Upload to R2 and Update RSS Feed
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+        run: |
+          # R2へアップロードし、podcast.xmlを更新
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/upload_and_rss.py
+
       - name: Commit and Push Updates
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # councils.db, podcasts/*.mp3, podcasts/*.md をコミット
+          # councils.db, podcasts/*.md, podcast.xml をコミット
           git pull --rebase origin main
-          git add councils.db podcasts/*.mp3 podcasts/*.md 2>/dev/null || true
+          git add councils.db podcasts/*.md podcast.xml 2>/dev/null || true
           
           if git status --porcelain | grep -q '.'; then
-            git commit -m "chore: status sync and podcast update [skip ci]"
+            git commit -m "chore: daily sync, podcast update, and R2 synchronization [skip ci]"
             git push
           else
             echo "No changes to commit."
