@@ -94,10 +94,15 @@ jobs:
       - name: "Debug: List Files"
         run: ls -R
 
-      - name: Run Impersonate Scraper Test
+      - name: Run Impersonate Scraper Test (METI)
         run: |
-          # 指紋偽装版のスクレイパーを直接実行して検証
+          # METI指紋偽装版の検証
           uv run --project notebooklm-podcast-lab python3 test_scripts/scrape_meti_shingikai_impersonate.py
+
+      - name: Run Impersonate Scraper Test (OCCTO)
+        run: |
+          # OCCTO指紋偽装版の検証
+          uv run --project notebooklm-podcast-lab python3 test_scripts/scrape_occto_impersonate.py
 
       - name: Verify Result
         run: |
