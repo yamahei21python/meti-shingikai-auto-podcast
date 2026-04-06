@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energy Audio | 経産省資料を5分で把握するAIポッドキャスト</title>
-    <meta name="description" content="最新のエネルギー政策や複雑な官公庁データをAIが自動で読み解き、ポッドキャストとして最速でお届け。">
+    <title>Energy Audio | Latest Intelligence for Energy Industry</title>
+    <meta name="description" content="AI-driven intelligence for the energy industry. Syncing METI & OCCTO documents into daily podcasts.">
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    colors: {
+                        brand: '#5e6ad2',
+                        page: '#08090a',
+                        panel: '#0f1011',
+                    },
                     fontFamily: {
                         outfit: ['Outfit', 'sans-serif'],
                         inter: ['Inter', 'sans-serif'],
@@ -24,231 +26,154 @@
         }
     </script>
 </head>
-<body class="bg-slate-950 text-slate-50 antialiased selection:bg-sky-500/30">
+<body class="bg-page text-[#8a8f98] antialiased selection:bg-[#5e6ad2]/30">
     
-    <!-- Background Elements -->
-    <div class="fixed inset-0 -z-10 overflow-hidden">
-        <div class="absolute top-0 right-0 w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full"></div>
-        <div class="absolute bottom-0 left-0 w-[60%] h-[60%] bg-sky-500/5 blur-[120px] rounded-full"></div>
-    </div>
-
-    <header class="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md">
-        <div class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
+    <header class="fixed top-0 z-50 w-full border-b border-[rgba(255,255,255,0.05)] bg-[#08090a]/80 backdrop-blur-md">
+        <div class="container mx-auto flex h-14 items-center justify-between px-6">
             <a href="/" class="flex items-center gap-2">
-                <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
-                    <i data-lucide="zap" class="h-5 w-5 text-white"></i>
+                <div class="h-6 w-6 rounded bg-[#5e6ad2] flex items-center justify-center shadow-lg shadow-[#5e6ad2]/20">
+                    <i data-lucide="zap" class="h-4 w-4 text-white"></i>
                 </div>
-                <span class="font-outfit text-xl font-bold tracking-tight text-slate-100">Energy Audio</span>
+                <span class="font-outfit text-lg font-bold tracking-tight text-[#f7f8f8]">Energy Audio</span>
             </a>
-            <nav class="hidden md:flex items-center gap-8">
-                <a href="/" class="text-sm font-medium text-slate-400 hover:text-sky-400 transition-colors">エピソード一覧</a>
-                <a href="#tech" class="text-sm font-medium text-slate-400 hover:text-sky-400 transition-colors">システムの裏側</a>
-                <a href="https://music.youtube.com" target="_blank" class="rounded-full bg-sky-500 px-5 py-2 text-sm font-bold text-white hover:bg-sky-400 transition-all shadow-lg shadow-sky-500/20">
-                    今すぐ聴く
+            <nav class="hidden md:flex items-center gap-6">
+                <a href="/" class="text-xs font-medium text-[#8a8f98] hover:text-[#f7f8f8] transition-colors">Episodes</a>
+                <a href="#tech" class="text-xs font-medium text-[#8a8f98] hover:text-[#f7f8f8] transition-colors">Architecture</a>
+                <a href="https://music.youtube.com" target="_blank" class="btn-linear-primary text-xs py-1.5 px-4 shadow-none">
+                    Listen Now
                 </a>
             </nav>
         </div>
     </header>
 
-    <main>
+    <main class="pt-14">
         <!-- 1. Hero Section -->
-        <section class="container mx-auto px-4 sm:px-6 py-16 md:py-24">
-            <div class="flex flex-col lg:flex-row items-center gap-16">
-                <div class="flex-1 space-y-8 animate-in slide-in-from-left duration-1000">
-                    <h1 class="hero-copy font-outfit font-bold tracking-tighter">
-                        経産省の100ページの<br>審議会資料、<br>
-                        <span class="gradient-text">通勤中の5分</span>で把握。
+        <section class="grid-bg relative overflow-hidden pt-24 pb-16 md:pt-40 md:pb-32">
+            <div class="container mx-auto px-6">
+                <div class="max-w-[800px] mx-auto text-center space-y-8">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] font-bold text-[#5e6ad2] uppercase tracking-widest">
+                        Intelligence Pipeline v2.0
+                    </div>
+                    <h1 class="hero-copy text-[#f7f8f8]">
+                        経産省の100ページの審議会資料、<br>
+                        通勤中の5分で把握。
                     </h1>
-                    <p class="text-xl text-slate-400 font-light leading-relaxed max-w-[540px]">
+                    <p class="text-lg md:text-xl text-[#8a8f98] max-w-[600px] mx-auto font-normal leading-relaxed">
                         Energy Audioは、最新のエネルギー政策や複雑な官公庁データをAIが自動で読み解き、ポッドキャストとして最速でお届けする「聴くインテリジェンス」です。
                     </p>
-                    <div class="space-y-6">
-                        <a href="/" class="inline-flex items-center gap-3 rounded-2xl bg-white px-8 py-5 text-lg font-bold text-slate-950 hover:bg-sky-400 transition-all shadow-2xl shadow-sky-500/20 group">
-                            <i data-lucide="play" class="h-6 w-6 fill-current"></i> 最新エピソードをWebで試し聴き
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                        <a href="/" class="btn-linear-primary px-8 py-3 text-sm">
+                            最新エピソードを聴く
                         </a>
-                        <div class="flex items-center gap-4 pt-2">
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Available On</span>
-                            <div class="flex gap-3">
-                                <a href="#" class="platform-icon text-slate-300 hover:text-[#1DB954]"><i data-lucide="music-2"></i></a>
-                                <a href="#" class="platform-icon text-slate-300 hover:text-[#FC3C44]"><i data-lucide="podcast"></i></a>
-                                <a href="https://music.youtube.com" class="platform-icon text-slate-300 hover:text-[#FF0000]"><i data-lucide="youtube"></i></a>
-                            </div>
-                        </div>
+                        <a href="#tech" class="btn-linear-secondary px-8 py-3 text-sm">
+                            システムの仕組み
+                        </a>
+                    </div>
+                    <div class="flex items-center justify-center gap-6 pt-12 grayscale opacity-40">
+                        <i data-lucide="music-2" class="h-5 w-5"></i>
+                        <i data-lucide="podcast" class="h-5 w-5"></i>
+                        <i data-lucide="youtube" class="h-5 w-5"></i>
                     </div>
                 </div>
-                <div class="flex-1 relative animate-in zoom-in duration-1000 delay-200">
-                    <div class="relative z-10 w-full max-w-[500px] mx-auto rounded-[3rem] overflow-hidden shadow-2xl border border-slate-800">
-                        <img src="assets/lp_hero_mockup.png" alt="Energy Audio App Mockup" class="w-full h-full object-cover">
+            </div>
+            <!-- Glow Effect -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#5e6ad2]/10 blur-[120px] -z-10"></div>
+        </section>
+
+        <section class="section-divider"></section>
+
+        <!-- 2. Feature Section -->
+        <section class="container mx-auto px-6 py-24">
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="linear-card group">
+                    <div class="h-10 w-10 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-[#f7f8f8] mb-6 group-hover:border-[#5e6ad2]/50 transition-colors">
+                        <i data-lucide="zap" class="h-5 w-5"></i>
                     </div>
-                    <div class="absolute -top-12 -right-12 w-64 h-64 bg-sky-500/10 blur-3xl rounded-full"></div>
+                    <h3 class="text-lg font-bold text-[#f7f8f8] mb-3">圧倒的なタイムパフォーマンス</h3>
+                    <p class="text-sm leading-relaxed">複雑な資料も要点だけを抽出。移動中や作業中に「ながら聴き」で最新動向をキャッチアップ。</p>
+                </div>
+                <div class="linear-card group">
+                    <div class="h-10 w-10 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-[#f7f8f8] mb-6 group-hover:border-[#5e6ad2]/50 transition-colors">
+                        <i data-lucide="target" class="h-5 w-5"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#f7f8f8] mb-3">プロ納得の深いインサイト</h3>
+                    <p class="text-sm leading-relaxed">単なる要約ではありません。AI が文脈を理解し、「ビジネスへの影響」という視点で生成します。</p>
+                </div>
+                <div class="linear-card group">
+                    <div class="h-10 w-10 rounded-lg bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] flex items-center justify-center text-[#f7f8f8] mb-6 group-hover:border-[#5e6ad2]/50 transition-colors">
+                        <i data-lucide="bell" class="h-5 w-5"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-[#f7f8f8] mb-3">重要な更新を見逃さない</h3>
+                    <p class="text-sm leading-relaxed">経産省・OCCTO を 24 時間体制で監視。新しい情報が発表され次第、即座にポッドキャスト化。</p>
                 </div>
             </div>
         </section>
 
-        <!-- 2. Problem Section -->
-        <section class="bg-slate-900/30 py-24 border-y border-slate-800/50">
-            <div class="container mx-auto px-4 sm:px-6">
-                <div class="max-w-[800px] mx-auto text-center space-y-4 mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold font-outfit">エネルギー業界の「今」を追うのは、<br>限界にきていませんか？</h2>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div class="problem-card space-y-4">
-                        <div class="check-item">
-                            <i data-lucide="alert-circle" class="check-icon h-6 w-6"></i>
-                            <p class="text-slate-300">経産省（METI）やOCCTOの最新資料がアップされても、読む時間がない。</p>
-                        </div>
-                    </div>
-                    <div class="problem-card space-y-4">
-                        <div class="check-item">
-                            <i data-lucide="alert-circle" class="check-icon h-6 w-6"></i>
-                            <p class="text-slate-300">「何が決まったのか」「今後の課題は何か」だけを端的に知りたい。</p>
-                        </div>
-                    </div>
-                    <div class="problem-card space-y-4">
-                        <div class="check-item">
-                            <i data-lucide="alert-circle" class="check-icon h-6 w-6"></i>
-                            <p class="text-slate-300">専門的な審議会の議事録やスライドを読み解くのが精神的・時間的負担。</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Solution Section -->
-        <section class="py-24">
-            <div class="container mx-auto px-4 sm:px-6">
-                <div class="text-center space-y-4 mb-20">
-                    <h2 class="text-4xl md:text-5xl font-bold font-outfit">情報の波を、<br><span class="gradient-text">インテリジェンスの源</span>に変える。</h2>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div class="benefit-card space-y-6">
-                        <div class="h-12 w-12 rounded-xl bg-sky-500/20 flex items-center justify-center text-sky-400">
-                            <i data-lucide="zap"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold">圧倒的なタイムパフォーマンス</h3>
-                        <p class="text-slate-400 leading-relaxed">複雑な資料も、要点だけを抽出した音声コンテンツに。移動中や作業中に「ながら聴き」で最新動向を瞬時にキャッチアップ。</p>
-                    </div>
-                    <div class="benefit-card space-y-6">
-                        <div class="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                            <i data-lucide="target"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold">プロ納得の深いインサイト</h3>
-                        <p class="text-slate-400 leading-relaxed">単なる文章の要約ではありません。最新のAIモデルが文脈を理解し、「ビジネスへの影響」という視点でコンテンツを生成します。</p>
-                    </div>
-                    <div class="benefit-card space-y-6">
-                        <div class="h-12 w-12 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                            <i data-lucide="bell"></i>
-                        </div>
-                        <h3 class="text-2xl font-bold">重要な更新を見逃さない</h3>
-                        <p class="text-slate-400 leading-relaxed">重要拠点を24時間365日監視。新しい情報が発表され次第、即座にAIが解析・ポッドキャスト化。鮮度を逃しません。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. Technology Section -->
-        <section id="tech" class="py-24 bg-slate-900/50 relative overflow-hidden">
-            <div class="container mx-auto px-4 sm:px-6">
+        <!-- 3. Tech Architecture -->
+        <section id="tech" class="py-24 bg-[rgba(255,255,255,0.01)] border-y border-[rgba(255,255,255,0.03)]">
+            <div class="container mx-auto px-6">
                 <div class="flex flex-col lg:flex-row items-center gap-16">
-                    <div class="flex-1 space-y-8">
-                        <div class="inline-flex items-center rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-semibold text-sky-400 tracking-wider">
-                            AUTOMATION ARCHITECTURE
+                    <div class="flex-1 space-y-10">
+                        <div class="space-y-4">
+                            <h2 class="text-3xl font-bold text-[#f7f8f8]">完全自動化された、<br>配信システムの裏側</h2>
+                            <p class="text-sm">独自の自動化パイプラインが、情報の鮮度と品質の両立を可能にしています。</p>
                         </div>
-                        <h2 class="text-4xl font-bold font-outfit">完全自動化された、<br>配信システムの裏側</h2>
-                        <p class="text-lg text-slate-400">最新のスクレイピング技術と生成AI（NotebookLM / LLM）を融合させた、独自のアーキテクチャがこの速さと質を実現しています。</p>
                         
-                        <div class="space-y-6">
-                            <div class="flex gap-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-sky-500/20 flex items-center justify-center text-sky-400 font-bold text-sm">01</div>
-                                <div class="space-y-1">
-                                    <h4 class="font-bold">Smart Scraping（24時間監視）</h4>
-                                    <p class="text-sm text-slate-500">官公庁の重要拠点を監視し、資料がアップロードされた瞬間にコンテンツを取得。<span class="text-sky-400/60 ml-2">#Python #Playwright</span></p>
+                        <div class="space-y-8">
+                            <div class="flex gap-6">
+                                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[10px] font-bold text-[#f7f8f8]">1</div>
+                                <div class="space-y-2">
+                                    <h4 class="text-sm font-bold text-[#f7f8f8]">Smart Scraping</h4>
+                                    <p class="text-xs">Playwright を使用した 24 時間体制の監視。資料のアップロードをミリ秒単位で検知。</p>
                                 </div>
                             </div>
-                            <div class="flex gap-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold text-sm">02</div>
-                                <div class="space-y-1">
-                                    <h4 class="font-bold">AI Analysis Pipeline（高度な解析）</h4>
-                                    <p class="text-sm text-slate-500">数千枚の資料をNotebookLMや最新LLMが読み込み、「何が決まったか」を瞬時に抽出。<span class="text-emerald-400/60 ml-2">#NotebookLM #LLM</span></p>
+                            <div class="flex gap-6">
+                                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[10px] font-bold text-[#f7f8f8]">2</div>
+                                <div class="space-y-2">
+                                    <h4 class="text-sm font-bold text-[#f7f8f8]">Intelligence Pipeline</h4>
+                                    <p class="text-xs">NotebookLM 連携による高度な文脈解析機能。独自のプロンプトエンジニアリングで品質を担保。</p>
                                 </div>
                             </div>
-                            <div class="flex gap-4">
-                                <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-sm">03</div>
-                                <div class="space-y-1">
-                                    <h4 class="font-bold">Automated Broadcasting（即時配信）</h4>
-                                    <p class="text-sm text-slate-500">解析結果をRSSフィードに統合し、主要プラットフォームへ即座に同期。<span class="text-indigo-400/60 ml-2">#Vercel #CloudflareR2</span></p>
+                            <div class="flex gap-6">
+                                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[10px] font-bold text-[#f7f8f8]">3</div>
+                                <div class="space-y-2">
+                                    <h4 class="text-sm font-bold text-[#f7f8f8]">Automated Broadcasting</h4>
+                                    <p class="text-xs">Cloudflare R2 への高速アップロードと、Vercel 経由での RSS フィード配信。</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="flex-1">
-                        <img src="assets/system_flow.png" alt="System Architecture Illustration" class="rounded-3xl shadow-2xl border border-slate-800/50">
+                    <div class="flex-1 w-full max-w-[600px]">
+                        <div class="relative rounded-xl overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[#0f1011] shadow-2xl">
+                            <img src="assets/system_flow.png" alt="Architecture" class="w-full opacity-80">
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- 5. Audience Section -->
-        <section class="py-24">
-            <div class="container mx-auto px-4 sm:px-6">
-                <div class="text-center space-y-4 mb-20">
-                    <h2 class="text-3xl font-bold font-outfit">こんな方におすすめです</h2>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <div class="persona-card space-y-4">
-                        <div class="h-16 w-16 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-sky-400">
-                            <i data-lucide="building-2" class="h-8 w-8"></i>
-                        </div>
-                        <h4 class="text-xl font-bold">事業立案・開発担当者</h4>
-                        <p class="text-sm text-slate-500">再エネ・EV事業の開発や市場進出に関わるビジネスパーソン。</p>
-                    </div>
-                    <div class="persona-card space-y-4">
-                        <div class="h-16 w-16 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400">
-                            <i data-lucide="trending-up" class="h-8 w-8"></i>
-                        </div>
-                        <h4 class="text-xl font-bold">市場アナリスト</h4>
-                        <p class="text-sm text-slate-500">電力トレーダーやエネルギー市場の動向を追い続ける専門家。</p>
-                    </div>
-                    <div class="persona-card space-y-4">
-                        <div class="h-16 w-16 mx-auto rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-indigo-400">
-                            <i data-lucide="graduation-cap" class="h-8 w-8"></i>
-                        </div>
-                        <h4 class="text-xl font-bold">研究者・学生</h4>
-                        <p class="text-sm text-slate-500">政策動向を網羅的に効率よくキャッチアップしたい学術関係者。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 6. Final CTA Section -->
-        <section class="container mx-auto px-4 sm:px-6 py-24">
-            <div class="relative overflow-hidden p-12 md:p-20 rounded-[3rem] bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 text-center space-y-8">
-                <div class="absolute -top-24 -right-24 w-64 h-64 bg-sky-500/10 blur-[100px] rounded-full"></div>
-                <h2 class="text-3xl md:text-5xl font-bold font-outfit">テクノロジーで、エネルギーの未来を<br>もっとクリアに。</h2>
-                <p class="text-xl text-slate-400 max-w-[700px] mx-auto">今すぐEnergy Audioをフォローして、エネルギー業界の最前線を「耳」で体験してください。</p>
-                <div class="flex flex-wrap justify-center gap-4 pt-4">
-                    <a href="https://music.youtube.com" target="_blank" class="flex items-center gap-3 rounded-2xl bg-[#FF0000] px-8 py-4 text-sm font-bold text-white shadow-xl shadow-red-500/20 hover:scale-105 transition-transform">
-                        <i data-lucide="youtube"></i> YouTube Music
-                    </a>
-                    <a href="#" class="flex items-center gap-3 rounded-2xl bg-[#1DB954] px-8 py-4 text-sm font-bold text-white shadow-xl shadow-green-500/20 hover:scale-105 transition-transform">
-                        <i data-lucide="music-2"></i> Spotify
-                    </a>
-                    <a href="#" class="flex items-center gap-3 rounded-2xl bg-[#FC3C44] px-8 py-4 text-sm font-bold text-white shadow-xl shadow-red-400/20 hover:scale-105 transition-transform">
-                        <i data-lucide="podcast"></i> Apple Podcasts
-                    </a>
-                </div>
+        <!-- 4. Final CTA -->
+        <section class="container mx-auto px-6 py-32 text-center space-y-8">
+            <h2 class="hero-copy text-4xl text-[#f7f8f8]">
+                エネルギーの「今」を、<br>最高精度のインテリジェンスへ。
+            </h2>
+            <p class="text-sm max-w-[500px] mx-auto">
+                Energy Audio をフォローして、多忙なビジネスの合間に最新情報のシャワーを浴びてください。
+            </p>
+            <div class="pt-8">
+                <a href="https://music.youtube.com" target="_blank" class="btn-linear-primary px-12 py-4">
+                    YouTube Music で聴く
+                </a>
             </div>
         </section>
     </main>
 
-    <footer class="border-t border-slate-900 bg-slate-950 py-12 text-slate-500">
-        <div class="container mx-auto px-4 sm:px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-                <p class="text-sm">&copy; 2026 Energy Audio. System Architecture Documentation.</p>
-                <div class="flex gap-6">
-                    <a href="#" class="hover:text-sky-400 transition-colors"><i data-lucide="github"></i></a>
-                    <a href="#" class="hover:text-sky-400 transition-colors"><i data-lucide="twitter"></i></a>
-                </div>
+    <footer class="border-t border-[rgba(255,255,255,0.03)] py-12 text-[10px] tracking-widest text-[#62666d] uppercase">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p>&copy; 2026 Energy Audio. Powered by AI and Automation.</p>
+            <div class="flex gap-8">
+                <a href="#" class="hover:text-[#f7f8f8] transition-colors">Github</a>
+                <a href="#" class="hover:text-[#f7f8f8] transition-colors">Documentation</a>
             </div>
         </div>
     </footer>
