@@ -9,7 +9,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
 </head>
 <body class="bg-slate-950 text-slate-50 antialiased selection:bg-sky-500/30">
     
@@ -65,7 +78,7 @@
                 </div>
                 <div class="flex-1 relative animate-in zoom-in duration-1000 delay-200">
                     <div class="relative z-10 w-full max-w-[500px] mx-auto rounded-[3rem] overflow-hidden shadow-2xl border border-slate-800">
-                        <img src="lp_hero_mockup.png" alt="Energy Audio App Mockup" class="w-full h-full object-cover">
+                        <img src="assets/lp_hero_mockup.png" alt="Energy Audio App Mockup" class="w-full h-full object-cover">
                     </div>
                     <div class="absolute -top-12 -right-12 w-64 h-64 bg-sky-500/10 blur-3xl rounded-full"></div>
                 </div>
@@ -169,7 +182,7 @@
                         </div>
                     </div>
                     <div class="flex-1">
-                        <img src="system_flow.png" alt="System Architecture Illustration" class="rounded-3xl shadow-2xl border border-slate-800/50">
+                        <img src="assets/system_flow.png" alt="System Architecture Illustration" class="rounded-3xl shadow-2xl border border-slate-800/50">
                     </div>
                 </div>
             </div>
