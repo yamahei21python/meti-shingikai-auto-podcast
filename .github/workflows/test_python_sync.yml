@@ -89,7 +89,9 @@ jobs:
 
       - name: Setup Lab (Install dependencies)
         working-directory: notebooklm-podcast-lab
-        run: uv sync
+        run: |
+          uv sync
+          uv run playwright install --with-deps chromium
 
       - name: "Debug: List Files"
         run: ls -R
