@@ -94,26 +94,50 @@ section {
     color: transparent;
 }
 
-.glass-card {
+.glass-card, .lp-card {
     background: var(--glass);
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--border);
     border-radius: 1.5rem;
     padding: 2.5rem;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
 }
 
-.glass-card:hover {
+.glass-card:hover, .lp-card:hover {
     border-color: var(--border-bright);
     background: rgba(30, 41, 59, 0.7);
     transform: translateY(-5px);
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
-.glass-card p {
+.lp-card .icon-box {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 2rem;
+    border-radius: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+}
+
+.lp-card:hover .icon-box {
+    transform: scale(1.1) rotate(5deg);
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.lp-card p {
     text-wrap: balance;
     word-break: keep-all;
     overflow-wrap: anywhere;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.7;
 }
 
 /* Buttons */
@@ -272,20 +296,8 @@ section {
     margin-bottom: 1.5rem;
 }
 
-.problem-card, .benefit-card, .persona-card {
-    background: var(--glass);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--border);
-    border-radius: 1.5rem;
-    padding: 2rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.problem-card:hover, .benefit-card:hover, .persona-card:hover {
-    border-color: var(--border-bright);
-    background: rgba(30, 41, 59, 0.7);
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+.lp-card {
+    /* Uses definition above */
 }
 
 .check-item {
