@@ -194,6 +194,9 @@ def process_single_item(item):
             else:
                 print(f"[!] Failed to delete notebook: {del_res.stderr}")
             
+            print(f"PODCAST_ASSET_PATH={target_path}")
+            print(f"ORIGINAL_URL={url}")
+            
             update_status(item_id, 'done')
             return True
     else:

@@ -108,6 +108,7 @@
                 items.forEach((item, index) => {
                     const title = item.querySelector('title').textContent;
                     const pubDateRaw = item.querySelector('pubDate').textContent;
+                    const originalLink = item.querySelector('link')?.textContent || '#';
                     const pubDate = new Date(pubDateRaw).toLocaleDateString('ja-JP', {
                         year: 'numeric', month: 'long', day: 'numeric'
                     });
@@ -126,7 +127,9 @@
                     card.innerHTML = `
                         <div class="flex flex-col h-full text-left">
                             <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">${pubDate}</span>
-                            <h3 class="text-lg font-bold mb-4 text-slate-100 leading-snug">${title}</h3>
+                            <a href="${originalLink}" target="_blank" class="block group/title">
+                                <h3 class="text-lg font-bold mb-4 text-slate-100 leading-snug group-hover/title:text-sky-400 transition-colors">${title}</h3>
+                            </a>
                             <div class="mb-6 overflow-hidden relative">
                                 <div class="max-h-[150px] overflow-y-auto pr-2 scrollbar-hide text-sm text-slate-400 leading-relaxed custom-scrollbar">
                                     ${formattedDesc}

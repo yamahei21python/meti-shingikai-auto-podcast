@@ -92,6 +92,7 @@ def load_existing_items(xml_path):
                 "title": title,
                 "description": description,
                 "url": url,
+                "original_link": link,
                 "size": size,
                 "mtime": mtime
             })
@@ -129,7 +130,8 @@ def generate_rss(files_info):
         fe.id(info['url'])
         fe.title(info['title'])
         fe.description(info['description'] or info['title'])
-        fe.link(href=info['url'])
+        # Link to the original source web page if available, otherwise fallback to audio URL
+        fe.link(href=info.get('original_link') or info['url'])
         fe.pubDate(datetime.fromtimestamp(info['mtime'], tz=timezone.utc))
         fe.enclosure(info['url'], str(info['size']), 'audio/mpeg')
         fe.podcast.itunes_explicit('no')
@@ -141,6 +143,7 @@ def generate_rss(files_info):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", help="Path to a single MP3 file to add")
+    parser.add_argument("--source_url", help="Original source URL for the meeting")
     args = parser.parse_args()
 
     if not all([R2_ID, R2_SECRET, R2_ENDPOINT, R2_BUCKET]):
@@ -191,6 +194,7 @@ def main():
                 "title": base_name,
                 "description": description,
                 "url": public_url,
+                "original_link": args.source_url,
                 "size": stat.st_size,
                 "mtime": stat.st_mtime
             })

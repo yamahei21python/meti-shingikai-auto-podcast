@@ -46,7 +46,12 @@ jobs:
             # Extract relative path to repo root
             raw_path=$(grep "PODCAST_ASSET_PATH=" worker_output.log | cut -d'=' -f2)
             filename=$(echo $raw_path | sed 's|^\.\./||')
+            
+            # Extract original source URL
+            original_url=$(grep "ORIGINAL_URL=" worker_output.log | cut -d'=' -f2)
+            
             echo "filename=$filename" >> $GITHUB_OUTPUT
+            echo "original_url=$original_url" >> $GITHUB_OUTPUT
             echo "has_asset=true" >> $GITHUB_OUTPUT
           else
             echo "has_asset=false" >> $GITHUB_OUTPUT
@@ -64,7 +69,9 @@ jobs:
         run: |
           # アセットのアップロードとRSSフィードの更新
           # --file で新しく生成されたMP3を指定し、既存のpodcast.xmlに追記
-          uv run python3 upload_and_rss.py --file "../${{ steps.podcast_gen.outputs.filename }}"
+          uv run python3 upload_and_rss.py \
+            --file "../${{ steps.podcast_gen.outputs.filename }}" \
+            --source_url "${{ steps.podcast_gen.outputs.original_url }}"
 
       - name: Commit and Push updates
         # 生成完了後の 'done' ステータス、更新されたRSS、およびスクリプト自身を保存
