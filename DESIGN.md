@@ -39,3 +39,8 @@ Linear の「静寂・高精度・信頼」という空気感を継承した UI 
 ## ⚡️ Motion & Interactivity
 - **Hover**: 境界線の透過度を上げ、背景の輝度を一段階上げる (Luminance stepping)
 - **Transitions**: `all 0.4s cubic-bezier(0.4, 0, 0.2, 1)`
+
+## 🖋 Writing Style & Brand Voice
+- **Engineered Accuracy (設計された正確性)**: 感情的な装飾を排し、事実と性能を中心とした言葉を選ぶ。
+- **Authoritative Calm (静かな権威)**: 「〜できます」という説明ではなく、「〜する (Syncs, Analyzes, Deploys)」という断定的・能動的な表現を用いる。
+- **Clarity over Hype (煽りより明瞭さ)**: 言葉を詰め込まず、見出しは極限まで短く、余白の中で「声」が響くように配置する。

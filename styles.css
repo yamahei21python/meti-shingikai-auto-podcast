@@ -1,23 +1,27 @@
-/* Energy Audio - Linear Design System Implementation */
+/* Energy Audio - The Ultimate Linear Implementation */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;510;590&family=Outfit:wght@500;700&display=swap');
 
 :root {
-    /* Color Palette - Linear Specs */
-    --bg-page: #08090a;
-    --bg-panel: #0f1011;
-    --bg-elevated: #191a1b;
-    
+    /* Brand Specs from docs/design/linear/DESIGN.md */
     --accent: #5e6ad2;
     --accent-hover: #7170ff;
     
+    /* Backgrounds: Luminance Stacking model */
+    --bg-page: #08090a;
+    --bg-panel: #0f1011;
+    --bg-surface: #191a1b;
+    
+    /* Text: Authoritative Grayscale */
     --text-primary: #f7f8f8;
     --text-secondary: #8a8f98;
     --text-tertiary: #62666d;
     
+    /* Borders: Whisper-thin white */
     --border-subtle: rgba(255,255,255,0.05);
     --border-standard: rgba(255,255,255,0.08);
-    
-    --shadow-inset: inset rgba(0,0,0,0.2) 0px 0px 12px 0px;
+
+    /* Selection */
+    --selection: rgba(94, 106, 210, 0.3);
 }
 
 * {
@@ -27,8 +31,9 @@
 }
 
 html {
-    scroll-behavior: smooth;
     background-color: var(--bg-page);
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -37,110 +42,144 @@ body {
     color: var(--text-secondary);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    /* Linear Typography Setting */
     font-feature-settings: "cv01", "ss03", "zero", "ss01";
     letter-spacing: -0.165px;
 }
 
+/* Base Typography Enhancement */
 h1, h2, h3, h4, .font-outfit {
     font-family: 'Outfit', sans-serif;
     color: var(--text-primary);
-    font-weight: 700;
-    tracking: tight;
+    font-weight: 590;
+    tracking: -0.02em;
 }
 
-/* Linear Typography Scales */
+/* Linear Authoritative Headline Scale */
 .hero-copy {
     font-size: clamp(2.5rem, 8vw, 4.5rem);
-    font-weight: 590;
-    line-height: 1.0;
-    letter-spacing: -1.584px;
-    margin-bottom: 24px;
+    font-weight: 590; /* Linear's signature bold */
+    line-height: 0.95;
+    letter-spacing: -1.584px; /* Engineered compression */
+    margin-bottom: 32px;
 }
 
 h2 {
     font-size: 32px;
     letter-spacing: -0.704px;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 }
 
-/* Background Grids */
-.grid-bg {
-    background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px), 
-                      linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+/* The Signature Linear Grid Background */
+.grid-canvas {
+    background-image: 
+        linear-gradient(var(--border-subtle) 1px, transparent 1px), 
+        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
     background-size: 40px 40px;
-    background-position: center center;
+    background-position: center top;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
 }
 
-/* Components - Linear Elevation Model */
+/* Interactive Components */
 .linear-card {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255,255,255,0.02);
     border: 1px solid var(--border-subtle);
     border-radius: 8px;
-    padding: 24px;
+    padding: 32px;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .linear-card:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255,255,255,0.04);
     border-color: var(--border-standard);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
 }
 
-/* Buttons - Linear Style */
-.btn-linear-primary {
+.benefit-tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+
+/* Button Refinement */
+.btn-linear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 510;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border: none;
+}
+
+.btn-primary {
     background: var(--accent);
     color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-weight: 510;
-    font-size: 14px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    border: none;
-    box-shadow: 0 4px 12px rgba(94, 106, 210, 0.3);
 }
 
-.btn-linear-primary:hover {
+.btn-primary:hover {
     background: var(--accent-hover);
-    transform: scale(1.02);
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(94, 106, 210, 0.4);
 }
 
-.btn-linear-secondary {
-    background: rgba(255,255,255,0.02);
+.btn-secondary {
+    background: rgba(255,255,255,0.03);
     border: 1px solid var(--border-standard);
     color: var(--text-primary);
-    padding: 10px 20px;
-    border-radius: 6px;
-    font-weight: 510;
-    font-size: 14px;
-    text-decoration: none;
-    transition: all 0.3s ease;
 }
 
-.btn-linear-secondary:hover {
-    background: rgba(255,255,255,0.05);
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.06);
     border-color: rgba(255,255,255,0.2);
-}
-
-/* Utilities */
-.gradient-text-linear {
-    background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
 }
 
 .section-divider {
     height: 1px;
     width: 100%;
     background: linear-gradient(90deg, transparent, var(--border-standard), transparent);
-    margin: 64px 0;
+    margin: 80px 0;
+    opacity: 0.5;
 }
 
+/* Tech List - Linear Inset Style */
+.tech-item {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.tech-item:hover {
+    background: rgba(255,255,255,0.02);
+}
+
+.tech-number {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-standard);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mobile Adjustments */
 @media (max-width: 768px) {
-    .hero-copy {
-        font-size: 40px;
-        letter-spacing: -1.0px;
-    }
+    .container { padding: 0 24px; }
+    .hero-copy { font-size: 36px; letter-spacing: -1px; }
 }
