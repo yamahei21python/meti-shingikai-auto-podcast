@@ -175,55 +175,9 @@
                 <div class="text-center space-y-4 mb-20 px-4">
                     <h2 class="text-3xl md:text-5xl font-bold font-outfit leading-tight text-slate-100">最新のエピソード</h2>
                 </div>
-                <div class="grid md:grid-cols-3 gap-8">
-                    <!-- Episode 1 -->
-                    <div class="lp-card group relative">
-                        <div class="flex flex-col h-full text-left">
-                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 6,
-                                2026</span>
-                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">原子力小委員会
-                                革新炉ワーキンググループ</h3>
-                            <div class="mt-auto">
-                                <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
-                                    <source
-                                        src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3"
-                                        type="audio/mpeg">
-                                </audio>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Episode 2 -->
-                    <div class="lp-card group relative">
-                        <div class="flex flex-col h-full text-left">
-                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 6,
-                                2026</span>
-                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">第98回 広域系統整備委員会
-                            </h3>
-                            <div class="mt-auto">
-                                <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
-                                    <source
-                                        src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3"
-                                        type="audio/mpeg">
-                                </audio>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Episode 3 -->
-                    <div class="lp-card group relative">
-                        <div class="flex flex-col h-full text-left">
-                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 4,
-                                2026</span>
-                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">第9回 計画評価及び検証小委員会
-                            </h3>
-                            <div class="mt-auto">
-                                <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
-                                    <source
-                                        src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260217_第9回_計画評価及び検証小委員会.mp3"
-                                        type="audio/mpeg">
-                                </audio>
-                            </div>
-                        </div>
-                    </div>
+                <div id="latest-episodes-grid" class="grid md:grid-cols-3 gap-8">
+                    <!-- Dynamic content will be loaded here -->
+                    <div class="col-span-full py-12 text-center text-slate-500 animate-pulse">Loading latest episodes...</div>
                 </div>
             </div>
         </section>
@@ -355,7 +309,65 @@
     </footer>
 
     <script>
+        // Initialize Lucide Icons
         lucide.createIcons();
+
+        // Fetch and load latest 3 episodes from RSS
+        async function loadLatestEpisodes() {
+            const grid = document.getElementById('latest-episodes-grid');
+            if (!grid) return;
+
+            try {
+                const response = await fetch('podcast.xml');
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const items = xmlDoc.querySelectorAll('item');
+
+                grid.innerHTML = '';
+
+                // Show only top 3 items
+                const top3 = Array.from(items).slice(0, 3);
+
+                if (top3.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500">No episodes found.</div>';
+                    return;
+                }
+
+                top3.forEach((item) => {
+                    const title = item.querySelector('title').textContent;
+                    const pubDateRaw = item.querySelector('pubDate').textContent;
+                    const pubDate = new Date(pubDateRaw).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                    const audioUrl = item.querySelector('enclosure').getAttribute('url');
+
+                    const card = document.createElement('div');
+                    card.className = 'lp-card group relative';
+                    card.innerHTML = `
+                        <div class="flex flex-col h-full text-left">
+                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">${pubDate}</span>
+                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">${title}</h3>
+                            <div class="mt-auto">
+                                <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
+                                    <source src="${audioUrl}" type="audio/mpeg">
+                                </audio>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error loading podcast feed:', error);
+                grid.innerHTML = '<div class="col-span-full py-12 text-center text-red-500/50">Failed to load episodes.</div>';
+            }
+        }
+
+        // Run on load
+        loadLatestEpisodes();
     </script>
 </body>
 
