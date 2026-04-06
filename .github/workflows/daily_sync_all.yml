@@ -1,0 +1,65 @@
+name: Daily METI & OCCTO Sync
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 日本時間 09:00 (毎日)
+  workflow_dispatch: # 手動実行用
+
+jobs:
+  sync-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Cloudflare WARP
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update && sudo apt-get install cloudflare-warp -y
+
+      - name: Connect WARP (Proxy Mode)
+        run: |
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos mode proxy
+          warp-cli --accept-tos connect
+          sleep 5
+          warp-cli --accept-tos status
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install libcurl-dev (for curl-cffi)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Setup Dependencies
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv sync
+          uv run playwright install --with-deps chromium
+
+      - name: Run Sync Pipeline
+        run: |
+          # 統合本番スクレイパーを実行
+          uv run --project notebooklm-podcast-lab python3 sync_all_production.py
+
+      - name: Commit and Push Database Update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # councils.db に変更がある場合のみコミット
+          if git status --porcelain councils.db | grep -q 'M'; then
+            git add councils.db
+            git commit -m "chore: auto-update councils.db [skip ci]"
+            git push
+          else
+            echo "No changes in councils.db to commit."
+          fi
