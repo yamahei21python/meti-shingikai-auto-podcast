@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,8 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
@@ -24,8 +26,9 @@
         }
     </script>
 </head>
+
 <body class="bg-slate-950 text-slate-50 antialiased selection:bg-sky-500/30">
-    
+
     <!-- Background Elements -->
     <div class="fixed inset-0 -z-10 overflow-hidden">
         <div class="absolute top-0 right-0 w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full"></div>
@@ -35,19 +38,23 @@
     <header class="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md">
         <div class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
             <a href="/" class="flex items-center gap-2">
-                <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                <div
+                    class="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
                     <i data-lucide="zap" class="h-5 w-5 text-white"></i>
                 </div>
                 <span class="font-outfit text-xl font-bold tracking-tight text-slate-100">Energy Audio</span>
             </a>
             <nav class="hidden md:flex items-center gap-3">
-                <a href="#episodes" class="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-950 hover:bg-sky-400 transition-all shadow-lg shadow-white/5">
+                <a href="#episodes"
+                    class="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-950 hover:bg-sky-400 transition-all shadow-lg shadow-white/5">
                     最新エピソード
                 </a>
-                <a href="/" class="rounded-full bg-[#FFB38A] px-4 py-2 text-xs font-bold text-slate-950 hover:bg-[#ffd1b8] transition-all shadow-lg shadow-[#FFB38A]/10">
+                <a href="/"
+                    class="rounded-full bg-[#FFB38A] px-4 py-2 text-xs font-bold text-slate-950 hover:bg-[#ffd1b8] transition-all shadow-lg shadow-[#FFB38A]/10">
                     エピソード一覧
                 </a>
-                <a href="/podcast.xml" target="_blank" class="flex items-center gap-2 rounded-full bg-[#F26522] px-4 py-2 text-xs font-bold text-white hover:bg-[#ff7b39] transition-all shadow-lg shadow-[#F26522]/20">
+                <a href="/podcast.xml" target="_blank"
+                    class="flex items-center gap-2 rounded-full bg-[#F26522] px-4 py-2 text-xs font-bold text-white hover:bg-[#ff7b39] transition-all shadow-lg shadow-[#F26522]/20">
                     <i data-lucide="rss" class="h-3.5 w-3.5"></i> RSS
                 </a>
             </nav>
@@ -68,24 +75,30 @@
                         Energy Audioは、最新のエネルギー政策や複雑な官公庁データをAIが自動で読み解き、ポッドキャストとして最速でお届けする「聴くインテリジェンス」です。
                     </p>
                     <div class="flex flex-wrap items-center gap-6 pt-4">
-                        <a href="#episodes" class="inline-flex items-center gap-3 rounded-full bg-white px-8 py-5 text-lg font-bold text-slate-950 hover:bg-sky-400 transition-all shadow-2xl shadow-sky-500/20 group">
-                            <i data-lucide="play-circle" class="h-6 w-6 fill-current"></i> 最新エピソード
+                        <a href="#episodes"
+                            class="inline-flex items-center gap-3 rounded-full bg-white px-8 py-5 text-lg font-bold text-slate-950 hover:bg-sky-400 transition-all shadow-2xl shadow-sky-500/20 group">
+                            <i data-lucide="play-circle" class="h-6 w-6 fill-current"></i> 最新エピソードを試し聴き
                         </a>
-                        <a href="/" class="inline-flex items-center gap-3 rounded-full bg-[#FFB38A] px-8 py-5 text-lg font-bold text-slate-950 hover:bg-[#ffd1b8] transition-all shadow-2xl shadow-[#FFB38A]/20">
+                        <a href="/"
+                            class="inline-flex items-center gap-3 rounded-full bg-[#FFB38A] px-8 py-5 text-lg font-bold text-slate-950 hover:bg-[#ffd1b8] transition-all shadow-2xl shadow-[#FFB38A]/20">
                             <i data-lucide="list" class="h-6 w-6"></i> エピソード一覧
                         </a>
-                        <a href="/podcast.xml" target="_blank" class="inline-flex items-center gap-3 rounded-full bg-[#F26522] px-8 py-5 text-lg font-bold text-white hover:bg-[#ff7b39] transition-all shadow-2xl shadow-[#F26522]/20">
-                            <i data-lucide="rss" class="h-6 w-6"></i> RSS FEED
+                        <a href="/podcast.xml" target="_blank"
+                            class="inline-flex items-center gap-3 rounded-full bg-[#F26522] px-8 py-5 text-lg font-bold text-white hover:bg-[#ff7b39] transition-all shadow-2xl shadow-[#F26522]/20">
+                            <i data-lucide="rss" class="h-6 w-6"></i> RSS
                         </a>
                     </div>
                 </div>
                 <div class="flex-1 relative animate-in zoom-in duration-1000 delay-200">
-                    <div class="relative z-10 w-full max-w-[500px] mx-auto rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/10 ring-1 ring-white/10">
-                        <img src="assets/lp_hero_mockup.png" alt="Energy Audio App Mockup" class="w-full h-auto object-cover">
+                    <div
+                        class="relative z-10 w-full max-w-[500px] mx-auto rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/10 ring-1 ring-white/10">
+                        <img src="assets/lp_hero_mockup.png" alt="Energy Audio App Mockup"
+                            class="w-full h-auto object-cover">
                     </div>
                     <!-- Decorative Glow -->
                     <div class="absolute -top-12 -right-12 w-64 h-64 bg-sky-500/10 blur-[100px] rounded-full"></div>
-                    <div class="absolute -bottom-12 -left-12 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full"></div>
+                    <div class="absolute -bottom-12 -left-12 w-64 h-64 bg-emerald-500/10 blur-[100px] rounded-full">
+                    </div>
                 </div>
             </div>
         </section>
@@ -94,7 +107,8 @@
         <section class="bg-slate-900/30 py-24 border-y border-slate-800/50">
             <div class="container mx-auto px-4 sm:px-6">
                 <div class="max-w-[1000px] mx-auto text-center space-y-4 mb-20 px-4">
-                    <h2 class="text-3xl md:text-5xl font-bold font-outfit leading-tight text-slate-100">エネルギー業界の「今」を追うのは、<br><span class="text-rose-500">限界</span>にきていませんか？</h2>
+                    <h2 class="text-3xl md:text-5xl font-bold font-outfit leading-tight text-slate-100">
+                        エネルギー業界の「今」を追うのは、<br><span class="text-rose-500">限界</span>にきていませんか？</h2>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
                     <div class="lp-card group">
@@ -126,7 +140,8 @@
         <section class="py-24">
             <div class="container mx-auto px-4 sm:px-6">
                 <div class="text-center space-y-4 mb-20 px-4">
-                    <h2 class="text-4xl md:text-5xl font-bold font-outfit leading-tight">情報の波を、<br><span class="gradient-text">インテリジェンスの源</span>に変える。</h2>
+                    <h2 class="text-4xl md:text-5xl font-bold font-outfit leading-tight">情報の波を、<br><span
+                            class="gradient-text">インテリジェンスの源</span>に変える。</h2>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
                     <div class="lp-card group">
@@ -164,11 +179,15 @@
                     <!-- Episode 1 -->
                     <div class="lp-card group relative">
                         <div class="flex flex-col h-full text-left">
-                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 6, 2026</span>
-                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">原子力小委員会 革新炉ワーキンググループ</h3>
+                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 6,
+                                2026</span>
+                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">原子力小委員会
+                                革新炉ワーキンググループ</h3>
                             <div class="mt-auto">
                                 <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
-                                    <source src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3" type="audio/mpeg">
+                                    <source
+                                        src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3"
+                                        type="audio/mpeg">
                                 </audio>
                             </div>
                         </div>
@@ -176,11 +195,15 @@
                     <!-- Episode 2 -->
                     <div class="lp-card group relative">
                         <div class="flex flex-col h-full text-left">
-                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 6, 2026</span>
-                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">第98回 広域系統整備委員会</h3>
+                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 6,
+                                2026</span>
+                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">第98回 広域系統整備委員会
+                            </h3>
                             <div class="mt-auto">
                                 <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
-                                    <source src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3" type="audio/mpeg">
+                                    <source
+                                        src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3"
+                                        type="audio/mpeg">
                                 </audio>
                             </div>
                         </div>
@@ -188,11 +211,15 @@
                     <!-- Episode 3 -->
                     <div class="lp-card group relative">
                         <div class="flex flex-col h-full text-left">
-                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 4, 2026</span>
-                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">第9回 計画評価及び検証小委員会</h3>
+                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">April 4,
+                                2026</span>
+                            <h3 class="text-lg font-bold mb-6 text-slate-100 leading-snug line-clamp-3">第9回 計画評価及び検証小委員会
+                            </h3>
                             <div class="mt-auto">
                                 <audio controls class="w-full h-8 opacity-50 hover:opacity-100 transition-opacity">
-                                    <source src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260217_第9回_計画評価及び検証小委員会.mp3" type="audio/mpeg">
+                                    <source
+                                        src="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260217_第9回_計画評価及び検証小委員会.mp3"
+                                        type="audio/mpeg">
                                 </audio>
                             </div>
                         </div>
@@ -205,7 +232,8 @@
         <section id="tech" class="py-24 bg-slate-900/50 relative overflow-hidden">
             <div class="container mx-auto px-4 sm:px-6">
                 <div class="text-center space-y-4 mb-20 px-4">
-                    <h2 class="text-3xl md:text-5xl font-bold font-outfit leading-tight text-slate-100">完全自動化された、<br>配信システムの裏側</h2>
+                    <h2 class="text-3xl md:text-5xl font-bold font-outfit leading-tight text-slate-100">
+                        完全自動化された、<br>配信システムの裏側</h2>
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
                     <div class="lp-card group">
@@ -228,8 +256,8 @@
                         </div>
                         <h3 class="text-xl font-bold mb-4 text-slate-100">スマホへ即座に配信</h3>
                         <p>抽出された内容はすぐにお手元のスマホへ。いつものアプリで、新着エピソードとして聴くことができます。</p>
+                    </div>
                 </div>
-            </div>
         </section>
 
         <!-- 5. Audience Section -->
@@ -274,28 +302,40 @@
                 </div>
                 <div class="grid md:grid-cols-3 gap-8">
                     <!-- YouTube Music -->
-                    <a href="https://music.youtube.com" target="_blank" class="lp-card group text-center flex flex-col items-center border-[#FF0000]/10 hover:border-[#FF0000]/40">
-                        <div class="icon-box bg-[#FF0000]/10 text-[#FF0000] border-[#FF0000]/20 group-hover:scale-110 transition-transform">
+                    <a href="https://music.youtube.com" target="_blank"
+                        class="lp-card group text-center flex flex-col items-center border-[#FF0000]/10 hover:border-[#FF0000]/40">
+                        <div
+                            class="icon-box bg-[#FF0000]/10 text-[#FF0000] border-[#FF0000]/20 group-hover:scale-110 transition-transform">
                             <i data-lucide="youtube"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-4 text-slate-100">YouTube Music</h3>
-                        <span class="mt-auto text-[10px] font-bold text-[#FF0000] tracking-widest uppercase py-2 px-4 rounded-full bg-[#FF0000]/5 border border-[#FF0000]/10 group-hover:bg-[#FF0000] group-hover:text-white transition-all">Subscribe Now</span>
+                        <span
+                            class="mt-auto text-[10px] font-bold text-[#FF0000] tracking-widest uppercase py-2 px-4 rounded-full bg-[#FF0000]/5 border border-[#FF0000]/10 group-hover:bg-[#FF0000] group-hover:text-white transition-all">Subscribe
+                            Now</span>
                     </a>
                     <!-- Spotify -->
-                    <a href="#" class="lp-card group text-center flex flex-col items-center border-[#1DB954]/10 hover:border-[#1DB954]/40">
-                        <div class="icon-box bg-[#1DB954]/10 text-[#1DB954] border-[#1DB954]/20 group-hover:scale-110 transition-transform">
+                    <a href="#"
+                        class="lp-card group text-center flex flex-col items-center border-[#1DB954]/10 hover:border-[#1DB954]/40">
+                        <div
+                            class="icon-box bg-[#1DB954]/10 text-[#1DB954] border-[#1DB954]/20 group-hover:scale-110 transition-transform">
                             <i data-lucide="music-2"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-4 text-slate-100">Spotify</h3>
-                        <span class="mt-auto text-[10px] font-bold text-[#1DB954] tracking-widest uppercase py-2 px-4 rounded-full bg-[#1DB954]/5 border border-[#1DB954]/10 group-hover:bg-[#1DB954] group-hover:text-white transition-all">Subscribe Now</span>
+                        <span
+                            class="mt-auto text-[10px] font-bold text-[#1DB954] tracking-widest uppercase py-2 px-4 rounded-full bg-[#1DB954]/5 border border-[#1DB954]/10 group-hover:bg-[#1DB954] group-hover:text-white transition-all">Subscribe
+                            Now</span>
                     </a>
                     <!-- Apple Podcasts -->
-                    <a href="#" class="lp-card group text-center flex flex-col items-center border-[#FC3C44]/10 hover:border-[#FC3C44]/40">
-                        <div class="icon-box bg-[#FC3C44]/10 text-[#FC3C44] border-[#FC3C44]/20 group-hover:scale-110 transition-transform">
+                    <a href="#"
+                        class="lp-card group text-center flex flex-col items-center border-[#FC3C44]/10 hover:border-[#FC3C44]/40">
+                        <div
+                            class="icon-box bg-[#FC3C44]/10 text-[#FC3C44] border-[#FC3C44]/20 group-hover:scale-110 transition-transform">
                             <i data-lucide="podcast"></i>
                         </div>
                         <h3 class="text-xl font-bold mb-4 text-slate-100">Apple Podcasts</h3>
-                        <span class="mt-auto text-[10px] font-bold text-[#FC3C44] tracking-widest uppercase py-2 px-4 rounded-full bg-[#FC3C44]/5 border border-[#FC3C44]/10 group-hover:bg-[#FC3C44] group-hover:text-white transition-all">Subscribe Now</span>
+                        <span
+                            class="mt-auto text-[10px] font-bold text-[#FC3C44] tracking-widest uppercase py-2 px-4 rounded-full bg-[#FC3C44]/5 border border-[#FC3C44]/10 group-hover:bg-[#FC3C44] group-hover:text-white transition-all">Subscribe
+                            Now</span>
                     </a>
                 </div>
             </div>
@@ -318,4 +358,5 @@
         lucide.createIcons();
     </script>
 </body>
+
 </html>
