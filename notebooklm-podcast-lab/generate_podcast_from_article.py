@@ -158,6 +158,8 @@ def main():
     # Use the provided name to anchor the start of the podcast
     title_context = args.name if args.name else "今回の資料"
     prompt = f"""
+資料の内容の解析、および解説・対話はすべて日本語で行ってください。
+
 まず最初に、資料のタイトル『{title_context}』をはっきりと明示して、すぐに本題の解析に入ってください。
 前置きや一般的な背景説明は最小限に留め、資料の内容に直接関わる核心部分から解説を開始してください。
 
