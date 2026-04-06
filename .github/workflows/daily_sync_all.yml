@@ -50,16 +50,25 @@ jobs:
           # 統合本番スクレイパーを実行
           uv run --project notebooklm-podcast-lab python3 sync_all_production.py
 
-      - name: Commit and Push Database Update
+      - name: Run Podcast Generation Worker (2 items per day)
+        env:
+          NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
+        run: |
+          # ポッドキャスト生成ワーカーを実行
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py
+
+      - name: Commit and Push Updates
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
-          # councils.db に変更がある場合のみコミット
-          if git status --porcelain councils.db | grep -q 'M'; then
-            git add councils.db
-            git commit -m "chore: auto-update councils.db [skip ci]"
+          # councils.db, podcasts/*.mp3, podcasts/*.md をコミット
+          git pull --rebase origin main
+          git add councils.db podcasts/*.mp3 podcasts/*.md 2>/dev/null || true
+          
+          if git status --porcelain | grep -q '.'; then
+            git commit -m "chore: status sync and podcast update [skip ci]"
             git push
           else
-            echo "No changes in councils.db to commit."
+            echo "No changes to commit."
           fi
