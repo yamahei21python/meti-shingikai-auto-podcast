@@ -3,338 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Energy Audio | 経産省資料を5分で把握するAIポッドキャスト</title>
-    <link rel="alternate" type="application/rss+xml" title="Energy Audio | METI AI Podcast" href="https://energy-audio.vercel.app/feed">
-    <meta name="description" content="経産省の100ページの審議会資料、通勤中の5分で把握。AIが自動で読み解き、ポッドキャストとして最速でお届けする「聴くインテリジェンス」です。">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="Energy Audio | 経産省資料を5分で把握するAIポッドキャスト">
-    <meta property="og:description" content="最新のエネルギー政策をAIが自動で読み解き、ポッドキャストとして配信。">
-    <meta property="og:image" content="cover.png">
-    
+    <title>Energy Audio | エピソード一覧</title>
+    <meta name="description" content="経産省の審議会資料をAIが解析したポッドキャストのエピソード一覧。最新のエネルギー政策の要約と音声を確認できます。">
     <link rel="stylesheet" href="styles.css">
-    <!-- Lucide Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
 </head>
-<body>
+<body class="bg-slate-950 text-slate-50 antialiased selection:bg-sky-500/30">
     
-    <!-- Background Decor -->
-    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div class="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-sky-500/10 blur-[150px] rounded-full"></div>
-        <div class="absolute bottom-[20%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[150px] rounded-full"></div>
+    <!-- Background Elements -->
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute top-0 right-0 w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 w-[60%] h-[60%] bg-sky-500/5 blur-[120px] rounded-full"></div>
     </div>
 
-    <!-- Header -->
-    <header class="sticky top-0 z-50 w-full glass-card border-none rounded-none border-b border-white/5 py-4">
-        <div class="container flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
-                    <i data-lucide="zap" class="h-6 w-6 text-white fill-current"></i>
+    <header class="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md">
+        <div class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
+            <a href="/" class="flex items-center gap-2">
+                <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <i data-lucide="zap" class="h-5 w-5 text-white"></i>
                 </div>
-                <span class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Energy Audio</span>
-            </div>
-            <nav class="hidden md:flex items-center gap-10">
-                <a href="#tech" class="text-sm font-medium hover:text-primary transition-colors">システムの裏側</a>
-                <a href="#episodes" class="text-sm font-medium hover:text-primary transition-colors">エピソード一覧</a>
-                <a href="https://music.youtube.com" target="_blank" class="btn btn-primary px-6 py-2 rounded-full text-sm">
-                    ポッドキャストを聴く
+                <span class="font-outfit text-xl font-bold tracking-tight text-slate-100">Energy Audio</span>
+            </a>
+            <nav class="flex items-center gap-4">
+                <a href="/lp" class="text-sm font-medium text-slate-400 hover:text-sky-400 transition-colors">サービス概要</a>
+                <a href="/podcast.xml" target="_blank" class="flex items-center gap-2 rounded-full bg-[#F26522] px-4 py-2 text-xs font-bold text-white hover:bg-[#ff7b39] transition-all shadow-lg shadow-[#F26522]/20">
+                    <i data-lucide="rss" class="h-3.5 w-3.5"></i> RSS
                 </a>
             </nav>
         </div>
     </header>
 
-    <main>
-        <!-- 1. Hero Section -->
-        <section class="container pt-6 pb-16 md:pt-8 md:pb-24">
-            <div class="flex flex-col lg:flex-row items-center gap-16 lg:gap-24">
-                <div class="lg:w-[60%] space-y-7 reveal">
-                    <div class="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary tracking-widest uppercase">
-                        AI-Powered Energy Intelligence
-                    </div>
-                    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-[1.2] tracking-tight break-keep">
-                        <span class="inline-block">経産省の100ページの</span><br>
-                        <span class="inline-block">審議会資料を、</span><br>
-                        <span class="inline-block"><span class="gradient-text">通勤中の5分</span>で把握。</span>
-                    </h1>
-                    <p class="text-base md:text-lg text-text-muted font-light leading-relaxed max-w-[560px]">
-                        Energy Audioは、最新のエネルギー政策や複雑な官公庁データをAIが自動で読み解き、<span class="inline-block">ポッドキャストとして最速でお届けする</span><span class="inline-block">「聴くインテリジェンス」です。</span>
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-6">
-                        <a href="#episodes" class="btn btn-primary group" aria-label="最新のエピソードをウェブサイトで聴く">
-                            <i data-lucide="play-circle" class="h-6 w-6"></i> 最新エピソードをWebで試し聴き
-                        </a>
-                        <div class="flex items-center gap-4">
-                            <a href="#" class="btn btn-outline p-4 rounded-2xl" aria-label="Spotifyで聴く" title="Spotify"><i data-lucide="music-2"></i></a>
-                            <a href="#" class="btn btn-outline p-4 rounded-2xl" aria-label="Apple Podcastsで聴く" title="Apple Podcasts"><i data-lucide="podcast"></i></a>
-                            <a href="https://music.youtube.com" class="btn btn-outline p-4 rounded-2xl" aria-label="YouTube Musicで聴く" title="YouTube Music"><i data-lucide="youtube"></i></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex-1 hero-visual reveal delay-2">
-                    <img src="hero_mockup.png" alt="Energy Audio Hero Mockup" class="w-full h-auto rounded-[3.5rem] shadow-2xl border border-white/10">
-                </div>
+    <main class="container mx-auto px-4 sm:px-6 py-12 md:py-20">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div class="space-y-4">
+                <h1 class="text-3xl md:text-5xl font-bold font-outfit tracking-tight">最新のエピソード</h1>
+                <p class="text-slate-400 max-w-2xl leading-relaxed">経産省・OCCTO等の審議会資料をAIが解析し、要約と音声で配信しています。</p>
             </div>
-        </section>
+            <div id="feed-status" class="text-xs font-mono text-slate-500 animate-pulse">Loading feed...</div>
+        </div>
 
-        <!-- 2. Problem Section -->
-        <section id="problem" class="bg-white/2 border-y border-white/5 py-16">
-            <div class="container">
-                <div class="text-center max-w-[800px] mx-auto space-y-4 mb-14 reveal">
-                    <h2 class="text-2xl md:text-3xl font-bold leading-tight break-keep">
-                        <span class="inline-block whitespace-nowrap">エネルギー業界の「今」を追うのは、</span><br>
-                        <span class="inline-block whitespace-nowrap text-primary">限界にきていませんか？</span>
-                    </h2>
-                </div>
-                <div class="grid md:grid-cols-3 gap-8 reveal delay-1">
-                    <div class="glass-card text-center">
-                        <div class="card-icon-container bg-red-500/10 text-red-400">
-                            <i data-lucide="alert-circle"></i>
-                        </div>
-                        <p class="text-base text-text-muted leading-relaxed">
-                            <span class="inline-block">経産省（METI）や</span><span class="inline-block">OCCTOの最新資料が</span><span class="inline-block">アップされても、</span><span class="inline-block">専門的すぎて</span><span class="inline-block">目を通す時間がない。</span>
-                        </p>
-                    </div>
-                    <div class="glass-card text-center">
-                        <div class="card-icon-container bg-red-500/10 text-red-400">
-                            <i data-lucide="alert-circle"></i>
-                        </div>
-                        <p class="text-base text-text-muted leading-relaxed">
-                            <span class="inline-block">何百枚もある</span><span class="inline-block">スライドの中から</span><span class="inline-block">「何が決まったのか」</span><span class="inline-block">「今後の課題は何か」</span><span class="inline-block">だけを端的に知りたい。</span>
-                        </p>
-                    </div>
-                    <div class="glass-card text-center">
-                        <div class="card-icon-container bg-red-500/10 text-red-400">
-                            <i data-lucide="alert-circle"></i>
-                        </div>
-                        <p class="text-base text-text-muted leading-relaxed">
-                            <span class="inline-block">専門用語だらけの</span><span class="inline-block">議事録やテクニカルな</span><span class="inline-block">資料を読み解くのが</span><span class="inline-block">精神的・時間的な</span><span class="inline-block">負担になっている。</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. Solution Section -->
-        <section id="solution" class="py-16">
-            <div class="container">
-                <div class="text-center space-y-4 mb-14 reveal">
-                    <h2 class="text-2xl md:text-3xl font-bold leading-tight break-keep">
-                        <span class="inline-block">情報の波を、</span><br>
-                        <span class="inline-block"><span class="gradient-text">インテリジェンスの源</span>に変える。</span>
-                    </h2>
-                </div>
-                <div class="solution-grid">
-                    <div class="glass-card text-center reveal delay-1">
-                        <div class="card-icon-container bg-primary/10 text-primary">
-                            <i data-lucide="zap"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-4">圧倒的なタイムパフォーマンス</h3>
-                        <p class="text-base text-text-muted leading-relaxed">複雑な資料も、<span class="inline-block">最短5分の音声コンテンツに。</span><span class="inline-block">通勤中や作業中に</span><span class="inline-block">「ながら聴き」で</span><span class="inline-block">最新動向を瞬時に</span><span class="inline-block">キャッチアップできます。</span></p>
-                    </div>
-                    <div class="glass-card text-center reveal delay-2">
-                        <div class="card-icon-container bg-emerald-500/10 text-emerald-500">
-                            <i data-lucide="brain"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-4">プロ納得の深いインサイト</h3>
-                        <p class="text-base text-text-muted leading-relaxed">単なる文章の要約ではありません。<span class="inline-block">最新のAIモデルが</span><span class="inline-block">文脈を理解し、</span><span class="inline-block">「ビジネスへの影響」という</span><span class="inline-block">独自の視点から</span><span class="inline-block">解説します。</span></p>
-                    </div>
-                    <div class="glass-card text-center reveal delay-3">
-                        <div class="card-icon-container bg-indigo-500/10 text-indigo-500">
-                            <i data-lucide="bell"></i>
-                        </div>
-                        <h3 class="text-xl font-bold mb-4">重要な更新を見逃さない</h3>
-                        <p class="text-base text-text-muted leading-relaxed">経産省やOCCTOを24時間監視。<span class="inline-block">新しい政策資料が発表され次第、</span><span class="inline-block">即座にAIが</span><span class="inline-block">ポッドキャスト化して配信。</span><span class="inline-block">情報の鮮度を逃しません。</span></p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="tech" class="py-16 bg-white/2">
-            <div class="container">
-                <div class="space-y-12 reveal">
-                    <div class="text-center space-y-4 mb-11">
-                        <h2 class="text-2xl md:text-3xl font-bold leading-tight mb-14 reveal">
-                            完全自動化された、配信システムの裏側
-                        </h2>
-                    </div>
-                    
-                    <div class="grid md:grid-cols-3 gap-8">
-                        <div class="glass-card text-center reveal delay-1">
-                            <div class="card-icon-container bg-primary/10 text-primary">
-                                <i data-lucide="search"></i>
-                            </div>
-                            <h4 class="text-xl font-bold mb-4">Smart Scraping</h4>
-                            <p class="text-base text-text-muted leading-relaxed mb-6">官公庁の重要拠点を常時クロール。<span class="inline-block">資料のアップロードを検知した瞬間、</span>取得を開始。</p>
-                            <div class="flex flex-wrap justify-center gap-2">
-                                <span class="badge m-0">Python</span>
-                                <span class="badge m-0">SQLite</span>
-                            </div>
-                        </div>
-                        <div class="glass-card text-center reveal delay-2">
-                            <div class="card-icon-container bg-emerald-500/10 text-emerald-500">
-                                <i data-lucide="cpu"></i>
-                            </div>
-                            <h4 class="text-xl font-bold mb-4">AI Processing</h4>
-                            <p class="text-base text-text-muted leading-relaxed mb-6">生成AIが数百枚の資料から<span class="inline-block">「ビジネスの要所」を抽出して</span>スクリプト化します。</p>
-                            <div class="flex flex-wrap justify-center gap-2">
-                                <span class="badge m-0">NotebookLM</span>
-                                <span class="badge m-0">GPT-4o</span>
-                            </div>
-                        </div>
-                        <div class="glass-card text-center reveal delay-3">
-                            <div class="card-icon-container bg-indigo-500/10 text-indigo-500">
-                                <i data-lucide="rss"></i>
-                            </div>
-                            <h4 class="text-xl font-bold mb-4">Broadcasting</h4>
-                            <p class="text-base text-text-muted leading-relaxed mb-6">生成された音声を<span class="inline-block">RSSフィードに統合し、</span><span class="inline-block">プラットフォームへ</span><span class="inline-block">即座に同期。</span></p>
-                            <div class="flex flex-wrap justify-center gap-2">
-                                <span class="badge m-0">Vercel</span>
-                                <span class="badge m-0">R2</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
- 
-        <!-- 5. Audience Section -->
-        <section id="audience" class="py-20">
-            <div class="container text-center">
-                <h2 class="text-2xl md:text-3xl font-bold mb-14 reveal">こんな方におすすめです</h2>
-                <div class="audience-grid">
-                    <div class="glass-card text-center reveal delay-1">
-                        <div class="card-icon-container bg-primary/5 border border-primary/20 text-primary">
-                            <i data-lucide="building-2"></i>
-                        </div>
-                        <h4 class="text-xl font-bold mb-4">再エネ・EV事業の開発担当者</h4>
-                        <p class="text-base text-text-muted leading-relaxed">新規事業の立案や、政策動向に合わせた戦略策定が必要なビジネスパーソン。</p>
-                    </div>
-                    <div class="glass-card text-center reveal delay-2">
-                        <div class="card-icon-container bg-emerald-500/5 border border-emerald-500/20 text-emerald-500">
-                            <i data-lucide="trending-up"></i>
-                        </div>
-                        <h4 class="text-xl font-bold mb-4">電力トレーダー・アナリスト</h4>
-                        <p class="text-base text-text-muted leading-relaxed"><span class="inline-block">市場への影響を</span><span class="inline-block">いち早くキャッチアップし、</span><span class="inline-block">判断材料を揃えたい</span><span class="inline-block">専門家の方。</span></p>
-                    </div>
-                    <div class="glass-card text-center reveal delay-3">
-                        <div class="card-icon-container bg-indigo-500/5 border border-indigo-500/20 text-indigo-500">
-                            <i data-lucide="graduation-cap"></i>
-                        </div>
-                        <h4 class="text-xl font-bold mb-4">エネルギー関連の研究者・学生</h4>
-                        <p class="text-base text-text-muted leading-relaxed">広範囲な政策議論を効率的に網羅し、主要な論点を整理したい学術関係者。</p>
-                    </div>
-                </div>
-            </div>
-        </section>
- 
-        <!-- 6. Episodes Section -->
-        <section id="episodes" class="py-16 border-t border-white/5">
-            <div class="container">
-                <div class="flex flex-col md:flex-row items-end justify-between gap-6 mb-11 reveal">
-                    <div class="space-y-3">
-                        <h2 class="text-2xl md:text-3xl font-bold">エピソード一覧</h2>
-                        <p class="text-text-muted">最新の配信回をWebでも直接聴くことができます。</p>
-                    </div>
-                    <div class="flex items-center gap-3 text-xs text-text-dim glass-card px-4 py-2">
-                        <i data-lucide="calendar" class="h-4 w-4"></i> 最新更新日: <span id="last-update">--</span>
-                    </div>
-                </div>
-
-                <div id="episode-grid" class="grid gap-8 md:grid-cols-2">
-                    <!-- Skeletons while loading -->
-                    <div class="glass-card p-8 animate-pulse">
-                        <div class="h-6 w-1/4 bg-white/5 rounded-full mb-6"></div>
-                        <div class="h-8 w-3/4 bg-white/5 rounded-lg mb-4"></div>
-                        <div class="space-y-2">
-                            <div class="h-4 w-full bg-white/5 rounded"></div>
-                            <div class="h-4 w-5/6 bg-white/5 rounded"></div>
-                        </div>
-                    </div>
-                    <div class="glass-card p-8 animate-pulse">
-                        <div class="h-6 w-1/4 bg-white/5 rounded-full mb-6"></div>
-                        <div class="h-8 w-3/4 bg-white/5 rounded-lg mb-4"></div>
-                        <div class="space-y-2">
-                            <div class="h-4 w-full bg-white/5 rounded"></div>
-                            <div class="h-4 w-5/6 bg-white/5 rounded"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-8 text-center reveal">
-                    <a href="https://music.youtube.com" target="_blank" class="btn btn-outline gap-3 text-lg px-10">
-                        すべてのエピソードを聴く <i data-lucide="external-link" class="h-5 w-5"></i>
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer CTA -->
-        <section class="container py-20">
-            <div class="relative overflow-hidden glass-card p-8 md:p-16 text-center space-y-7 group reveal">
-                <!-- Background Pulse -->
-                <div class="absolute -top-32 -right-32 w-96 h-96 bg-primary/10 blur-[120px] rounded-full group-hover:bg-primary/20 transition-all duration-700"></div>
-                <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-emerald-500/10 blur-[120px] rounded-full"></div>
-                
-                <h2 class="text-2xl md:text-3xl font-bold leading-tight mb-14 reveal">
-                    テクノロジーで、エネルギーの未来をもっとクリアに。
-                </h2>
-                <div class="flex flex-wrap justify-center gap-6 pt-4">
-                    <a href="#" class="btn btn-primary bg-[#FF0000] text-white hover:bg-red-600 px-8 py-5 text-lg shadow-xl shadow-red-500/10" aria-label="YouTube Musicで購読する">
-                        <i data-lucide="youtube"></i> YouTube Music
-                    </a>
-                    <a href="#" class="btn btn-primary bg-[#1DB954] text-white hover:bg-green-600 px-8 py-5 text-lg shadow-xl shadow-green-500/10" aria-label="Spotifyで購読する">
-                        <i data-lucide="music-2"></i> Spotify
-                    </a>
-                    <a href="#" class="btn btn-primary bg-[#FC3C44] text-white hover:bg-red-500 px-8 py-5 text-lg shadow-xl shadow-red-400/10" aria-label="Apple Podcastsで購読する">
-                        <i data-lucide="podcast"></i> Apple Podcasts
-                    </a>
-                </div>
-            </div>
-        </section>
+        <!-- Episode Grid -->
+        <div id="episode-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 overflow-visible">
+            <!-- Dynamic Content Load Here -->
+        </div>
     </main>
 
-    <footer class="border-t border-white/5 py-16 bg-bg-deep text-text-dim">
-        <div class="container flex flex-col md:flex-row justify-between items-center gap-8">
-            <div class="flex items-center gap-3 grayscale opacity-70">
-                <div class="h-8 w-8 rounded-lg bg-text-dim flex items-center justify-center">
-                    <i data-lucide="zap" class="h-5 w-5 text-bg-deep fill-current"></i>
+    <footer class="border-t border-slate-900 bg-slate-950 py-12 text-slate-500 mt-20">
+        <div class="container mx-auto px-4 sm:px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <p class="text-sm">&copy; 2026 Energy Audio. Intelligence Hub.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-sky-400 transition-colors"><i data-lucide="github" class="h-5 w-5"></i></a>
+                    <a href="#" class="hover:text-sky-400 transition-colors"><i data-lucide="twitter" class="h-5 w-5"></i></a>
                 </div>
-                <span class="text-xl font-bold tracking-tight">Energy Audio</span>
-            </div>
-            <p class="text-xs">© 2026 Energy Audio. AI-Centric Policy Analysis System.</p>
-            <div class="flex gap-6">
-                <a href="#" class="hover:text-primary transition-colors" aria-label="GitHubリポジトリを見る"><i data-lucide="github"></i></a>
-                <a href="#" class="hover:text-primary transition-colors" aria-label="公式Twitterを見る"><i data-lucide="twitter"></i></a>
             </div>
         </div>
     </footer>
 
-    <script src="app.js"></script>
+    <!-- Templates & Logic -->
     <script>
+        async function loadEpisodes() {
+            const grid = document.getElementById('episode-grid');
+            const status = document.getElementById('feed-status');
+
+            try {
+                const response = await fetch('podcast.xml');
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const items = xmlDoc.querySelectorAll('item');
+
+                grid.innerHTML = '';
+                
+                items.forEach((item, index) => {
+                    const title = item.querySelector('title').textContent;
+                    const pubDateRaw = item.querySelector('pubDate').textContent;
+                    const pubDate = new Date(pubDateRaw).toLocaleDateString('ja-JP', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    const description = item.querySelector('description').textContent;
+                    const audioUrl = item.querySelector('enclosure').getAttribute('url');
+                    
+                    // Format description (simple markdown to HTML subset)
+                    const formattedDesc = description
+                        .replace(/### (.*)/g, '<h4 class="text-sky-400 font-bold mb-2">$1</h4>')
+                        .replace(/\* \*\*(.*?)\*\*/g, '<li class="text-slate-300 mb-1 ml-4 list-disc">$1</li>')
+                        .replace(/\* (.*)/g, '<li class="text-slate-400 mb-1 ml-4 list-disc">$1</li>')
+                        .replace(/\n\n/g, '<br><br>');
+
+                    const card = document.createElement('div');
+                    card.className = 'lp-card group flex flex-col h-full';
+                    card.innerHTML = `
+                        <div class="flex flex-col h-full text-left">
+                            <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase mb-2">${pubDate}</span>
+                            <h3 class="text-lg font-bold mb-4 text-slate-100 leading-snug">${title}</h3>
+                            <div class="mb-6 overflow-hidden relative">
+                                <div class="max-h-[150px] overflow-y-auto pr-2 scrollbar-hide text-sm text-slate-400 leading-relaxed custom-scrollbar">
+                                    ${formattedDesc}
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-900/50 to-transparent pointer-events-none"></div>
+                            </div>
+                            <div class="mt-auto space-y-4">
+                                <div class="h-px bg-slate-800/50 w-full"></div>
+                                <audio controls class="w-full h-8 opacity-70 hover:opacity-100 transition-opacity">
+                                    <source src="${audioUrl}" type="audio/mpeg">
+                                </audio>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                status.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+                status.classList.remove('animate-pulse');
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Error loading podcasts:', error);
+                status.textContent = 'Failed to load feed.';
+                status.classList.add('text-rose-500');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadEpisodes);
         lucide.createIcons();
-        
-        // Intersection Observer for reveal animations
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.classList.add('animate-fadeInUp');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.reveal').forEach(el => {
-            observer.observe(el);
-        });
     </script>
+
+    <style>
+        /* Custom scrollbar for summary */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(56, 189, 248, 0.2);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(56, 189, 248, 0.4);
+        }
+    </style>
 </body>
 </html>
