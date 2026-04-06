@@ -47,5 +47,18 @@
 - **毎日 00:00 (UTC) / 04:00 (JST)**: GitHub Actions が自動起動。
 - 会議資料の同期と、未処理の会議（最大2件）に対するポッドキャスト化が自動的に実行されます。
 
+## 🌐 公開ページと配信 URL
+
+このシステムは Vercel にデプロイされており、以下の URL から最新のポッドキャストを購読できます。
+
+- **公開フィード (RSS)**: [https://energy-audio.vercel.app/feed](https://energy-audio.vercel.app/feed)
+- **バックアップ URL**: [https://energy-audio.vercel.app/podcast.xml](https://energy-audio.vercel.app/podcast.xml)
+- **配信基盤**:
+    - **GitHub Actions**: データの同期とポッドキャスト生成。
+    - **Cloudflare R2**: 音声ファイルのホスティング。
+    - **Vercel**: RSS フィードへのアクセス（`/feed` への転送）およびウェブページ公開。
+
+GitHub へのプッシュ（Actions の完了）をトリガーに、Vercel へ最新のフィードが自動デプロイされる仕組みとなっています。
+
 ## 📄 ライセンス
 このプロジェクトのコードは、個人的な情報収集の自動化を目的としています。情報の正確性については、常に公式サイトの一次資料を優先してください。
