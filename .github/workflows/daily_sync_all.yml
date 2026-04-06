@@ -2,7 +2,7 @@ name: Daily METI & OCCTO Sync
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 日本時間 09:00 (毎日)
+    - cron: '0 19 * * *' # 日本時間 09:00 (毎日)
   workflow_dispatch: # 手動実行用
 
 jobs:
