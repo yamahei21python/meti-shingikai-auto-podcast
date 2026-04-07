@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Tue, 07 Apr 2026 16:23:42 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Apr 2026 20:20:19 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcast/cover.png"/>
@@ -221,18 +221,6 @@
     *   本ガイドライン策定前に着手された整備計画についても、原則として本プロセスの検証結果の取り扱いを準用します（ただし、実施済みのプロセスを遡及してやり直すことは求めません）。</itunes:summary>
     </item>
     <item>
-      <title>20260224_第98回_広域系統整備委員会</title>
-      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</link>
-      <description>### ポッドキャスト解説ガイド
-第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</description>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3" length="36640664" type="audio/mpeg"/>
-      <pubDate>Mon, 06 Apr 2026 00:00:00 +0000</pubDate>
-      <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>### ポッドキャスト解説ガイド
-第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</itunes:summary>
-    </item>
-    <item>
       <title>20260226_第12回_総合資源エネルギー調査会_原子力小委員会_革新炉ワーキンググループ</title>
       <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3</link>
       <description>### ポッドキャスト解説ガイド
@@ -243,6 +231,18 @@
       <itunes:explicit>no</itunes:explicit>
       <itunes:summary>### ポッドキャスト解説ガイド
 本セクションでは、革新炉の開発プロセスや安全性向上に向けた具体的ロードマップについて解説します。</itunes:summary>
+    </item>
+    <item>
+      <title>20260224_第98回_広域系統整備委員会</title>
+      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</link>
+      <description>### ポッドキャスト解説ガイド
+第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</description>
+      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</guid>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3" length="36640664" type="audio/mpeg"/>
+      <pubDate>Mon, 06 Apr 2026 00:00:00 +0000</pubDate>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>### ポッドキャスト解説ガイド
+第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</itunes:summary>
     </item>
     <item>
       <title>20260227_第21回_同時市場の在り方等に関する検討会</title>
