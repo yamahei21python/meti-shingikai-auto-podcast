@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Mon, 06 Apr 2026 19:55:16 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Apr 2026 16:23:42 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcast/cover.png"/>
@@ -221,6 +221,18 @@
     *   本ガイドライン策定前に着手された整備計画についても、原則として本プロセスの検証結果の取り扱いを準用します（ただし、実施済みのプロセスを遡及してやり直すことは求めません）。</itunes:summary>
     </item>
     <item>
+      <title>20260224_第98回_広域系統整備委員会</title>
+      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</link>
+      <description>### ポッドキャスト解説ガイド
+第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</description>
+      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</guid>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3" length="36640664" type="audio/mpeg"/>
+      <pubDate>Mon, 06 Apr 2026 00:00:00 +0000</pubDate>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:summary>### ポッドキャスト解説ガイド
+第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</itunes:summary>
+    </item>
+    <item>
       <title>20260226_第12回_総合資源エネルギー調査会_原子力小委員会_革新炉ワーキンググループ</title>
       <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260226_第12回_総合資源エネルギー調査会_電力・ガス事業分科会_原子力小委員会_革新炉ワーキンググループ.mp3</link>
       <description>### ポッドキャスト解説ガイド
@@ -233,16 +245,126 @@
 本セクションでは、革新炉の開発プロセスや安全性向上に向けた具体的ロードマップについて解説します。</itunes:summary>
     </item>
     <item>
-      <title>20260224_第98回_広域系統整備委員会</title>
-      <link>https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</link>
-      <description>### ポッドキャスト解説ガイド
-第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</description>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260224_第98回_広域系統整備委員会.mp3" length="36640664" type="audio/mpeg"/>
-      <pubDate>Mon, 06 Apr 2026 00:00:00 +0000</pubDate>
+      <title>20260227_第21回_同時市場の在り方等に関する検討会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/doji_shijo_kento/021.html</link>
+      <description># Report on the 21st Council on the Future of Co-optimized Markets: Custom Report
+
+## 1. Podcast Commentary Guide (Key Points of Content)
+
+*   **Strategic Significance of Phase 1 Transition**
+    The launch of Phase 1 in April 2026 represents a critical pivot from theoretical validation to the system-wide requirement definition of Japan’s "Co-optimized Markets." Grounded in the 7th Strategic Energy Plan—approved by the Cabinet on February 18, 2025—this phase seeks to verify the simultaneous optimization of energy (kWh) and balancing services (ΔkW). As a Market Architect, I view this transition as a vital "Go/No-Go" gate. It ensures that the roadmap for next-generation power infrastructure is not merely conceptually sound but technically executable within the nuances of Japan's evolving market architecture.
+
+*   **Technical Feasibility and the "Japan-Specific" Engineering Risks**
+    While North American ISOs like PJM and ERCOT utilize SCUC/SCED, Japan’s architecture faces unique engineering risks regarding solver convergence and price formation. Key constraints include LNG fuel lead times of 2–3 months and a massive scale of pumped-storage hydro. Unlike PJM, which manages 5 units on 24-hour cycles, Japan must optimize a high count of units over a one-week management cycle. Research must determine if current optimization engines can process these intense "Japan-specific" constraints within the calculation windows required for reliable market clearing without compromising grid stability or economic efficiency.
+
+*   **Operational Impact on Market Participants**
+    The transition to "Generator-based" bidding and "Full Supply" obligations fundamentally disrupts current Balancing Group (BG) workflows. Market participants must pivot from area-wide planning to individual unit commitment, requiring granular data provision for all available capacity. This shift necessitates node-based congestion management and a sophisticated approach to intermittency management for FIT/FIP resources. For retailers and generators, the "Bid-to-Bill" transition demands significant internal system upgrades to handle the high-fidelity coordination between market award results and real-time physical dispatch instructions.
+
+*   **Introduction of the Specialized Research Framework**
+    The Council has established the "Business Design and Technical Research Group" (業務設計・技術研究会) as a specialized, non-public body to navigate sensitive technical and vendor data. Chair Kanemoto has emphasized a modular architectural philosophy: the awarding engine must be a "replaceable component" to avoid long-term vendor lock-in. By shielding proprietary solver logic while reporting objective findings back to the public Council, this framework ensures that the market design remains competitive and adaptable, preventing a single system provider from dictating the technical limits of Japan's energy policy.
+
+## 2. Key Agenda Items
+
+*   **Establishment of the "Business Design and Technical Research Group"**
+    This new subcommittee is tasked with the technical heavy lifting required for Phase 1. Comprising academic experts, system vendors, and General Transmission and Distribution (GT&amp;D) operators, the group will bridge the gap between international best practices and Japanese grid realities. A critical prerequisite is ensuring the co-optimized market’s SCUC/SCED logic aligns with the "Next-Generation Centralized Dispatch System" (次期中給) currently under development by the TSOs. This alignment ensures that market clearing results are physically feasible for real-time frequency control and grid management.
+
+*   **Technical Feasibility of Award Processing (SCUC/SCED)**
+    The core debate centers on the trade-off between strict grid modeling and computational feasibility. Yamamoto-san of the GT&amp;D operators warned that including too many "strict constraints"—such as high node counts, diverse voltage levels, and complex unit commitment logic—could lead to solver failure or delayed clearing. The agenda focuses on whether optimization engines can achieve convergence within required timeframes while accounting for Japan’s high concentration of pumped hydro. Verifying this "solver performance" is essential to avoid price formation errors that could destabilize the market.
+
+*   **Defining the Scope of Detailed Business Design**
+    The Council has prioritized six design areas: (1) Bidding and information provision obligations; (2) Demand-based SCUC logic integrating retail bids and TSO forecasts; (3) Uplift payment mechanisms to ensure generators are kept "whole" by compensating for costs not recovered via market prices; (4) Unit-based BG plan submission protocols; (5) Integration of pumped hydro and Distributed Energy Resources (DER); and (6) Market monitoring disciplines. These areas are designed to ensure that the co-optimization of energy and ancillary services remains transparent, competitive, and operationally stable.
+
+*   **Operational Entity Selection**
+    The Council discussed the framework for selecting the market operator and system development lead, emphasizing their participation by Phase 2. The relationship between the market operator and the TSO is pivotal for managing local grid congestion and wide-area frequency control. From a Market Architect’s perspective, the organizational structure must support a modular "Bid-to-Bill" system. This ensures that the operational entity can manage complex ancillary service co-optimization while maintaining the flexibility to upgrade market components as technology and renewable penetration evolve.
+
+## 3. Decisions and Agreements
+
+*   **Transition to Phase 1 in FY2026**
+    The Council formally agreed to initiate Phase 1 in April 2026. This period is dedicated to detailed business design and the identification of the market operating entity. This is not a final commitment to build but a mandatory feasibility verification. The results will determine the "Go/No-Go" decision at the end of Phase 2. By establishing this gate, the Council ensures that system development only proceeds if the proposed co-optimized market architecture can demonstrate manageable technical risks and clear economic benefits for the Japanese power system.
+
+*   **New Committee Formation and Closure of Previous Body**
+    To streamline technical deliberations, the "Business Design and Technical Research Group" will be established as the primary technical venue. Correspondingly, the "Technical Verification Meeting on Power Plant Startup and Output Allocation Logic" will be closed by March 2026. All unresolved technical issues and optimization logic debates will be absorbed into the new Research Group. This organizational shift ensures continuity while bringing system vendors and operators closer to the design process, facilitating a more practical approach to solving SCUC/SCED convergence challenges.
+
+*   **Outsourcing Plan for Technical Feasibility**
+    OCCTO will execute two strategic contracts: (1) A consulting contract (starting May 2026) for overseas surveys and business flow mapping, and (2) A system vendor contract (H2 2026) for specialized solver simulations. A critical agreement is that these vendors must share findings as "common knowledge." The Council mandated that the resulting "Simple Feasibility Report" must be objective and general, intentionally avoiding proprietary descriptions that would favor a specific vendor. This "anti-lock-in" requirement is vital for maintaining a competitive procurement environment for the actual market system.
+
+*   **Public/Non-Public Governance Structure**
+    A two-tier governance model was approved to balance transparency with the need for technical confidentiality. The Research Group will meet non-publicly to allow system vendors and experts to discuss sensitive solver performance and proprietary architecture. However, all significant milestones and technical findings must be reported back to the public-facing Council. This ensures that while the engineering "black box" is protected during the research phase, the final policy decisions remain subject to public accountability and stakeholder scrutiny, maintaining the integrity of the market design process.
+
+## 4. Future Timeline
+
+*   **April 2026**
+    Official launch of Phase 1 and the "Business Design and Technical Research Group." The Secretariat will finalize the expert panel and vendor participants. Initial work will focus on defining technical research themes and reconciling the proposed market architecture with the dispatch requirements of the "Next-Generation Centralized Dispatch System." This month begins the formal shift from conceptual discussion to the detailed engineering of Japan's co-optimized market logic.
+
+*   **May 2026**
+    Commencement of the consulting contract for international market surveys and business design support. This work will map out detailed "Bid-to-Bill" flows and identify critical gaps between international models (like PJM or ERCOT) and the Japanese grid. It will specifically focus on how other jurisdictions handle complex constraints similar to Japan’s weekly pumped-hydro management and node-based congestion, providing the baseline for the subsequent simulation phase.
+
+*   **FY2026 Second Half**
+    Targeted window for technical simulations led by specialized system vendors. The priority is to test solver performance under strict "Japan-specific" grid conditions. The Research Group aims to draft the "Simple Feasibility Report" by the end of the fiscal year. This report must demonstrate that SCUC/SCED can achieve convergence within operational timeframes without relying on proprietary vendor technology, thereby providing the technical evidence required to proceed to Phase 2.
+
+*   **FY2027 and Beyond**
+    Progression to Phase 2 (Requirement Definition), where the designated market operator and system lead will begin detailed specifications. This phase culminates in the final "Go/No-Go" decision on market introduction. If feasibility is confirmed, the project will move to Phase 3 (System Development), followed by participant rehearsals and eventual implementation, marking the most significant transformation of the Japanese wholesale power market since its liberalization.</description>
+      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260227_第21回_同時市場の在り方等に関する検討会.mp3</guid>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260227_第21回_同時市場の在り方等に関する検討会.mp3" length="27571240" type="audio/mpeg"/>
+      <pubDate>Tue, 07 Apr 2026 16:22:06 +0000</pubDate>
       <itunes:explicit>no</itunes:explicit>
-      <itunes:summary>### ポッドキャスト解説ガイド
-第98回 広域系統整備委員会での議論内容（広域連系線の整備計画など）についての要約解説です。</itunes:summary>
+      <itunes:summary># Report on the 21st Council on the Future of Co-optimized Markets: Custom Report
+
+## 1. Podcast Commentary Guide (Key Points of Content)
+
+*   **Strategic Significance of Phase 1 Transition**
+    The launch of Phase 1 in April 2026 represents a critical pivot from theoretical validation to the system-wide requirement definition of Japan’s "Co-optimized Markets." Grounded in the 7th Strategic Energy Plan—approved by the Cabinet on February 18, 2025—this phase seeks to verify the simultaneous optimization of energy (kWh) and balancing services (ΔkW). As a Market Architect, I view this transition as a vital "Go/No-Go" gate. It ensures that the roadmap for next-generation power infrastructure is not merely conceptually sound but technically executable within the nuances of Japan's evolving market architecture.
+
+*   **Technical Feasibility and the "Japan-Specific" Engineering Risks**
+    While North American ISOs like PJM and ERCOT utilize SCUC/SCED, Japan’s architecture faces unique engineering risks regarding solver convergence and price formation. Key constraints include LNG fuel lead times of 2–3 months and a massive scale of pumped-storage hydro. Unlike PJM, which manages 5 units on 24-hour cycles, Japan must optimize a high count of units over a one-week management cycle. Research must determine if current optimization engines can process these intense "Japan-specific" constraints within the calculation windows required for reliable market clearing without compromising grid stability or economic efficiency.
+
+*   **Operational Impact on Market Participants**
+    The transition to "Generator-based" bidding and "Full Supply" obligations fundamentally disrupts current Balancing Group (BG) workflows. Market participants must pivot from area-wide planning to individual unit commitment, requiring granular data provision for all available capacity. This shift necessitates node-based congestion management and a sophisticated approach to intermittency management for FIT/FIP resources. For retailers and generators, the "Bid-to-Bill" transition demands significant internal system upgrades to handle the high-fidelity coordination between market award results and real-time physical dispatch instructions.
+
+*   **Introduction of the Specialized Research Framework**
+    The Council has established the "Business Design and Technical Research Group" (業務設計・技術研究会) as a specialized, non-public body to navigate sensitive technical and vendor data. Chair Kanemoto has emphasized a modular architectural philosophy: the awarding engine must be a "replaceable component" to avoid long-term vendor lock-in. By shielding proprietary solver logic while reporting objective findings back to the public Council, this framework ensures that the market design remains competitive and adaptable, preventing a single system provider from dictating the technical limits of Japan's energy policy.
+
+## 2. Key Agenda Items
+
+*   **Establishment of the "Business Design and Technical Research Group"**
+    This new subcommittee is tasked with the technical heavy lifting required for Phase 1. Comprising academic experts, system vendors, and General Transmission and Distribution (GT&amp;D) operators, the group will bridge the gap between international best practices and Japanese grid realities. A critical prerequisite is ensuring the co-optimized market’s SCUC/SCED logic aligns with the "Next-Generation Centralized Dispatch System" (次期中給) currently under development by the TSOs. This alignment ensures that market clearing results are physically feasible for real-time frequency control and grid management.
+
+*   **Technical Feasibility of Award Processing (SCUC/SCED)**
+    The core debate centers on the trade-off between strict grid modeling and computational feasibility. Yamamoto-san of the GT&amp;D operators warned that including too many "strict constraints"—such as high node counts, diverse voltage levels, and complex unit commitment logic—could lead to solver failure or delayed clearing. The agenda focuses on whether optimization engines can achieve convergence within required timeframes while accounting for Japan’s high concentration of pumped hydro. Verifying this "solver performance" is essential to avoid price formation errors that could destabilize the market.
+
+*   **Defining the Scope of Detailed Business Design**
+    The Council has prioritized six design areas: (1) Bidding and information provision obligations; (2) Demand-based SCUC logic integrating retail bids and TSO forecasts; (3) Uplift payment mechanisms to ensure generators are kept "whole" by compensating for costs not recovered via market prices; (4) Unit-based BG plan submission protocols; (5) Integration of pumped hydro and Distributed Energy Resources (DER); and (6) Market monitoring disciplines. These areas are designed to ensure that the co-optimization of energy and ancillary services remains transparent, competitive, and operationally stable.
+
+*   **Operational Entity Selection**
+    The Council discussed the framework for selecting the market operator and system development lead, emphasizing their participation by Phase 2. The relationship between the market operator and the TSO is pivotal for managing local grid congestion and wide-area frequency control. From a Market Architect’s perspective, the organizational structure must support a modular "Bid-to-Bill" system. This ensures that the operational entity can manage complex ancillary service co-optimization while maintaining the flexibility to upgrade market components as technology and renewable penetration evolve.
+
+## 3. Decisions and Agreements
+
+*   **Transition to Phase 1 in FY2026**
+    The Council formally agreed to initiate Phase 1 in April 2026. This period is dedicated to detailed business design and the identification of the market operating entity. This is not a final commitment to build but a mandatory feasibility verification. The results will determine the "Go/No-Go" decision at the end of Phase 2. By establishing this gate, the Council ensures that system development only proceeds if the proposed co-optimized market architecture can demonstrate manageable technical risks and clear economic benefits for the Japanese power system.
+
+*   **New Committee Formation and Closure of Previous Body**
+    To streamline technical deliberations, the "Business Design and Technical Research Group" will be established as the primary technical venue. Correspondingly, the "Technical Verification Meeting on Power Plant Startup and Output Allocation Logic" will be closed by March 2026. All unresolved technical issues and optimization logic debates will be absorbed into the new Research Group. This organizational shift ensures continuity while bringing system vendors and operators closer to the design process, facilitating a more practical approach to solving SCUC/SCED convergence challenges.
+
+*   **Outsourcing Plan for Technical Feasibility**
+    OCCTO will execute two strategic contracts: (1) A consulting contract (starting May 2026) for overseas surveys and business flow mapping, and (2) A system vendor contract (H2 2026) for specialized solver simulations. A critical agreement is that these vendors must share findings as "common knowledge." The Council mandated that the resulting "Simple Feasibility Report" must be objective and general, intentionally avoiding proprietary descriptions that would favor a specific vendor. This "anti-lock-in" requirement is vital for maintaining a competitive procurement environment for the actual market system.
+
+*   **Public/Non-Public Governance Structure**
+    A two-tier governance model was approved to balance transparency with the need for technical confidentiality. The Research Group will meet non-publicly to allow system vendors and experts to discuss sensitive solver performance and proprietary architecture. However, all significant milestones and technical findings must be reported back to the public-facing Council. This ensures that while the engineering "black box" is protected during the research phase, the final policy decisions remain subject to public accountability and stakeholder scrutiny, maintaining the integrity of the market design process.
+
+## 4. Future Timeline
+
+*   **April 2026**
+    Official launch of Phase 1 and the "Business Design and Technical Research Group." The Secretariat will finalize the expert panel and vendor participants. Initial work will focus on defining technical research themes and reconciling the proposed market architecture with the dispatch requirements of the "Next-Generation Centralized Dispatch System." This month begins the formal shift from conceptual discussion to the detailed engineering of Japan's co-optimized market logic.
+
+*   **May 2026**
+    Commencement of the consulting contract for international market surveys and business design support. This work will map out detailed "Bid-to-Bill" flows and identify critical gaps between international models (like PJM or ERCOT) and the Japanese grid. It will specifically focus on how other jurisdictions handle complex constraints similar to Japan’s weekly pumped-hydro management and node-based congestion, providing the baseline for the subsequent simulation phase.
+
+*   **FY2026 Second Half**
+    Targeted window for technical simulations led by specialized system vendors. The priority is to test solver performance under strict "Japan-specific" grid conditions. The Research Group aims to draft the "Simple Feasibility Report" by the end of the fiscal year. This report must demonstrate that SCUC/SCED can achieve convergence within operational timeframes without relying on proprietary vendor technology, thereby providing the technical evidence required to proceed to Phase 2.
+
+*   **FY2027 and Beyond**
+    Progression to Phase 2 (Requirement Definition), where the designated market operator and system lead will begin detailed specifications. This phase culminates in the final "Go/No-Go" decision on market introduction. If feasibility is confirmed, the project will move to Phase 3 (System Development), followed by participant rehearsals and eventual implementation, marking the most significant transformation of the Japanese wholesale power market since its liberalization.</itunes:summary>
     </item>
   </channel>
 </rss>
