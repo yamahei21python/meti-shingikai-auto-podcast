@@ -103,6 +103,36 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
+def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=30):
+    """Wait for a task to complete by polling status."""
+    start_time = time.time()
+    print(f"[*] Starting monitoring for task: {task_id} (Timeout: {timeout_seconds}s)")
+    
+    while time.time() - start_time < timeout_seconds:
+        status_args = ["artifact", "status", task_id]
+        if notebook_identifier:
+            status_args.extend(["-n", notebook_identifier])
+        
+        # Use run_notebooklm directly to check status
+        cmd = run_notebooklm(status_args)
+        if cmd.returncode == 0:
+            status_out = cmd.stdout.strip()
+            print(f"    [STATUS] {status_out}")
+            
+            if "SUCCEEDED" in status_out.upper() or "COMPLETED" in status_out.upper():
+                print("    [+] Task completed successfully.")
+                return True
+            if "FAILED" in status_out.upper() or "ERROR" in status_out.upper():
+                print(f"    [!] Task failed according to status: {status_out}")
+                return False
+        else:
+            print(f"    [!] Status check command failed (code {cmd.returncode})")
+
+        time.sleep(poll_interval)
+    
+    print(f"    [!] Monitoring timed out after {timeout_seconds}s")
+    return False
+
 def generate_summary_report(notebook_id, target_path):
     """Generate and download a detailed summary report."""
     print(f"[*] Generating detailed summary report for: {notebook_id}...")
@@ -145,12 +175,11 @@ def generate_summary_report(notebook_id, target_path):
         print(f"    [!] No task_id returned in JSON: {gen_res.stdout}")
         return False
 
-    # Wait for completion (Extended timeout: 45 minutes)
-    print(f"    [*] Waiting for report generation (Task: {task_id}, Timeout: 2700s)...")
-    wait_res = run_notebooklm(["artifact", "wait", task_id, "-n", notebook_id, "--timeout", "2700"])
+    # Wait for completion using monitoring loop (Extended timeout: 90 minutes)
+    success = wait_for_task(task_id, notebook_identifier=notebook_id, timeout_seconds=5400)
     
-    if wait_res.returncode != 0:
-        print(f"    [!] Report wait finished with non-zero code ({wait_res.returncode}). Possible timeout.")
+    if not success:
+        print(f"    [!] Report generation failed or timed out.")
         print(f"    [*] Waiting for 300s buffer before fail-safe download attempt...")
         time.sleep(300)
 

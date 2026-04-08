@@ -40,6 +40,39 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
+def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=30):
+    """Wait for a task to complete by polling status."""
+    start_time = time.time()
+    print(f"[*] Starting monitoring for task: {task_id} (Timeout: {timeout_seconds}s)")
+    
+    while time.time() - start_time < timeout_seconds:
+        status_args = ["artifact", "status", task_id]
+        if notebook_identifier:
+            status_args.extend(["-n", notebook_identifier])
+        
+        res = run_notebooklm(status_args)
+        if res.returncode == 0:
+            try:
+                # Expecting output like: "Status: RUNNING, Progress: 45%" or similar
+                status_out = res.stdout.strip()
+                print(f"    [STATUS] {status_out}")
+                
+                if "SUCCEEDED" in status_out.upper() or "COMPLETED" in status_out.upper():
+                    print("[+] Task completed successfully.")
+                    return True
+                if "FAILED" in status_out.upper() or "ERROR" in status_out.upper():
+                    print(f"[!] Task failed according to status: {status_out}")
+                    return False
+            except Exception as e:
+                print(f"    [!] Warning: Failed to parse status output: {e}")
+        else:
+            print(f"    [!] Status check command failed (code {res.returncode})")
+
+        time.sleep(poll_interval)
+    
+    print(f"[!] Monitoring timed out after {timeout_seconds}s")
+    return False
+
 def fetch_with_playwright_lite(url, max_attempts=3):
     """Fetch URL using Playwright with adaptive wait and longer timeout."""
     for attempt in range(max_attempts):
@@ -171,7 +204,8 @@ def main():
                 time.sleep(15)
         
         if not success:
-            print(f"[!] Skipping failed source after {max_src_attempts} attempts: {url}")
+            print(f"[!] CRITICAL: Source add failed for {url}. Aborting generation to prevent incomplete podcast.")
+            sys.exit(1)
     
     print("[*] Waiting for sources to process (30s)...")
     time.sleep(30)
@@ -212,17 +246,14 @@ def main():
     if not task_id:
         print("[!] Exhausted all attempts to start audio generation.")
         sys.exit(1)
-    print(f"[*] Waiting for completion (Extended timeout: 2700s)...")
+    print(f"[*] Waiting for completion (Extended timeout: 5400s)...")
     
-    # Wait for completion with extended timeout (45 minutes)
-    wait_res = run_notebooklm(["artifact", "wait", task_id, "--timeout", "2700"])
+    # Wait for completion using monitoring loop
+    success = wait_for_task(task_id, notebook_identifier=notebook_id, timeout_seconds=5400)
     
-    if wait_res.returncode != 0:
-        print(f"[!] Audio generation wait finished with non-zero code (Return code {wait_res.returncode})")
-        print(f"STDOUT: {wait_res.stdout}")
-        print(f"STDERR: {wait_res.stderr}")
-        # Even if wait failed (timed out), we don't exit yet. 
-        # We wait a bit more and try to download anyway.
+    if not success:
+        print(f"[!] Audio generation failed or timed out.")
+        # Attempt fail-safe download anyway after a small buffer
         print(f"[*] Waiting for an additional 300s buffer before attempting fail-safe download...")
         time.sleep(300)
     else:
