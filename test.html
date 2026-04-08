@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energy Audio | タイムライン一覧 (Test)</title>
+    <meta name="description" content="経産省の審議会資料をAIが解析したポッドキャストのタイムライン表示プロトタイプ。">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        outfit: ['Outfit', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-slate-950 text-slate-50 antialiased selection:bg-orange-500/30">
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute top-0 right-0 w-[60%] h-[60%] bg-[#FFB38A]/5 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 w-[60%] h-[60%] bg-[#F26522]/5 blur-[120px] rounded-full"></div>
+    </div>
+
+    <header class="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md">
+        <div class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
+            <a href="/" class="flex items-center gap-2">
+                <div
+                    class="h-8 w-8 rounded-lg bg-gradient-to-br from-[#FFB38A] to-[#F26522] flex items-center justify-center shadow-lg shadow-[#F26522]/20">
+                    <i data-lucide="zap" class="h-5 w-5 text-white"></i>
+                </div>
+                <span class="font-outfit text-xl font-bold tracking-tight text-slate-100">Energy Audio</span>
+            </a>
+            <nav class="hidden md:flex items-center gap-3">
+                <div class="bg-slate-900/50 px-3 py-1 rounded-full border border-slate-800 flex items-center gap-2 mr-4">
+                    <span class="h-2 w-2 rounded-full bg-orange-500 animate-pulse"></span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Test Prototype</span>
+                </div>
+                <a href="/" class="text-xs font-bold text-slate-400 hover:text-white transition-colors">戻る</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-12 md:py-20 max-w-5xl">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div class="space-y-4">
+                <h1 class="text-3xl md:text-5xl font-bold font-outfit tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">
+                    Timeline Browser
+                </h1>
+                <p class="text-slate-400 max-w-2xl leading-relaxed">
+                    最新の会議資料を直感的に。タイトルと音声で素早く流し読みし、気になるトピックを深く掘り下げることができます。
+                </p>
+            </div>
+            <div id="feed-status" class="text-xs font-mono text-slate-500 animate-pulse">Synchronizing feed...</div>
+        </div>
+
+        <!-- Timeline Container -->
+        <div id="timeline-root" class="timeline-container">
+            <!-- Dynamic Content Load Here -->
+        </div>
+    </main>
+
+    <footer class="border-t border-slate-900 bg-slate-950 py-12 text-slate-500 mt-20">
+        <div class="container mx-auto px-4 sm:px-6">
+            <p class="text-sm text-center">&copy; 2026 Energy Audio. Intelligence Hub Prototype.</p>
+        </div>
+    </footer>
+
+    <!-- Templates & Logic -->
+    <script>
+        async function loadEpisodes() {
+            const root = document.getElementById('timeline-root');
+            const status = document.getElementById('feed-status');
+
+            try {
+                const response = await fetch('podcast.xml');
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const items = Array.from(xmlDoc.querySelectorAll('item')).reverse();
+
+                root.innerHTML = '';
+
+                items.forEach((item, index) => {
+                    const title = item.querySelector('title').textContent;
+                    const pubDateRaw = item.querySelector('pubDate').textContent;
+                    const originalLink = item.querySelector('link')?.textContent || '#';
+                    const pubDate = new Date(pubDateRaw).toLocaleDateString('ja-JP', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                    const description = item.querySelector('description').textContent;
+                    const audioUrl = item.querySelector('enclosure').getAttribute('url');
+
+                    // Split description by sections
+                    const sections = description.split(/### \d\.\s*/);
+                    
+                    const formatLines = (text) => {
+                        if (!text) return '';
+                        return text
+                            .replace(/\* \*\*(.*?)\*\*/g, '<li class="text-slate-300 mb-1 ml-4 list-disc">$1</li>')
+                            .replace(/\* (.*)/g, '<li class="text-slate-400 mb-1 ml-4 list-disc">$1</li>')
+                            .replace(/\n/g, '<br>');
+                    };
+
+                    const guideContent = formatLines(sections[1]?.replace(/^.*?\n/, ''));
+                    const detailedContent = [sections[2], sections[3], sections[4]]
+                        .filter(Boolean)
+                        .map((s, i) => {
+                            const lines = s.split('\n');
+                            const head = lines[0];
+                            const body = formatLines(lines.slice(1).join('\n'));
+                            return `<div class="mb-4"><h4 class="text-white font-bold mb-2 text-[11px] opacity-80">${head}</h4><div class="opacity-90">${body}</div></div>`;
+                        })
+                        .join('');
+
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'timeline-item';
+                    itemElement.innerHTML = `
+                        <div class="timeline-dot"></div>
+                        
+                        <!-- Main Summary Card (Playback) -->
+                        <div class="lp-card group p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-8 border-l-4 border-l-white/30 backdrop-blur-sm">
+                            <div class="flex-1 w-full sm:w-auto">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <span class="text-[10px] font-bold text-white/50 tracking-widest uppercase">${pubDate}</span>
+                                    <span class="h-1 w-1 rounded-full bg-white/20"></span>
+                                    <a href="${originalLink}" target="_blank" class="text-[10px] font-bold text-sunset-peach uppercase tracking-widest hover:underline whitespace-nowrap">Original Link</a>
+                                </div>
+                                <h3 class="text-xl md:text-2xl font-bold text-slate-100 leading-tight mb-6 group-hover/title:text-white transition-colors">${title}</h3>
+                                
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <div class="flex-1 min-w-[200px]">
+                                        <audio controls class="w-full h-8 opacity-70 hover:opacity-100 transition-opacity">
+                                            <source src="${audioUrl}" type="audio/mpeg">
+                                        </audio>
+                                    </div>
+                                    <button class="expand-btn shrink-0" onclick="toggleAccordion(this)">
+                                        <i data-lucide="plus-circle" class="h-4 w-4"></i>
+                                        <span>内容を解析する (Deep Dive)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Expansion Area -->
+                        <div class="accordion-content">
+                            <div class="accordion-inner">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                    <!-- Guide Card -->
+                                    <div class="lp-card group flex flex-col h-[400px] border-l-4 border-l-[#FFB38A]/50 relative overflow-hidden bg-slate-900/50 shadow-2xl">
+                                        <div class="flex flex-col h-full text-left p-6">
+                                            <div class="flex items-center gap-2 mb-4 shrink-0">
+                                                <div class="p-1.2 rounded bg-[#FFB38A]/10 text-[#FFB38A]"><i data-lucide="brain" class="h-3.5 w-3.5"></i></div>
+                                                <h4 class="text-[10px] font-bold text-[#FFB38A] uppercase tracking-widest">ポッドキャスト解説ガイド</h4>
+                                            </div>
+                                            <div class="scroll-container custom-scrollbar overflow-y-auto pr-2 text-[12px] text-slate-400 leading-relaxed" onscroll="handleScroll(this)">
+                                                ${guideContent || 'No guide available.'}
+                                            </div>
+                                        </div>
+                                        <div class="scroll-indicator text-[#FFB38A]/30"><i data-lucide="chevron-down" class="h-3 w-3"></i></div>
+                                    </div>
+
+                                    <!-- Details Card -->
+                                    <div class="lp-card group flex flex-col h-[400px] border-l-4 border-l-[#F26522]/50 relative overflow-hidden bg-slate-900/50 shadow-2xl">
+                                        <div class="flex flex-col h-full text-left p-6">
+                                            <div class="flex items-center gap-2 mb-4 shrink-0">
+                                                <div class="p-1.2 rounded bg-[#F26522]/10 text-[#F26522]"><i data-lucide="list" class="h-3.5 w-3.5"></i></div>
+                                                <h4 class="text-[10px] font-bold text-[#F26522] uppercase tracking-widest">詳細議題・決定事項</h4>
+                                            </div>
+                                            <div class="scroll-container custom-scrollbar overflow-y-auto pr-2 text-[11px] text-slate-400 leading-relaxed" onscroll="handleScroll(this)">
+                                                ${detailedContent || 'No details available.'}
+                                            </div>
+                                        </div>
+                                        <div class="scroll-indicator text-[#F26522]/30"><i data-lucide="chevron-down" class="h-3 w-3"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    root.appendChild(itemElement);
+                });
+
+                status.textContent = `Sync Complete: ${new Date().toLocaleTimeString()}`;
+                status.classList.remove('animate-pulse');
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Error loading podcasts:', error);
+                status.textContent = 'Sync Failed.';
+                status.classList.add('text-rose-500');
+            }
+        }
+
+        function toggleAccordion(btn) {
+            const accordion = btn.closest('.timeline-item').querySelector('.accordion-content');
+            const isOpen = accordion.classList.contains('is-open');
+            
+            // Toggle current
+            accordion.classList.toggle('is-open');
+            btn.classList.toggle('is-open');
+            
+            // Update icon
+            const icon = btn.querySelector('i');
+            if (isOpen) {
+                icon.setAttribute('data-lucide', 'plus-circle');
+            } else {
+                icon.setAttribute('data-lucide', 'minus-circle');
+            }
+            lucide.createIcons();
+        }
+
+        function handleScroll(el) {
+            const indicator = el.closest('.lp-card').querySelector('.scroll-indicator');
+            if (el.scrollTop + el.offsetHeight >= el.scrollHeight - 10) {
+                indicator.style.opacity = '0';
+                el.classList.add('is-scrolled');
+            } else {
+                indicator.style.opacity = '1';
+                el.classList.remove('is-scrolled');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadEpisodes);
+    </script>
+
+    <style>
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: var(--sunset-orange);
+        }
+        
+        /* Fade edges for scroll containers */
+        .scroll-container {
+            mask-image: linear-gradient(to bottom, transparent, black 15px, black calc(100% - 30px), transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 15px, black calc(100% - 30px), transparent);
+            padding: 20px 0;
+        }
+        .scroll-container.is-scrolled {
+            mask-image: linear-gradient(to bottom, transparent, black 15px, black 100%, black 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 15px, black 100%, black 100%);
+        }
+    </style>
+</body>
+
+</html>
