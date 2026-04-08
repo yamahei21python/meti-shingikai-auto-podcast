@@ -171,7 +171,7 @@ def main():
     # Normalize prompt: remove newlines for CLI stability
     normalized_prompt = " ".join(prompt.strip().split())
     # Start generation in non-blocking mode to get the task ID
-    gen_res = run_notebooklm(["generate", "audio", normalized_prompt, "--no-wait"])
+    gen_res = run_notebooklm(["generate", "audio", normalized_prompt, "--language", "ja", "--no-wait"])
     
     if gen_res.returncode != 0:
         print(f"[!] Audio generation start failed (Return code {gen_res.returncode})")
@@ -189,18 +189,21 @@ def main():
         
     task_id = task_match.group(1)
     print(f"[*] Audio generation started. Task ID: {task_id}")
-    print(f"[*] Waiting for completion (Extended timeout: 1200s)...")
+    print(f"[*] Waiting for completion (Extended timeout: 2700s)...")
     
-    # Wait for completion with extended timeout (20 minutes)
-    wait_res = run_notebooklm(["artifact", "wait", task_id, "--timeout", "1200"])
+    # Wait for completion with extended timeout (45 minutes)
+    wait_res = run_notebooklm(["artifact", "wait", task_id, "--timeout", "2700"])
     
     if wait_res.returncode != 0:
-        print(f"[!] Audio generation failed or timed out (Return code {wait_res.returncode})")
+        print(f"[!] Audio generation wait finished with non-zero code (Return code {wait_res.returncode})")
         print(f"STDOUT: {wait_res.stdout}")
         print(f"STDERR: {wait_res.stderr}")
-        sys.exit(1)
-    
-    print("[+] Audio generation completed successfully.")
+        # Even if wait failed (timed out), we don't exit yet. 
+        # We wait a bit more and try to download anyway.
+        print(f"[*] Waiting for an additional 300s buffer before attempting fail-safe download...")
+        time.sleep(300)
+    else:
+        print("[+] Audio generation completed successfully.")
 
     # 6. Download
     final_output = "podcast_summary.mp3"

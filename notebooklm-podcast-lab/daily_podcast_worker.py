@@ -4,6 +4,7 @@ import os
 import sys
 import re
 import time
+import json
 from datetime import datetime
 
 # --- 設定 ---
@@ -30,6 +31,10 @@ def init_notebooklm_auth():
     with open(auth_path, "w", encoding="utf-8") as f:
         f.write(auth_json)
     print("[+] Auth file created successfully.")
+    
+    # Ensure language is set to Japanese globally for this account
+    print("[*] Setting NotebookLM language to Japanese (ja)...")
+    run_notebooklm(["language", "set", "ja"])
 
 def sanitize_filename(text):
     """Remove invalid characters and limit length."""
@@ -123,17 +128,39 @@ def generate_summary_report(notebook_id, target_path):
     """
     normalized_prompt = " ".join(prompt.strip().split())
     
-    # Generate
-    gen_res = run_notebooklm(["generate", "report", normalized_prompt, "-n", notebook_id, "--wait"])
+    # Generate (JSON mode to get task_id)
+    gen_res = run_notebooklm(["generate", "report", normalized_prompt, "-n", notebook_id, "--language", "ja", "--json"])
     if gen_res.returncode != 0:
-        print(f"    [!] Report generation failed: {gen_res.stderr}")
+        print(f"    [!] Report generation start failed: {gen_res.stderr}")
         return False
+
+    try:
+        gen_data = json.loads(gen_res.stdout)
+        task_id = gen_data.get("task_id")
+    except Exception as e:
+        print(f"    [!] Failed to parse report task ID: {e}")
+        return False
+
+    if not task_id:
+        print(f"    [!] No task_id returned in JSON: {gen_res.stdout}")
+        return False
+
+    # Wait for completion (Extended timeout: 45 minutes)
+    print(f"    [*] Waiting for report generation (Task: {task_id}, Timeout: 2700s)...")
+    wait_res = run_notebooklm(["artifact", "wait", task_id, "-n", notebook_id, "--timeout", "2700"])
+    
+    if wait_res.returncode != 0:
+        print(f"    [!] Report wait finished with non-zero code ({wait_res.returncode}). Possible timeout.")
+        print(f"    [*] Waiting for 300s buffer before fail-safe download attempt...")
+        time.sleep(300)
 
     # Download
     dl_res = run_notebooklm(["download", "report", target_path, "-n", notebook_id, "--latest", "--force"])
     if dl_res.returncode == 0:
         print(f"    [🎉 SUCCESS] Detailed summary saved to: {target_path}")
         return True
+    
+    print(f"    [!] Final report download failed: {dl_res.stderr}")
     return False
 
 def process_single_item(item):

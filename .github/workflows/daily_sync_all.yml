@@ -2,7 +2,7 @@ name: Daily METI & OCCTO Sync
 
 on:
   schedule:
-    - cron: '0 19 * * *' # 日本時間 09:00 (毎日)
+    - cron: '30 20 * * *' # 日本時間 05:30 (毎日)
   workflow_dispatch: # 手動実行用
 
 jobs:
@@ -45,17 +45,43 @@ jobs:
           uv sync
           uv run playwright install --with-deps chromium
 
+      - name: Set NotebookLM Language to Japanese
+        env:
+          NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
+        run: |
+          # 認証ファイルを一時的に作成して言語を設定
+          mkdir -p ~/.notebooklm
+          echo "$NOTEBOOKLM_AUTH_JSON" > ~/.notebooklm/auth.json
+          uv run --project notebooklm-podcast-lab notebooklm language set ja
+
       - name: Run Sync Pipeline
         run: |
           # 統合本番スクレイパーを実行
           uv run --project notebooklm-podcast-lab python3 sync_all_production.py
 
       - name: Run Podcast Generation Worker (1 item per day - TEST)
+        id: podcast_gen
         env:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
           # ポッドキャスト生成ワーカーを実行
-          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py
+          set -o pipefail
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py 2>&1 | tee worker_output.log
+          
+          if grep -q "PODCAST_ASSET_PATH=" worker_output.log; then
+            # Extract relative path (the log says ../podcasts/..., which is podcasts/ relative to root)
+            raw_path=$(grep "PODCAST_ASSET_PATH=" worker_output.log | cut -d'=' -f2)
+            filename=$(echo $raw_path | sed 's|^\.\./||')
+            
+            # Extract original source URL
+            original_url=$(grep "ORIGINAL_URL=" worker_output.log | cut -d'=' -f2)
+            
+            echo "filename=$filename" >> $GITHUB_OUTPUT
+            echo "original_url=$original_url" >> $GITHUB_OUTPUT
+            echo "has_asset=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_asset=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload to R2 and Update RSS Feed
         env:
@@ -84,3 +110,17 @@ jobs:
           else
             echo "No changes to commit."
           fi
+
+      - name: Create Release and Upload Asset
+        if: steps.podcast_gen.outputs.has_asset == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "podcast-${{ github.run_number }}"
+          name: "Podcast [${{ steps.podcast_gen.outputs.filename }}]"
+          body: "METI Council Audio Summary (Energy Industry Knowledge-up series)."
+          files: |
+            ${{ steps.podcast_gen.outputs.filename }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
