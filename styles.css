@@ -2,12 +2,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-    /* Color Palette - Deep Oceanic & Emerald */
-    --primary: #38bdf8;
-    --primary-glow: rgba(56, 189, 248, 0.4);
-    --secondary: #10b981;
-    --secondary-glow: rgba(16, 185, 129, 0.3);
-    --accent: #6366f1;
+    /* Color Palette - Sunset Orange */
+    --primary: #F26522;
+    --primary-glow: rgba(242, 101, 34, 0.4);
+    --secondary: #FFB38A;
+    --secondary-glow: rgba(255, 179, 138, 0.3);
+    --accent: #F26522;
+    --sunset-peach: #FFB38A;
+    --sunset-orange: #F26522;
+    --sunset-glow: rgba(242, 101, 34, 0.4);
     
     --bg-deep: #020617;
     --bg-surface: #0f172a;
@@ -94,6 +97,30 @@ section {
     color: transparent;
 }
 
+.gradient-sunset {
+    background: linear-gradient(135deg, var(--sunset-peach), var(--sunset-orange));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Color Utils */
+.text-primary { color: var(--primary); }
+.bg-primary-soft { background: var(--primary-glow); }
+.border-primary-soft { border-color: rgba(242, 101, 34, 0.2); }
+
+.text-white { color: #ffffff; }
+.bg-white-soft { background: rgba(255, 255, 255, 0.05); }
+.border-white-soft { border-color: rgba(255, 255, 255, 0.1); }
+
+.text-sunset-peach { color: var(--sunset-peach); }
+.bg-sunset-peach-soft { background: rgba(255, 179, 138, 0.1); }
+.border-sunset-peach-soft { border-color: rgba(255, 179, 138, 0.2); }
+
+.text-sunset-orange { color: var(--sunset-orange); }
+.bg-sunset-orange-soft { background: var(--sunset-glow); }
+.border-sunset-orange-soft { border-color: rgba(242, 101, 34, 0.2); }
+
 .glass-card, .lp-card {
     background: var(--glass);
     backdrop-filter: var(--glass-blur);
@@ -106,11 +133,47 @@ section {
     text-align: center;
 }
 
-.glass-card:hover, .lp-card:hover {
-    border-color: var(--border-bright);
-    background: rgba(30, 41, 59, 0.7);
+.lp-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Scroll Fade & Indicator */
+.scroll-container {
+    mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent 100%);
+}
+.scroll-container.is-scrolled {
+    mask-image: none;
+    -webkit-mask-image: none;
+}
+.scroll-indicator {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: bounce-soft 2s infinite;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+@keyframes bounce-soft {
+    0%, 100% { transform: translate(-50%, 0); opacity: 0.3; }
+    50% { transform: translate(-50%, 5px); opacity: 0.8; }
 }
 
 .lp-card .icon-box {
@@ -127,8 +190,8 @@ section {
 
 .lp-card:hover .icon-box {
     transform: scale(1.1) rotate(5deg);
-    border-color: var(--primary);
-    box-shadow: 0 0 20px var(--primary-glow);
+    border-color: var(--sunset-orange);
+    box-shadow: 0 0 20px rgba(242, 101, 34, 0.3);
 }
 
 .lp-card p {

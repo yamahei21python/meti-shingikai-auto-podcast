@@ -41,21 +41,29 @@ def run_notebooklm(args):
     return subprocess.run(cmd, capture_output=True, text=True)
 
 def fetch_with_playwright_lite(url, max_attempts=3):
-    """Fetch URL using Playwright (fallback mode if PDF list not provided)."""
+    """Fetch URL using Playwright with adaptive wait and longer timeout."""
     for attempt in range(max_attempts):
         try:
-            print(f"[*] Fetching article with Playwright (attempt {attempt+1}, lite mode): {url}")
+            # Stage 1-2: Be patient, wait for DOM
+            # Stage 3: Grab whatever is available
+            wait_condition = "domcontentloaded" if attempt < 2 else "commit"
+            timeout = 120000 # 120 seconds
+            
+            print(f"[*] Fetching article with Playwright (attempt {attempt+1}/{max_attempts}, mode: {wait_condition}): {url}")
             with sync_playwright() as p:
                 browser = p.chromium.launch(headless=True)
                 context = browser.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+                    locale="ja-JP"
                 )
                 page = context.new_page()
-                page.route("**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2,js}", lambda route: route.abort())
-                response = page.goto(url, wait_until="commit", timeout=60000)
+                # Do not block JS for now as METI might rely on it for some items
+                page.route("**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2}", lambda route: route.abort())
+                
+                response = page.goto(url, wait_until=wait_condition, timeout=timeout)
                 
                 if response and response.status == 200:
-                    time.sleep(1) 
+                    time.sleep(2) # Extra buffer for dynamic content
                     content = page.content()
                     browser.close()
                     from bs4 import BeautifulSoup
@@ -67,7 +75,9 @@ def fetch_with_playwright_lite(url, max_attempts=3):
         except Exception as e:
             print(f"[!] Attempt {attempt+1} failed: {e}")
             if attempt < max_attempts - 1:
-                time.sleep(10)
+                wait_time = 15 * (attempt + 1)
+                print(f"[*] Waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
     return None
 
 def extract_pdf_urls(page_url, soup):
@@ -110,51 +120,63 @@ def main():
     # 1. Setup Notebook Title
     notebook_name = args.name or f"METI_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-    # 2. Create Notebook
-    print(f"[*] Creating notebook: {notebook_name}")
-    res = run_notebooklm(["create", notebook_name])
-    
-    if res.returncode != 0:
-        print(f"[!] Failed to create notebook (Return code {res.returncode})")
-        print(f"STDOUT: {res.stdout}")
-        print(f"STDERR: {res.stderr}")
-        sys.exit(1)
-
+    # 2. Create Notebook (with retries)
     notebook_id = None
-    try:
-        import re
-        # Look for UUID format: 8-4-4-4-12 hex chars
-        match = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', res.stdout, re.IGNORECASE)
-        if match:
-            notebook_id = match.group(1)
-        else:
-            # Fallback for simpler IDs
-            parts = res.stdout.strip().split()
-            if parts:
-                notebook_id = parts[-1]
+    max_nb_attempts = 3
+    for attempt in range(max_nb_attempts):
+        print(f"[*] Creating notebook: {notebook_name} (Attempt {attempt+1}/{max_nb_attempts})")
+        res = run_notebooklm(["create", notebook_name])
         
-        if not notebook_id or len(notebook_id) < 10: 
-            raise ValueError(f"Invalid ID format in: {res.stdout}")
-        print(f"[+] Notebook created ID: {notebook_id}")
-        # PRINT ID to stdout for the worker to capture
-        print(f"NOTEBOOK_ID={notebook_id}")
-    except Exception as e:
-        print(f"[!] Error parsing notebook ID: {e}")
-        print(f"Full output: {res.stdout}")
+        if res.returncode == 0:
+            try:
+                import re
+                match = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', res.stdout, re.IGNORECASE)
+                if match:
+                    notebook_id = match.group(1)
+                else:
+                    parts = res.stdout.strip().split()
+                    if parts:
+                        notebook_id = parts[-1]
+                
+                if notebook_id and len(notebook_id) >= 10:
+                    print(f"[+] Notebook created ID: {notebook_id}")
+                    print(f"NOTEBOOK_ID={notebook_id}")
+                    break
+            except Exception as e:
+                print(f"[!] Error parsing notebook ID: {e}")
+        
+        print(f"[!] Failed to create or parse notebook ID (Attempt {attempt+1})")
+        if attempt < max_nb_attempts - 1:
+            time.sleep(10)
+    
+    if not notebook_id:
+        print("[!] Exhausted all attempts to create notebook. Exiting.")
         sys.exit(1)
 
     # 3. Select Notebook
     run_notebooklm(["use", notebook_id])
 
-    # 4. Add Sources
+    # 4. Add Sources (with retries per URL)
     for url in pdf_urls:
-        print(f"[*] Adding source: {url}")
-        run_notebooklm(["source", "add", url])
+        max_src_attempts = 3
+        success = False
+        for attempt in range(max_src_attempts):
+            print(f"[*] Adding source: {url} (Attempt {attempt+1}/{max_src_attempts})")
+            res = run_notebooklm(["source", "add", url])
+            if res.returncode == 0:
+                success = True
+                break
+            print(f"[!] Source add failed for {url}")
+            if attempt < max_src_attempts - 1:
+                time.sleep(15)
+        
+        if not success:
+            print(f"[!] Skipping failed source after {max_src_attempts} attempts: {url}")
     
     print("[*] Waiting for sources to process (30s)...")
     time.sleep(30)
 
-    # 5. Generate Podcast Audio
+    # 5. Generate Podcast Audio (with retries for initiation)
     # Use the provided name to anchor the start of the podcast
     title_context = args.name if args.name else "今回の資料"
     prompt = f"""
@@ -167,28 +189,29 @@ def main():
 今日の世界的なエネルギー情勢の中で、この会議で議論された技術開発の進展、法規制や基準の改正、現場レベルでの対応が必要なリスク、および今後の具体的スケジュールを多角的に要約・解説してください。
 """
     
-    print(f"[*] Generating podcast audio with analyst prompt...")
-    # Normalize prompt: remove newlines for CLI stability
     normalized_prompt = " ".join(prompt.strip().split())
-    # Start generation in non-blocking mode to get the task ID
-    gen_res = run_notebooklm(["generate", "audio", normalized_prompt, "--language", "ja", "--no-wait"])
     
-    if gen_res.returncode != 0:
-        print(f"[!] Audio generation start failed (Return code {gen_res.returncode})")
-        print(f"STDOUT: {gen_res.stdout}")
-        print(f"STDERR: {gen_res.stderr}")
-        sys.exit(1)
-    
-    # Extract task/artifact ID from output
-    import re
-    # Handle both "Task: ID" and direct "ID" output
-    task_match = re.search(r'(?:Task: )?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', gen_res.stdout, re.IGNORECASE)
-    if not task_match:
-        print(f"[!] Could not extract Task ID from output: {gen_res.stdout}")
-        sys.exit(1)
+    task_id = None
+    max_gen_attempts = 3
+    for attempt in range(max_gen_attempts):
+        print(f"[*] Generating podcast audio (Attempt {attempt+1}/{max_gen_attempts})...")
+        gen_res = run_notebooklm(["generate", "audio", normalized_prompt, "--language", "ja", "--no-wait"])
         
-    task_id = task_match.group(1)
-    print(f"[*] Audio generation started. Task ID: {task_id}")
+        if gen_res.returncode == 0:
+            import re
+            task_match = re.search(r'(?:Task: )?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', gen_res.stdout, re.IGNORECASE)
+            if task_match:
+                task_id = task_match.group(1)
+                print(f"[+] Audio generation started. Task ID: {task_id}")
+                break
+        
+        print(f"[!] Audio generation start failed (Attempt {attempt+1})")
+        if attempt < max_gen_attempts - 1:
+            time.sleep(20)
+            
+    if not task_id:
+        print("[!] Exhausted all attempts to start audio generation.")
+        sys.exit(1)
     print(f"[*] Waiting for completion (Extended timeout: 2700s)...")
     
     # Wait for completion with extended timeout (45 minutes)

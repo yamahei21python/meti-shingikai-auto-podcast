@@ -31,22 +31,22 @@
 
     <!-- Background Elements -->
     <div class="fixed inset-0 -z-10 overflow-hidden">
-        <div class="absolute top-0 right-0 w-[60%] h-[60%] bg-emerald-500/5 blur-[120px] rounded-full"></div>
-        <div class="absolute bottom-0 left-0 w-[60%] h-[60%] bg-sky-500/5 blur-[120px] rounded-full"></div>
+        <div class="absolute top-0 right-0 w-[60%] h-[60%] bg-[#FFB38A]/5 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 w-[60%] h-[60%] bg-[#F26522]/5 blur-[120px] rounded-full"></div>
     </div>
 
     <header class="sticky top-0 z-50 w-full border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md">
         <div class="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
             <a href="/" class="flex items-center gap-2">
                 <div
-                    class="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    class="h-8 w-8 rounded-lg bg-gradient-to-br from-[#FFB38A] to-[#F26522] flex items-center justify-center shadow-lg shadow-[#F26522]/20">
                     <i data-lucide="zap" class="h-5 w-5 text-white"></i>
                 </div>
                 <span class="font-outfit text-xl font-bold tracking-tight text-slate-100">Energy Audio</span>
             </a>
             <nav class="hidden md:flex items-center gap-3">
                 <a href="/lp#episodes"
-                    class="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-950 hover:bg-sky-400 transition-all shadow-lg shadow-white/5">
+                    class="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-950 hover:bg-[#FFB38A] transition-all shadow-lg shadow-white/5">
                     最新エピソード
                 </a>
                 <a href="/"
@@ -81,9 +81,9 @@
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <p class="text-sm">&copy; 2026 Energy Audio. Intelligence Hub.</p>
                 <div class="flex gap-6">
-                    <a href="#" class="hover:text-sky-400 transition-colors"><i data-lucide="github"
+                    <a href="#" class="hover:text-[#FFB38A] transition-colors"><i data-lucide="github"
                             class="h-5 w-5"></i></a>
-                    <a href="#" class="hover:text-sky-400 transition-colors"><i data-lucide="twitter"
+                    <a href="#" class="hover:text-[#FFB38A] transition-colors"><i data-lucide="twitter"
                             class="h-5 w-5"></i></a>
                 </div>
             </div>
@@ -101,7 +101,7 @@
                 const xmlText = await response.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                const items = xmlDoc.querySelectorAll('item');
+                const items = Array.from(xmlDoc.querySelectorAll('item')).reverse();
 
                 grid.innerHTML = '';
 
@@ -138,60 +138,64 @@
                             const lines = s.split('\n');
                             const head = lines[0];
                             const body = formatLines(lines.slice(1).join('\n'));
-                            return `<div class="mb-4"><h4 class="text-sky-400 font-bold mb-2 text-xs">${head}</h4>${body}</div>`;
+                            return `<div class="mb-4"><h4 class="text-white font-bold mb-2 text-[11px] opacity-80">${head}</h4><div class="opacity-90">${body}</div></div>`;
                         })
                         .join('');
 
                     // 1. Playback Card
                     const card1 = document.createElement('div');
-                    card1.className = 'lp-card group flex flex-col h-full border-l-4 border-l-sky-500/50';
+                    card1.className = 'lp-card group flex flex-col h-[520px] border-l-4 border-l-white/30 relative overflow-hidden';
                     card1.innerHTML = `
-                        <div class="flex flex-col h-full text-left">
-                            <div class="flex justify-between items-start mb-4">
-                                <span class="text-[10px] font-bold text-sky-400 tracking-widest uppercase">${pubDate}</span>
-                                <i data-lucide="play-circle" class="h-4 w-4 text-sky-500/50"></i>
+                        <div class="flex flex-col h-full text-left scroll-container custom-scrollbar overflow-y-auto pr-2" onscroll="const s=this.closest('.lp-card').querySelector('.scroll-indicator'); if(this.scrollTop + this.offsetHeight >= this.scrollHeight - 10) { s.style.opacity='0'; this.classList.add('is-scrolled'); } else { s.style.opacity='1'; this.classList.remove('is-scrolled'); }">
+                            <div class="flex justify-between items-start mb-6">
+                                <span class="text-[10px] font-bold text-white/60 tracking-widest uppercase">${pubDate}</span>
                             </div>
-                            <a href="${originalLink}" target="_blank" class="block group/title mb-6">
-                                <h3 class="text-lg font-bold text-slate-100 leading-snug group-hover/title:text-sky-400 transition-colors">${title}</h3>
-                            </a>
-                            <div class="mt-auto space-y-4 pt-4 border-t border-slate-800/50">
+                            
+                            <div class="mb-8 pb-8 border-b border-slate-800/50">
                                 <audio controls class="w-full h-8 opacity-70 hover:opacity-100 transition-opacity">
                                     <source src="${audioUrl}" type="audio/mpeg">
                                 </audio>
                             </div>
+
+                            <a href="${originalLink}" target="_blank" class="block group/title">
+                                <h3 class="text-lg font-bold text-slate-100 leading-snug group-hover/title:text-white transition-colors">${title}</h3>
+                            </a>
                         </div>
+                        <div class="scroll-indicator text-white/30"><i data-lucide="chevron-down" class="h-4 w-4"></i></div>
                     `;
                     grid.appendChild(card1);
 
                     // 2. Guide Card
                     const card2 = document.createElement('div');
-                    card2.className = 'lp-card group flex flex-col h-full border-l-4 border-l-emerald-500/50';
+                    card2.className = 'lp-card group flex flex-col h-[520px] border-l-4 border-l-[#FFB38A]/50 relative overflow-hidden';
                     card2.innerHTML = `
                         <div class="flex flex-col h-full text-left">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="p-1.5 rounded bg-emerald-500/10 text-emerald-400"><i data-lucide="brain" class="h-3.5 w-3.5"></i></div>
-                                <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-tighter">ポッドキャスト解説ガイド</h4>
+                            <div class="flex items-center gap-2 mb-4 shrink-0">
+                                <div class="p-1.5 rounded bg-[#FFB38A]/10 text-[#FFB38A]"><i data-lucide="brain" class="h-3.5 w-3.5"></i></div>
+                                <h4 class="text-xs font-bold text-[#FFB38A] uppercase tracking-tighter">ポッドキャスト解説ガイド</h4>
                             </div>
-                            <div class="overflow-y-auto pr-2 scrollbar-hide text-[13px] text-slate-400 leading-relaxed custom-scrollbar">
+                            <div class="scroll-container custom-scrollbar overflow-y-auto pr-2 text-[13px] text-slate-400 leading-relaxed" onscroll="const s=this.closest('.lp-card').querySelector('.scroll-indicator'); if(this.scrollTop + this.offsetHeight >= this.scrollHeight - 10) { s.style.opacity='0'; this.classList.add('is-scrolled'); } else { s.style.opacity='1'; this.classList.remove('is-scrolled'); }">
                                 ${guideContent || 'No guide available.'}
                             </div>
                         </div>
+                        <div class="scroll-indicator text-[#FFB38A]/30"><i data-lucide="chevron-down" class="h-4 w-4"></i></div>
                     `;
                     grid.appendChild(card2);
 
                     // 3. Detailed Info Card
                     const card3 = document.createElement('div');
-                    card3.className = 'lp-card group flex flex-col h-full border-l-4 border-l-indigo-500/50';
+                    card3.className = 'lp-card group flex flex-col h-[520px] border-l-4 border-l-[#F26522]/50 relative overflow-hidden';
                     card3.innerHTML = `
                         <div class="flex flex-col h-full text-left">
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="p-1.5 rounded bg-indigo-500/10 text-indigo-400"><i data-lucide="list" class="h-3.5 w-3.5"></i></div>
-                                <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-tighter">詳細議題・決定事項</h4>
+                            <div class="flex items-center gap-2 mb-4 shrink-0">
+                                <div class="p-1.5 rounded bg-[#F26522]/10 text-[#F26522]"><i data-lucide="list" class="h-3.5 w-3.5"></i></div>
+                                <h4 class="text-xs font-bold text-[#F26522] uppercase tracking-tighter">詳細議題・決定事項</h4>
                             </div>
-                            <div class="overflow-y-auto pr-2 scrollbar-hide text-[12px] text-slate-400 leading-relaxed custom-scrollbar">
+                            <div class="scroll-container custom-scrollbar overflow-y-auto pr-2 text-[12px] text-slate-400 leading-relaxed" onscroll="const s=this.closest('.lp-card').querySelector('.scroll-indicator'); if(this.scrollTop + this.offsetHeight >= this.scrollHeight - 10) { s.style.opacity='0'; this.classList.add('is-scrolled'); } else { s.style.opacity='1'; this.classList.remove('is-scrolled'); }">
                                 ${detailedContent || 'No details available.'}
                             </div>
                         </div>
+                        <div class="scroll-indicator text-[#F26522]/30"><i data-lucide="chevron-down" class="h-4 w-4"></i></div>
                     `;
                     grid.appendChild(card3);
                 });
