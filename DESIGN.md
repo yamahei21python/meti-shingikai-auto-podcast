@@ -1,87 +1,68 @@
 # Energy Audio - Design System (Energy Intelligence)
 
-Energy Audio のデザインシステムは、高精度なデータ解析とエネルギー業界の未来を象徴する「Energy Intelligence」をテーマとしています。深海のような深いダークテーマを基調とし、エネルギーの輝き（Sky Blue & Emerald）を感じさせる視覚体験を提供します。
+Energy Audio のデザインシステムは、高精度なデータ解析とエネルギー業界の未来を象徴する「Energy Intelligence」をテーマとしています。深い紺・黒のダークテーマを基調とし、サンセットカラー（Peach/Orange）のアクセントを用いた、機能的かつプレミアムな視覚体験を提供します。
 
 ## 1. Visual Theme
-- **Concept**: 高情報密度、静寂、エネルギーの躍動感。
-- **Aesthetic**: 「Oceanic Dark (深い紺・黒)」 × 「Energy Glow (ネオン発光)」。
-- **Key Elements**: グラスモルフィズム、広大な余白（Spaciousness）、マイクロアニメーション、大型の背景ブラー。
+- **Concept**: 高情報密度（High-Density）、タイムライン、エネルギーの躍動感。
+- **Aesthetic**: 「Oceanic Dark (深い紺・黒)」 × 「Sunset Glow (サンセット発光)」。
+- **Key Elements**: タイムライン、アコーディオン、グラスモルフィズム、高密度テキスト、詳細カード。
 
 ## 2. Color Palette
 - **Backgrounds**:
     - `Deep (Primary)`: `#020617` (Deep Indigo-Black)
-    - `Surface`: `#0f172a` (Card Backgrounds)
-    - `Elevated`: `#1e293b` (Hover states)
-- **Accents (Energy Flows)**:
-    - `Primary (Sky)`: `#38bdf8` - メインアクセント、プライマリボタングロウ
-    - `Secondary (Emerald)`: `#10b981` - 成功、完了、サブアクセント
-    - `Accent (Sunset Peach)`: `#FFB38A` - 差し色、エピソード一覧等のサブボタン用
-    - `Accent (Sunset Orange)`: `#F26522` - RSS、外部連携等の強調用
-    - `Gradient (Energy)`: `linear-gradient(135deg, #38bdf8, #10b981)` (Sky to Emerald)
-    - `Gradient (Sunset)`: `linear-gradient(135deg, #FFB38A, #F26522)` (Peach to Orange)
+    - `Surface`: `rgba(15, 23, 42, 0.6)` (Card backgrounds with blur)
+- **Accents (Sunset Energy)**:
+    - `Accent (Sunset Peach)`: `#FFB38A` - タイムライン光、詳細確認ボタン、ガイドカード
+    - `Accent (Sunset Orange)`: `#F26522` - RSS強調、アジェンダカード
+    - `Timeline Line`: `rgba(242, 101, 34, 0.5)` (Orange with transparency)
 - **Text Hierarchy**:
     - `Main`: `#f8fafc` (純白に近いグレー)
-    - `Muted`: `#94a3b8` (サブテキス、説明文)
+    - `Muted`: `#94a3b8` (サブテキスト)
     - `Dim`: `#64748b` (メタデータ、注釈)
-- **Borders**:
-    - `Default`: `rgba(255, 255, 255, 0.08)`
-    - `Bright`: `rgba(255, 255, 255, 0.15)` (強調・ホバー用)
 
-## 3. Typography
-- **Display & Headings**: `Outfit`, sans-serif
-    - 特徴: 幾何学的で洗練された印象。
-    - 使用場所: タイトル、ロゴ、数字、キャッチコピー。
-- **UI & Body**: `Inter`, sans-serif
-    - 特徴: 高い可読性とエンジニアリング的な精密さ。
-    - 使用場所: 説明文、リンク、UIラベル。
-- **Hero Copy**: `clamp(2.5rem, 8vw, 4.5rem)`, line-height: `1.1`.
-- **Text Rendering**: `-webkit-font-smoothing: antialiased`. 
+## 3. Typography & Density
+- **Headings**: `Outfit`, sans-serif (Bold, 3xl-5xl)
+- **UI & Details**: `Inter`, sans-serif
+- **Extreme High-Density (Detail Cards)**:
+    - `Guide Font`: `14px` (text-sm相当) / `leading-tight`.
+    - `Details Font`: `13px` / `leading-tight`.
+    - `Indentation`: リストインデントを最小限 (`ml-1`) にし、横幅を最大限活用する。
+    - `Spacing`: `mb-0` (リスト内), `p-2` (カード全体パディング) まで圧縮し、情報の可読性と密度を両立。
 
-## 4. Component Styles
-- **Cards (Glassmorphism)**:
-    - `Background`: `rgba(15, 23, 42, 0.6)` + `blur(12px)`.
-    - `Border-radius`: `1.5rem` (24px).
-    - `Interactivity`: ホバー時に `translateY(-5px)` かつ背景の輝度を向上。
-- **Icon Boxes (Three-Step Progression)**:
-    - `Base Style`: すべての `icon-box` で `bg-white-soft` (白5%透過) と `border-white-soft` (白10%透過) を適用し、枠のデザインを統一する。
-    - `Color Stepping`: 3つの要素が並ぶ場合、アイコンの「線のみ」に以下のステップを適用する。
-        1. 1つ目: `text-white` (純白)
-        2. 2つ目: `text-sunset-peach` (ピーチ)
-        3. 3つ目: `text-sunset-orange` (オレンジ)
-- **Icons**:
-    - `Provider`: Lucide
-    - `Treatment`: アクセントカラーの背景ボックス（1.25rem radius）に配置。
+## 4. Interaction Model: Timeline-Accordion
+- **Core Structure**: 左側に垂直なタイムライン（光るドット + オレンジライン）を配置し、全てのカードを紐付ける。
+- **Main Card**: タイトル、日付、再生プレイヤーのみを含むコンパクトなカード。
+- **Accordion Expansion**: 
+    - 「詳細確認」ボタンでスライド展開。
+    - 最新の1件はデフォルトで `is-open` 状態。
+- **Two-Tone Detail Deck**:
+    - `Left (Guide)`: Sunset Peach の左ボーダー。
+    - `Right (Details)`: Sunset Orange の左ボーダー。
+    - 両者とも `h-[600px]` の固定高を持ち、独立してスクロール可能。
 
 ## 5. Layout Principles
-- **Grid**: `1280px` センター配置。
-- **Spacing**: セクション間は `4rem` (64px) 以上の大きな余白。
-- **Background elements**: 画面の隅に大きなぼかし円（`blur-120px`）を配置し、奥行きを出す。
-- **Text Alignment**: 原則「中央揃え」または「整然とした左揃え」。
+- **Grid / Max-Width**: 
+    - `Explorer (index.html)`: `max-w-6xl` (1152px) - 大画面での閲覧効率を優先。
+    - `LP (lp.html)`: セクション全体の `container` 幅に準拠。
+- **Pagination**: 10件ずつのバッチ読み込み（Infinite Scroll）を採用し、初期表示速度を担保。
 
-## 6. Elevation & Glow
-- **Shadows**: 物理的な黒い影は避け、**「光（Glow）」**で浮き上がりを表現。
-- **Glow states**: 
-    - `primary-glow`: `rgba(56, 189, 248, 0.4)`
-    - `secondary-glow`: `rgba(16, 185, 129, 0.3)`
-- **Border Elevation**: ホバー時にボーダーの色を明るくすることで深さを演出。
+## 6. Elevation & Masking
+- **Scroll Masks**: スクロールコンテナの上下に `5px` の極薄フェードをかけ、カードの境界を感じさせつつ、隠れている情報を暗示。
+- **Glow**: タイムラインのドットには強めの `box-shadow` グロウを適用。
 
 ## 7. Do's & Don'ts
 - **✅ Do**:
-    - 見出しには `Outfit` を使用する。
-    - 文字のグラデーション（Sky -> Emerald）をベースとし、Sunset Orange を効果的な差し色として使用する。
-    - 3連のカード等では、アイコンボックスの枠を統一し、アイコンの線のみを白→ピーチ→オレンジへ変化させる。
-    - 十分な余白（Whitespace）を確保し、情報を詰め込みすぎない。
+    - エピソードは垂直タイムラインに沿って配置する。
+    - 詳細カードの情報密度は極力高く保つ（余白を恐れず、情報を詰める）。
+    - 最新1件は即座に読めるよう開いた状態にする。
 - **❌ Don't**:
-    - 純粋な黒（#000000）を背景に使用しない。
-    - 物理的なドロップシャドウを多用しない（グロウを使用する）。
-    - 派手すぎる原色（純粋な赤、青、緑）を使用しない。
+    - メインカードに不必要な余白を作らない。
+    - スクロールを阻害する大きなグラデーションマスクを使用しない。
+    - デザインのために情報の可読性（文字サイズ）を犠牲にしない。
 
 ## 8. Responsive Design
-- **Breakpoints**: 
-    - `MD` (768px): ヒーローコピーの縮小、グリッドの1カラム化。
-    - `LG` (1024px): 複雑なレイアウトの開始。
-- **Padding**: モバイルでは `1.5rem`、デスクトップでは `2rem` 以上のマージン。
+- **MD (768px)**: アコーディオン内の「Guide」と「Details」が縦に並ぶ。
+- **SM (640px)**: パディングの最小化 (`p-4` -> `p-2` 等)。
 
 ## 9. Agent Prompt Guide
-今後の実装・修正では、以下のスタイルガイドを遵守すること：
-> "Energy Audio のデザインシステムに基づき、Slate-950 背景、Outfit/Inter のタイポグラフィ、Sky/Emerald のグラデーション、および明瞭な1pxボーダーとグラスモルフィズムを用いた、プレミアムで情報の透明性が高い UI を生成してください。物理的な影ではなく、グロウと輝度の調整で奥行きを表現してください。"
+> "Energy Audio のデザインシステムに基づき、垂直タイムラインとアコーディオンを用いた『Timeline-Accordion UI』を生成してください。詳細カードは高密度・高可読性を追求し、h-[600px] の固定高、p-2 の極小パディング、および 13-14px のフォントサイズを適用してください。Sunset Peach (#FFB38A) と Sunset Orange (#F26522) をアクセントラインとして使い、機能的でプレミアムな閲覧体験を提供してください。"
