@@ -68,16 +68,7 @@ jobs:
           set -o pipefail
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py 2>&1 | tee worker_output.log
           
-          if grep -q "PODCAST_ASSET_PATH=" worker_output.log; then
-            # Extract relative path (the log says ../podcasts/..., which is podcasts/ relative to root)
-            raw_path=$(grep "PODCAST_ASSET_PATH=" worker_output.log | cut -d'=' -f2)
-            filename=$(echo $raw_path | sed 's|^\.\./||')
-            
-            # Extract original source URL
-            original_url=$(grep "ORIGINAL_URL=" worker_output.log | cut -d'=' -f2)
-            
-            echo "filename=$filename" >> $GITHUB_OUTPUT
-            echo "original_url=$original_url" >> $GITHUB_OUTPUT
+          if grep -q "COMPLETE SUCCESS:" worker_output.log; then
             echo "has_asset=true" >> $GITHUB_OUTPUT
           else
             echo "has_asset=false" >> $GITHUB_OUTPUT
@@ -111,15 +102,15 @@ jobs:
             echo "No changes to commit."
           fi
 
-      - name: Create Release and Upload Asset
+      - name: Create Release and Upload Assets
         if: steps.podcast_gen.outputs.has_asset == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "podcast-${{ github.run_number }}"
-          name: "Podcast [${{ steps.podcast_gen.outputs.filename }}]"
+          name: "Daily Podcast [Run #${{ github.run_number }}]"
           body: "METI Council Audio Summary (Energy Industry Knowledge-up series)."
           files: |
-            ${{ steps.podcast_gen.outputs.filename }}
+            podcasts/*.mp3
           draft: false
           prerelease: false
         env:

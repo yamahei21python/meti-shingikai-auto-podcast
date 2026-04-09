@@ -9,7 +9,7 @@ from datetime import datetime
 
 # --- 設定 ---
 DB_PATH = "../councils.db"
-MAX_PROCESS_PER_RUN = 1 # 1回の実行で処理する最大件数
+MAX_PROCESS_PER_RUN = 2 # 1回の実行で処理する最大件数
 
 def init_notebooklm_auth():
     """Ensure notebooklm auth file exists if secret is provided in ENV."""
@@ -103,13 +103,13 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
-def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=30):
+def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=60):
     """Wait for a task to complete by polling status."""
     start_time = time.time()
     print(f"[*] Starting monitoring for task: {task_id} (Timeout: {timeout_seconds}s)")
     
     while time.time() - start_time < timeout_seconds:
-        status_args = ["artifact", "status", task_id]
+        status_args = ["artifact", "poll", task_id]
         if notebook_identifier:
             status_args.extend(["-n", notebook_identifier])
         
@@ -198,67 +198,83 @@ def process_single_item(item):
     print(f"\n>>> Processing Item: {title} ({date_str})")
     
     formatted_date = format_date_yyyymmdd(date_str)
-    notebook_name = sanitize_filename(f"{formatted_date}_{title}")
-    output_filename = "temp_podcast.mp3"
+    sanitized_title = sanitize_filename(title)
+    notebook_name = f"{formatted_date}_{sanitized_title}"
+    output_temp = f"temp_{formatted_date}.mp3"
     
-    # Execute Generator
+    # --- STEP 1: Generate Podcast MP3 ---
     python_bin = sys.executable
     cmd = [
         python_bin, "generate_podcast_from_article.py",
         "--url", url,
-        "--output", output_filename,
+        "--output", output_temp,
         "--name", notebook_name
     ]
     if pdf_urls_json:
         cmd.extend(["--pdfs", pdf_urls_json])
     
     print(f"[*] Executing Generator: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    print(result.stdout)
+    mp3_res = subprocess.run(cmd, capture_output=True, text=True)
+    print(mp3_res.stdout)
     
-    if result.returncode == 0:
-        # Capture Notebook ID
-        captured_id = None
-        for line in result.stdout.splitlines():
+    mp3_success = False
+    notebook_identifier = notebook_name
+    
+    if mp3_res.returncode == 0 and os.path.exists(output_temp):
+        mp3_success = True
+        # Try to capture real notebook ID if possible
+        for line in mp3_res.stdout.splitlines():
             if line.startswith("NOTEBOOK_ID="):
-                captured_id = line.split("=", 1)[1].strip()
+                notebook_identifier = line.split("=", 1)[1].strip()
                 break
+    
+    # --- STEP 2: Generate Summary MD (Only if MP3 succeeded) ---
+    md_success = False
+    md_temp = f"temp_{formatted_date}_summary.md"
+    
+    if mp3_success:
+        md_success = generate_summary_report(notebook_id=notebook_identifier, target_path=md_temp)
+    
+    # --- STEP 3: Finalize or Rollback ---
+    final_dir = "../podcasts"
+    if not os.path.exists(final_dir): os.makedirs(final_dir)
+    
+    final_mp3_path = os.path.join(final_dir, f"{formatted_date}_{sanitized_title}.mp3")
+    final_md_path = os.path.join(final_dir, f"{formatted_date}_{sanitized_title}_summary.md")
+    
+    if mp3_success and md_success:
+        # Atomic Move
+        if os.path.exists(final_mp3_path): os.remove(final_mp3_path)
+        os.rename(output_temp, final_mp3_path)
         
-        notebook_identifier = captured_id if captured_id else notebook_name
+        if os.path.exists(final_md_path): os.remove(final_md_path)
+        os.rename(md_temp, final_md_path)
         
-        # Move MP3
-        display_name = f"{formatted_date}_{sanitize_filename(title)}.mp3"
-        target_dir = "../podcasts"
-        if not os.path.exists(target_dir): os.makedirs(target_dir)
-        target_path = os.path.join(target_dir, display_name)
+        # Save metadata JSON for RSS generator (Original Link)
+        meta_path = final_mp3_path.rsplit(".", 1)[0] + ".json"
+        with open(meta_path, "w", encoding="utf-8") as f:
+            json.dump({"original_url": url, "title": title}, f, ensure_ascii=False, indent=2)
+            
+        print(f"[+] COMPLETE SUCCESS: Both MP3 and MD saved with metadata.")
+        update_status(item_id, 'done')
         
-        if os.path.exists(output_filename):
-            if os.path.exists(target_path): os.remove(target_path)
-            os.rename(output_filename, target_path)
-            print(f"[+] Podcast saved to: {target_path}")
-            
-            # Generate Summary
-            summary_filename = f"{formatted_date}_{sanitize_filename(title)}_summary.md"
-            summary_path = os.path.join(target_dir, summary_filename)
-            generate_summary_report(notebook_id=notebook_identifier, target_path=summary_path)
-            
-            # --- NEW: Immediate Cleanup of Notebook ---
-            print(f"[*] Deleting NotebookLM Notebook: {notebook_identifier}")
-            del_res = run_notebooklm(["delete", "-n", notebook_identifier, "-y"])
-            if del_res.returncode == 0:
-                print(f"[+] Successfully deleted notebook: {notebook_identifier}")
-            else:
-                print(f"[!] Failed to delete notebook: {del_res.stderr}")
-            
-            print(f"PODCAST_ASSET_PATH={target_path}")
-            print(f"ORIGINAL_URL={url}")
-            
-            update_status(item_id, 'done')
-            return True
+        # Success details for workflow
+        print(f"PODCAST_ASSET_PATH={final_mp3_path}")
+        print(f"ORIGINAL_URL={url}")
+        
+        result_status = True
     else:
-        print(f"[!] Error during generation: {result.stderr}")
-        update_status(item_id, 'failed')
-        return False
+        # Failed: Cleanup temp files
+        print(f"[!] FAILED: mp3={mp3_success}, md={md_success}. Keeping status as pending for retry.")
+        if os.path.exists(output_temp): os.remove(output_temp)
+        if os.path.exists(md_temp): os.remove(md_temp)
+        result_status = False
+
+    # --- STEP 4: Cleanup Notebook (Always) ---
+    print(f"[*] Cleaning up Notebook: {notebook_identifier}")
+    run_notebooklm(["delete", "-n", notebook_identifier, "-y"])
+    
+    return result_status
 
 def main():
     print(f"=== Daily Podcast Worker Start (Limit: {MAX_PROCESS_PER_RUN}): {datetime.now()} ===")

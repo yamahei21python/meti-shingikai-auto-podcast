@@ -183,6 +183,19 @@ def main():
             public_url = f"{R2_PUBLIC_URL.rstrip('/')}/{r2_key}"
             base_name = filename.rsplit(".", 1)[0]
             
+            # Load metadata if available (Original Link)
+            original_link = args.source_url
+            meta_filename = f"{base_name}.json"
+            meta_path = os.path.join(os.path.dirname(local_path), meta_filename)
+            if os.path.exists(meta_path):
+                try:
+                    import json
+                    with open(meta_path, "r", encoding="utf-8") as f:
+                        meta_data = json.load(f)
+                        original_link = meta_data.get("original_url")
+                except Exception as e:
+                    print(f"[!] Warning: Failed to read metadata for {filename}: {e}")
+
             description = None
             summary_filename = f"{base_name}_summary.md"
             summary_path = os.path.join(os.path.dirname(local_path), summary_filename)
@@ -194,7 +207,7 @@ def main():
                 "title": base_name,
                 "description": description,
                 "url": public_url,
-                "original_link": args.source_url,
+                "original_link": original_link,
                 "size": stat.st_size,
                 "mtime": stat.st_mtime
             })

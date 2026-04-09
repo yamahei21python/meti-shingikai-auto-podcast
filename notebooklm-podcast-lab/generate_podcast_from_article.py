@@ -40,13 +40,13 @@ def run_notebooklm(args):
     print(f"[*] Executing: {' '.join(cmd)}")
     return subprocess.run(cmd, capture_output=True, text=True)
 
-def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=30):
+def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=60):
     """Wait for a task to complete by polling status."""
     start_time = time.time()
     print(f"[*] Starting monitoring for task: {task_id} (Timeout: {timeout_seconds}s)")
     
     while time.time() - start_time < timeout_seconds:
-        status_args = ["artifact", "status", task_id]
+        status_args = ["artifact", "poll", task_id]
         if notebook_identifier:
             status_args.extend(["-n", notebook_identifier])
         
