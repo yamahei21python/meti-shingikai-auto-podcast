@@ -167,15 +167,28 @@ def fetch_occto_updates():
 def save_to_db(conn, updates):
     cursor = conn.cursor()
     new_count = 0
+    # ポッドキャスト対象の定義
+    target_cats_meti = ['エネルギー・環境', '総合資源エネルギー調査会']
+    
     for item in updates:
         try:
-            placeholders = ", ".join(["?"] * (MAX_CATEGORIES + 3))
+            # カテゴリに基づいてステータスを決定
+            category1 = item['categories'][0] if len(item['categories']) > 0 else None
+            category2 = item['categories'][1] if len(item['categories']) > 1 else None
+            
+            status = 'skipped'
+            if category1 == 'OCCTO':
+                status = 'pending'
+            elif category1 == 'METI' and category2 in target_cats_meti:
+                status = 'pending'
+                
+            placeholders = ", ".join(["?"] * (MAX_CATEGORIES + 4))
             cat_list = (item['categories'] + [None] * MAX_CATEGORIES)[:MAX_CATEGORIES]
-            params = [item['date'], item['title'], item['url']] + cat_list
+            params = [item['date'], item['title'], item['url'], status] + cat_list
             col_names = ", ".join([f"category{i+1}" for i in range(MAX_CATEGORIES)])
             
             cursor.execute(f'''
-                INSERT OR IGNORE INTO council_updates (date, title, url, {col_names})
+                INSERT OR IGNORE INTO council_updates (date, title, url, podcast_status, {col_names})
                 VALUES ({placeholders})
             ''', params)
             if cursor.rowcount > 0:

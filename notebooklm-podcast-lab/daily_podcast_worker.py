@@ -43,7 +43,7 @@ def sanitize_filename(text):
     return text[:200]
 
 def get_pending_items(limit=2):
-    """Get pending items to process."""
+    """Get pending items to process, filtered by target categories."""
     if not os.path.exists(DB_PATH):
         print(f"[!] Database not found at {DB_PATH}")
         return []
@@ -51,10 +51,15 @@ def get_pending_items(limit=2):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
+    # 対象カテゴリ: OCCTO全件, METI(総合資源エネルギー調査会, エネルギー・環境)
     cursor.execute("""
         SELECT id, title, url, date, pdf_urls 
         FROM council_updates 
         WHERE podcast_status = 'pending' 
+        AND (
+            category1 = 'OCCTO' OR 
+            (category1 = 'METI' AND category2 IN ('エネルギー・環境', '総合資源エネルギー調査会'))
+        )
         ORDER BY date ASC, id ASC 
         LIMIT ?
     """, (limit,))
