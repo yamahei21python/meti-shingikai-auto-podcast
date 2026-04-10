@@ -45,6 +45,8 @@ jobs:
 
       - name: Run Sync Pipeline
         run: |
+          # テスト用に既存のDBを削除して新規取得をシミュレーション
+          rm -f councils.db
           # 統合本番スクレイパーを実行
           uv run --project notebooklm-podcast-lab python3 sync_all_production.py
 

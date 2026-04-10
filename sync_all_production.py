@@ -37,6 +37,11 @@ def init_db():
     conn.commit()
     return conn
 
+def is_url_in_db(conn, url):
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM council_updates WHERE url = ?", (url,))
+    return cursor.fetchone() is not None
+
 def normalize_date(date_str):
     if not date_str: return None
     # 2026年4月10日 -> 2026-04-10
@@ -77,6 +82,38 @@ def fetch_meti_updates():
     except Exception as e:
         print(f"  [!] METI Exception: {e}")
         return []
+
+def fetch_meti_categories(url):
+    """個別ページを訪問してパンくずリストからカテゴリを抽出する"""
+    proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
+    try:
+        response = curl_requests.get(url, impersonate="chrome120", timeout=30, proxies=proxies)
+        if response.status_code != 200:
+            return ["METI"]
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        breadcrumb = soup.find('div', id='breadcrumb')
+        if not breadcrumb:
+            return ["METI"]
+        
+        # パンくずリストのテキストを取得して整形
+        items = [item.get_text(strip=True) for item in breadcrumb.find_all(['li', 'a', 'span'])]
+        # 「ホーム」「審議会・研究会」は除外
+        exclude = ["ホーム", "審議会・研究会", "HOME"]
+        categories = ["METI"]
+        for item in items:
+            if item and item not in exclude and item not in categories:
+                # 最後のアイテム（現在のタイトル）自体は含めない（親階層のみが必要）
+                categories.append(item)
+        
+        # タイトル自体がパンくずの最後にある場合、それを除外（最後の1つを削除）
+        if len(categories) > 2:
+            categories.pop()
+            
+        return categories
+    except Exception as e:
+        print(f"  [!] METI Category Error ({url}): {e}")
+        return ["METI"]
 
 # --- OCCTO Scraper ---
 def fetch_occto_updates():
@@ -139,12 +176,22 @@ def main():
     meti_data = fetch_meti_updates()
     print(f"  [+] METI: Found {len(meti_data)} items.")
     
+    # 新規アイテムのみ詳細を取得
+    processed_meti = []
+    print("  [*] Checking for new METI items to fetch categories...")
+    for item in meti_data:
+        if not is_url_in_db(conn, item['url']):
+            print(f"    [+] Fetching categories for: {item['title'][:40]}...")
+            item['categories'] = fetch_meti_categories(item['url'])
+            time.sleep(1) # サーバー負荷軽減
+        processed_meti.append(item)
+    
     # 2. OCCTO
     occto_data = fetch_occto_updates()
     print(f"  [+] OCCTO: Found {len(occto_data)} items.")
     
     # 3. Save
-    all_data = meti_data + occto_data
+    all_data = processed_meti + occto_data
     added = save_to_db(conn, all_data)
     print(f"  [🎉] Summary: Added {added} new items to DB.")
     
