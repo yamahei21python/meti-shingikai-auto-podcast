@@ -92,21 +92,27 @@ def fetch_meti_categories(url):
             return ["METI"]
         
         soup = BeautifulSoup(response.content, 'html.parser')
-        breadcrumb = soup.find('div', id='breadcrumb')
+        # 経産省のパンくずリストは通常 <div class="pan"> または <div id="breadcrumb">
+        breadcrumb = soup.find('div', class_='pan') or soup.find('div', id='breadcrumb')
         if not breadcrumb:
             return ["METI"]
         
-        # パンくずリストのテキストを取得して整形
-        items = [item.get_text(strip=True) for item in breadcrumb.find_all(['li', 'a', 'span'])]
-        # 「ホーム」「審議会・研究会」は除外
-        exclude = ["ホーム", "審議会・研究会", "HOME"]
+        # パンくずリストの各階層テキストを取得
+        # <a>タグまたは<li>タグの中身を順番に取得
+        items = []
+        for li in breadcrumb.find_all(['li', 'a']):
+            text = li.get_text(strip=True)
+            if text and text not in items:
+                items.append(text)
+        
+        # 「ホーム」「審議会・研究会」および英語の「HOME」は除外
+        exclude = ["ホーム", "審議会・研究会", "HOME", "审议会・研究会"]
         categories = ["METI"]
         for item in items:
             if item and item not in exclude and item not in categories:
-                # 最後のアイテム（現在のタイトル）自体は含めない（親階層のみが必要）
                 categories.append(item)
         
-        # タイトル自体がパンくずの最後にある場合、それを除外（最後の1つを削除）
+        # パンくずの最後（現在のタイトル）はカテゴリとして冗長なので除外
         if len(categories) > 2:
             categories.pop()
             
