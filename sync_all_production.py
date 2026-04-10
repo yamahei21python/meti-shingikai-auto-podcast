@@ -54,8 +54,12 @@ def normalize_date(date_str):
 def fetch_meti_updates():
     print(f"[*] Fetching METI via curl-cffi + WARP: {METI_URL}")
     proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
+    headers = {
+        "Referer": "https://www.google.com/",
+        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8"
+    }
     try:
-        response = curl_requests.get(METI_URL, impersonate="chrome120", timeout=60, proxies=proxies)
+        response = curl_requests.get(METI_URL, impersonate="chrome120", timeout=60, proxies=proxies, headers=headers)
         if response.status_code != 200:
             print(f"  [!] METI Error: {response.status_code}")
             return []
@@ -86,10 +90,9 @@ def fetch_meti_updates():
 def fetch_meti_categories(url):
     """個別ページを訪問してパンくずリストからカテゴリを抽出する"""
     proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
     try:
+        # ヘッダーを最小限にし、impersonateに任せる。Refererを追加。
+        headers = {"Referer": METI_URL}
         response = curl_requests.get(url, impersonate="chrome120", timeout=30, proxies=proxies, headers=headers)
         if response.status_code != 200:
             return ["METI"]
