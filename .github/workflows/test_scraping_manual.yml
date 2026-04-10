@@ -43,6 +43,14 @@ jobs:
           uv sync
           uv run playwright install --with-deps chromium
 
+      - name: Debug METI HTML Structure
+        run: |
+          echo "=== Debug METI Page ==="
+          # プロキシ経由で経産省のHTMLを取得して構造を確認
+          curl -s --proxy socks5h://127.0.0.1:40000 https://www.meti.go.jp/shingikai/index.html | head -n 1000
+          echo "=== Selector Check ==="
+          curl -s --proxy socks5h://127.0.0.1:40000 https://www.meti.go.jp/shingikai/index.html | grep -C 2 -E "id=\"main_contents\"|id=\"contents\"|<dl" || echo "Standard selectors not found"
+
       - name: Run Sync Pipeline
         run: |
           # 統合本番スクレイパーを実行
