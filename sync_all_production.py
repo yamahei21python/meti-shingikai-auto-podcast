@@ -86,8 +86,11 @@ def fetch_meti_updates():
 def fetch_meti_categories(url):
     """個別ページを訪問してパンくずリストからカテゴリを抽出する"""
     proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
     try:
-        response = curl_requests.get(url, impersonate="chrome120", timeout=30, proxies=proxies)
+        response = curl_requests.get(url, impersonate="chrome120", timeout=30, proxies=proxies, headers=headers)
         if response.status_code != 200:
             return ["METI"]
         
@@ -95,10 +98,12 @@ def fetch_meti_categories(url):
         # 経産省のパンくずリストは通常 <div class="pan"> または <div id="breadcrumb">
         breadcrumb = soup.find('div', class_='pan') or soup.find('div', id='breadcrumb')
         if not breadcrumb:
+            title = soup.title.string if soup.title else "No Title"
+            print(f"      [!] Breadcrumb not found on {url}. Title: {title}")
+            # デバッグ用にHTMLの一部（メインコンテンツ付近）を確認
             return ["METI"]
         
         # パンくずリストの各階層テキストを取得
-        # <a>タグまたは<li>タグの中身を順番に取得
         items = []
         for li in breadcrumb.find_all(['li', 'a']):
             text = li.get_text(strip=True)
@@ -115,6 +120,9 @@ def fetch_meti_categories(url):
         # パンくずの最後（現在のタイトル）はカテゴリとして冗長なので除外
         if len(categories) > 2:
             categories.pop()
+            
+        if len(categories) > 1:
+            print(f"      [✓] Categories: {'>'.join(categories)}")
             
         return categories
     except Exception as e:
