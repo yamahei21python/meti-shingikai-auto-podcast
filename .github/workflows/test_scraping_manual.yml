@@ -43,10 +43,6 @@ jobs:
           uv sync
           uv run playwright install --with-deps chromium
 
-      - name: Debug METI Detail Page
-        run: |
-          uv run python3 debug_meti_detail.py
-
       - name: Run Sync Pipeline
         run: |
           # テスト用に既存のDBを削除して新規取得をシミュレーション
