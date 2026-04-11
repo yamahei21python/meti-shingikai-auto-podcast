@@ -57,10 +57,11 @@ def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_
                 status_out = res.stdout.strip()
                 print(f"    [STATUS] {status_out}")
                 
-                if "status='SUCCEEDED'" in status_out or "status='COMPLETED'" in status_out:
+                status_upper = status_out.upper()
+                if "STATUS='SUCCEEDED'" in status_upper or "STATUS='COMPLETED'" in status_upper:
                     print("[+] Task completed successfully.")
                     return True
-                if "status='FAILED'" in status_out or "status='ERROR'" in status_out:
+                if "STATUS='FAILED'" in status_upper or "STATUS='ERROR'" in status_upper:
                     print(f"[!] Task failed according to status: {status_out}")
                     return False
             except Exception as e:
