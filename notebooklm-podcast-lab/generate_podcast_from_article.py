@@ -85,7 +85,11 @@ def fetch_with_playwright_lite(url, max_attempts=3):
             
             print(f"[*] Fetching article with Playwright (attempt {attempt+1}/{max_attempts}, mode: {wait_condition}): {url}")
             with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
+                # Use WARP SOCKS5 proxy if available (required for METI on GitHub Actions)
+                browser = p.chromium.launch(
+                    headless=True,
+                    proxy={"server": "socks5://127.0.0.1:40000"}
+                )
                 context = browser.new_context(
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
                     locale="ja-JP"
