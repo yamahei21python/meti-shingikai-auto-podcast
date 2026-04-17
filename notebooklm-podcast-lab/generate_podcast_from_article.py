@@ -7,6 +7,8 @@ import json
 from datetime import datetime
 from urllib.parse import urljoin
 from playwright.sync_api import sync_playwright
+from curl_cffi import requests as curl_requests
+from bs4 import BeautifulSoup
 
 # Configurations
 # Use system 'uv' by default, fallback to known local path
@@ -74,48 +76,46 @@ def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_
     print(f"[!] Monitoring timed out after {timeout_seconds}s")
     return False
 
-def fetch_with_playwright_lite(url, max_attempts=3):
-    """Fetch URL using Playwright with adaptive wait and longer timeout."""
+def fetch_with_curl_cffi(url, max_attempts=3):
+    """Fetch URL using curl-cffi with Chrome impersonation to bypass bot detection."""
     for attempt in range(max_attempts):
         try:
-            # Stage 1-2: Be patient, wait for DOM
-            # Stage 3: Grab whatever is available
-            wait_condition = "domcontentloaded" if attempt < 2 else "commit"
-            timeout = 120000 # 120 seconds
+            # SOCKS5 proxy is required for METI on GitHub Actions (WARP)
+            proxies = None
+            if os.getenv("GITHUB_ACTIONS") or os.path.exists("/usr/bin/warp-cli"):
+                proxies = {"http": "socks5://127.0.0.1:40000", "https": "socks5://127.0.0.1:40000"}
             
-            print(f"[*] Fetching article with Playwright (attempt {attempt+1}/{max_attempts}, mode: {wait_condition}): {url}")
-            with sync_playwright() as p:
-                # Use WARP SOCKS5 proxy if available (required for METI on GitHub Actions)
-                browser = p.chromium.launch(
-                    headless=True,
-                    proxy={"server": "socks5://127.0.0.1:40000"}
-                )
-                context = browser.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
-                    locale="ja-JP"
-                )
-                page = context.new_page()
-                # Do not block JS for now as METI might rely on it for some items
-                page.route("**/*.{png,jpg,jpeg,gif,svg,css,woff,woff2}", lambda route: route.abort())
-                
-                response = page.goto(url, wait_until=wait_condition, timeout=timeout)
-                
-                if response and response.status == 200:
-                    time.sleep(2) # Extra buffer for dynamic content
-                    content = page.content()
-                    browser.close()
-                    from bs4 import BeautifulSoup
-                    return BeautifulSoup(content, 'html.parser')
-                else:
-                    status = response.status if response else "No response"
-                    print(f"[!] Received status {status} for {url}")
-                    browser.close()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+                "Referer": "https://www.google.com/"
+            }
+
+            print(f"[*] Fetching article with curl-cffi (attempt {attempt+1}/{max_attempts}): {url}")
+            
+            response = curl_requests.get(
+                url, 
+                impersonate="chrome120", 
+                timeout=30, 
+                proxies=proxies, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                return BeautifulSoup(response.content, 'html.parser')
+            else:
+                print(f"[!] Received status {response.status_code} for {url}")
+                if response.status_code == 403:
+                    print(f"[!] 403 Forbidden detected. METI security is blocking the request.")
+        
         except Exception as e:
             print(f"[!] Attempt {attempt+1} failed: {e}")
-            if attempt < max_attempts - 1:
-                wait_time = 15 * (attempt + 1)
-                print(f"[*] Waiting {wait_time}s before retry...")
-                time.sleep(wait_time)
+            
+        if attempt < max_attempts - 1:
+            wait_time = 15 * (attempt + 1)
+            print(f"[*] Waiting {wait_time}s before retry...")
+            time.sleep(wait_time)
+            
     return None
 
 def extract_pdf_urls(page_url, soup):
@@ -145,7 +145,7 @@ def main():
         pdf_urls = json.loads(args.pdfs)
     elif args.url:
         # Fallback: Scrape if not provided (Local mode)
-        soup = fetch_with_playwright_lite(args.url)
+        soup = fetch_with_curl_cffi(args.url)
         if soup:
             pdf_urls = extract_pdf_urls(args.url, soup)
     
