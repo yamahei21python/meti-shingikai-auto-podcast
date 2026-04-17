@@ -43,6 +43,11 @@ jobs:
           uv sync
           uv run playwright install --with-deps chromium
 
+      - name: Run curl-cffi Fetch Test
+        run: |
+          # curl-cffiでの取得テストを実行
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/test_fetch_curl_cffi.py
+
       - name: Run Sync Pipeline
         run: |
           # テスト用に既存のDBを削除して新規取得をシミュレーション
