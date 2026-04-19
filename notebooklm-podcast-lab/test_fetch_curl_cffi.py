@@ -24,6 +24,11 @@ def test_fetch_with_curl_cffi():
         print("[*] Running locally, proxy skipped unless USE_PROXY=true.")
         proxies = None
 
+    # === 注意：ヘッダー整合性の重要性 ===
+    # impersonate="chrome120" を使用する場合、headers内の User-Agent も
+    # Chrome 120 のものに固定する必要があります。
+    # TLSフィンガープリント（癖）と自己申告（UA）を一致させることが 403 回避の鍵です。
+    # ================================
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

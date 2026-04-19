@@ -53,6 +53,13 @@ def fetch_article_page(url: str) -> BeautifulSoup | None:
     if is_github_actions() or os.path.exists("/usr/bin/warp-cli"):
         proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
 
+    # === IMPORTANT: Header Matching Strategy ===
+    # curl-cffiの 'impersonate' で指定したブラウザバージョン（ここではchrome120）と、
+    # 'headers' 内の User-Agent および Client Hints (sec-ch-*) は必ず一致させる必要があります。
+    # 
+    # [理由] TLSフィンガープリント（通信の癖）と自己申告（UA）が矛盾すると、 WAFによってボットと判定され
+    # METIサイトから 403 Forbidden を返されます。そのため、UAのランダム化は行わないでください。
+    # ===========================================
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
