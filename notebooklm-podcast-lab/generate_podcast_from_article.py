@@ -1,224 +1,248 @@
+"""
+Generate Podcast from PDF links using NotebookLM.
+
+Usage:
+    python generate_podcast_from_article.py --url "https://..."
+    python generate_podcast_from_article.py --pdfs '["url1", "url2"]' --name "Custom Name"
+"""
+
+import argparse
+import json
 import os
 import sys
-import argparse
-import subprocess
 import time
-import json
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urljoin
-from playwright.sync_api import sync_playwright
-from curl_cffi import requests as curl_requests
+
+import bs4
+import curl_requests
 from bs4 import BeautifulSoup
 
-# Configurations
-# Use system 'uv' by default, fallback to known local path
-UV_PATH = "uv"
-if not os.getenv("GITHUB_ACTIONS"):
-    # Check if 'uv' is in PATH, if not use specific local path
-    import shutil
-    if not shutil.which("uv"):
-        UV_PATH = "/Users/kohei/.local/bin/uv"
-BASE_URL = "https://www.meti.go.jp"
+# Add parent to path
+sys.path.insert(0, ".")
+
+from shared import (
+    METI_URL,
+    SOCKS5_PROXY,
+    init_auth,
+    run_notebooklm,
+    parse_notebook_id,
+    parse_task_id,
+    wait_for_task,
+    logger,
+    is_github_actions,
+)
+
+# === Configuration ===
 OUTPUT_MP3 = "podcast_summary.mp3"
+BASE_URL = "https://www.meti.go.jp"
 
-def run_notebooklm(args):
-    """Run notebooklm command using direct path if available, or uv run as fallback."""
-    # Try to find the exact path for notebooklm in the local .venv
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    venv_bin_path = os.path.join(base_dir, ".venv", "bin", "notebooklm")
-    python_bin = sys.executable # Use current python
-    
-    if os.path.exists(venv_bin_path):
-        # Using [python, script_path] to bypass broken shebangs
-        cmd = [python_bin, venv_bin_path] + args
-    else:
-        # Fallback to uv run if uv is available, or just 'notebooklm'
-        import shutil
-        if shutil.which("uv"):
-            cmd = ["uv", "run", "notebooklm"] + args
-        else:
-            cmd = ["notebooklm"] + args
-        
-    print(f"[*] Executing: {' '.join(cmd)}")
-    return subprocess.run(cmd, capture_output=True, text=True)
 
-def wait_for_task(task_id, notebook_identifier=None, timeout_seconds=5400, poll_interval=60):
-    """Wait for a task to complete by polling status."""
-    start_time = time.time()
-    print(f"[*] Starting monitoring for task: {task_id} (Timeout: {timeout_seconds}s)")
-    
-    while time.time() - start_time < timeout_seconds:
-        status_args = ["artifact", "poll", task_id]
-        if notebook_identifier:
-            status_args.extend(["-n", notebook_identifier])
-        
-        res = run_notebooklm(status_args)
-        if res.returncode == 0:
-            try:
-                # Expecting output like: "Status: RUNNING, Progress: 45%" or similar
-                status_out = res.stdout.strip()
-                print(f"    [STATUS] {status_out}")
-                
-                status_upper = status_out.upper()
-                if "STATUS='SUCCEEDED'" in status_upper or "STATUS='COMPLETED'" in status_upper:
-                    print("[+] Task completed successfully.")
-                    return True
-                if "STATUS='FAILED'" in status_upper or "STATUS='ERROR'" in status_upper:
-                    print(f"[!] Task failed according to status: {status_out}")
-                    return False
-            except Exception as e:
-                print(f"    [!] Warning: Failed to parse status output: {e}")
-        else:
-            print(f"    [!] Status check command failed (code {res.returncode})")
+def fetch_article_page(url: str) -> BeautifulSoup | None:
+    """
+    Fetch article page using curl-cffi.
 
-        time.sleep(poll_interval)
-    
-    print(f"[!] Monitoring timed out after {timeout_seconds}s")
-    return False
+    Args:
+        url: Article URL
 
-def fetch_with_curl_cffi(url, max_attempts=3):
-    """Fetch URL using curl-cffi with Chrome impersonation to bypass bot detection."""
-    for attempt in range(max_attempts):
+    Returns:
+        BeautifulSoup object or None on failure
+    """
+    proxies = None
+    if is_github_actions() or os.path.exists("/usr/bin/warp-cli"):
+        proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+    }
+
+    for attempt in range(3):
         try:
-            # SOCKS5 proxy is required for METI on GitHub Actions (WARP)
-            proxies = None
-            if os.getenv("GITHUB_ACTIONS") or os.path.exists("/usr/bin/warp-cli"):
-                proxies = {"http": "socks5://127.0.0.1:40000", "https": "socks5://127.0.0.1:40000"}
-            
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-                "Referer": "https://www.google.com/"
-            }
-
-            print(f"[*] Fetching article with curl-cffi (attempt {attempt+1}/{max_attempts}): {url}")
-            
+            logger.info(f"Fetching article (attempt {attempt + 1}/3): {url}")
             response = curl_requests.get(
-                url, 
-                impersonate="chrome120", 
-                timeout=30, 
-                proxies=proxies, 
-                headers=headers
+                url,
+                impersonate="chrome120",
+                timeout=30,
+                proxies=proxies,
+                headers=headers,
             )
-            
+
             if response.status_code == 200:
-                return BeautifulSoup(response.content, 'html.parser')
-            else:
-                print(f"[!] Received status {response.status_code} for {url}")
-                if response.status_code == 403:
-                    print(f"[!] 403 Forbidden detected. METI security is blocking the request.")
-        
+                return BeautifulSoup(response.content, "html.parser")
+
+            logger.warning(f"Status {response.status_code} for {url}")
+            if response.status_code == 403:
+                logger.warning("403 Forbidden - METI security blocking")
+
         except Exception as e:
-            print(f"[!] Attempt {attempt+1} failed: {e}")
-            
-        if attempt < max_attempts - 1:
+            logger.error(f"Attempt {attempt + 1} failed: {e}")
+
+        if attempt < 2:
             wait_time = 15 * (attempt + 1)
-            print(f"[*] Waiting {wait_time}s before retry...")
+            logger.info(f"Waiting {wait_time}s before retry...")
             time.sleep(wait_time)
-            
+
     return None
 
-def extract_pdf_urls(page_url, soup):
-    """Extract all PDF links from a METI article page."""
-    print(f"[*] Extracting PDF links from soup...")
-    links = soup.find_all('a', href=True)
+
+def extract_pdf_urls(page_url: str, soup: BeautifulSoup) -> list[str]:
+    """
+    Extract PDF links from article page.
+
+    Args:
+        page_url: Original page URL
+        soup: BeautifulSoup object
+
+    Returns:
+        List of absolute PDF URLs
+    """
+    logger.info("Extracting PDF links...")
+    links = soup.find_all("a", href=True)
     pdf_urls = []
+
     for link in links:
-        href = link.get('href')
-        if href and (href.lower().endswith('.pdf') or '/pdf/' in href.lower()):
+        href = link.get("href")
+        if href and (href.lower().endswith(".pdf") or "/pdf/" in href.lower()):
             abs_url = urljoin(page_url, href)
             pdf_urls.append(abs_url)
+
+    # Deduplicate while preserving order
     return list(dict.fromkeys(pdf_urls))
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate a podcast from PDF links.")
-    parser.add_argument("--url", help="URL of the METI article page (context only)")
-    parser.add_argument("--pdfs", help="JSON string of PDF URLs to process directly")
-    parser.add_argument("--name", help="Name of the Notebook")
-    parser.add_argument("--output", default=OUTPUT_MP3, help="Output filename for the MP3")
-    args = parser.parse_args()
 
-    pdf_urls = []
-    if args.pdfs:
-        # Step 0: Use provided PDF list directly (Robust for Cloud)
-        print("[*] Using provided PDF URL list (direct mode).")
-        pdf_urls = json.loads(args.pdfs)
-    elif args.url:
-        # Fallback: Scrape if not provided (Local mode)
-        soup = fetch_with_curl_cffi(args.url)
-        if soup:
-            pdf_urls = extract_pdf_urls(args.url, soup)
-    
-    if not pdf_urls:
-        print("[!] No PDF links found on the page or provided.")
-        sys.exit(1)
+def create_notebook(name: str, max_attempts: int = 3) -> str | None:
+    """
+    Create a new NotebookLM notebook.
 
-    print(f"[+] Found {len(pdf_urls)} PDF documents.")
+    Args:
+        name: Notebook name
+        max_attempts: Maximum retry attempts
 
-    # 1. Setup Notebook Title
-    notebook_name = args.name or f"METI_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    Returns:
+        Notebook ID or None on failure
+    """
+    for attempt in range(max_attempts):
+        logger.info(f"Creating notebook: {name} (Attempt {attempt + 1}/{max_attempts})")
+        res = run_notebooklm(["create", name])
 
-    # 2. Create Notebook (with retries)
-    notebook_id = None
-    max_nb_attempts = 3
-    for attempt in range(max_nb_attempts):
-        print(f"[*] Creating notebook: {notebook_name} (Attempt {attempt+1}/{max_nb_attempts})")
-        res = run_notebooklm(["create", notebook_name])
-        
         if res.returncode == 0:
-            try:
-                import re
-                match = re.search(r'([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', res.stdout, re.IGNORECASE)
-                if match:
-                    notebook_id = match.group(1)
-                else:
-                    parts = res.stdout.strip().split()
-                    if parts:
-                        notebook_id = parts[-1]
-                
-                if notebook_id and len(notebook_id) >= 10:
-                    print(f"[+] Notebook created ID: {notebook_id}")
-                    print(f"NOTEBOOK_ID={notebook_id}")
-                    break
-            except Exception as e:
-                print(f"[!] Error parsing notebook ID: {e}")
-        
-        print(f"[!] Failed to create or parse notebook ID (Attempt {attempt+1})")
-        if attempt < max_nb_attempts - 1:
+            notebook_id = parse_notebook_id(res.stdout)
+            if notebook_id and len(notebook_id) >= 10:
+                logger.info(f"Notebook created: {notebook_id}")
+                print(f"NOTEBOOK_ID={notebook_id}")
+                return notebook_id
+
+        logger.warning(f"Failed to create notebook (Attempt {attempt + 1})")
+        if attempt < max_attempts - 1:
             time.sleep(10)
-    
-    if not notebook_id:
-        print("[!] Exhausted all attempts to create notebook. Exiting.")
-        sys.exit(1)
 
-    # 3. Select Notebook
-    run_notebooklm(["use", notebook_id])
+    return None
 
-    # 4. Add Sources (with retries per URL)
-    for url in pdf_urls:
-        max_src_attempts = 3
-        success = False
-        for attempt in range(max_src_attempts):
-            print(f"[*] Adding source: {url} (Attempt {attempt+1}/{max_src_attempts})")
-            res = run_notebooklm(["source", "add", url])
-            if res.returncode == 0:
-                success = True
-                break
-            print(f"[!] Source add failed for {url}")
-            if attempt < max_src_attempts - 1:
-                time.sleep(15)
-        
-        if not success:
-            print(f"[!] CRITICAL: Source add failed for {url}. Aborting generation to prevent incomplete podcast.")
-            sys.exit(1)
-    
-    print("[*] Waiting for sources to process (30s)...")
-    time.sleep(30)
 
-    # 5. Generate Podcast Audio (with retries for initiation)
-    # Use the provided name to anchor the start of the podcast
-    title_context = args.name if args.name else "今回の資料"
-    prompt = f"""
+def add_source(url: str, max_attempts: int = 3) -> bool:
+    """
+    Add source URL to notebook.
+
+    Args:
+        url: PDF URL to add
+        max_attempts: Maximum retry attempts
+
+    Returns:
+        True if successful
+    """
+    for attempt in range(max_attempts):
+        logger.info(f"Adding source: {url} (Attempt {attempt + 1}/{max_attempts})")
+        res = run_notebooklm(["source", "add", url])
+
+        if res.returncode == 0:
+            return True
+
+        logger.warning(f"Source add failed for {url}")
+        if attempt < max_attempts - 1:
+            time.sleep(15)
+
+    return False
+
+
+def generate_audio(prompt: str, max_attempts: int = 3) -> str | None:
+    """
+    Start audio generation task.
+
+    Args:
+        prompt: Generation prompt
+        max_attempts: Maximum retry attempts
+
+    Returns:
+        Task ID or None on failure
+    """
+    normalized_prompt = " ".join(prompt.strip().split())
+
+    for attempt in range(max_attempts):
+        logger.info(f"Generating audio (Attempt {attempt + 1}/{max_attempts})...")
+        res = run_notebooklm(
+            ["generate", "audio", normalized_prompt, "--language", "ja", "--no-wait"]
+        )
+
+        if res.returncode == 0:
+            task_id = parse_task_id(res.stdout)
+            if task_id:
+                logger.info(f"Audio generation started. Task ID: {task_id}")
+                return task_id
+
+        logger.warning(f"Audio generation start failed (Attempt {attempt + 1})")
+        if attempt < max_attempts - 1:
+            time.sleep(20)
+
+    return None
+
+
+def download_audio(output_filename: str) -> bool:
+    """
+    Download generated audio file.
+
+    Args:
+        output_filename: Output file path
+
+    Returns:
+        True if successful
+    """
+    logger.info(f"Downloading audio to: {output_filename}")
+    res = run_notebooklm(["download", "audio", output_filename])
+
+    if res.returncode == 0:
+        if os.path.exists(output_filename):
+            logger.info(f"Podcast saved to: {os.path.abspath(output_filename)}")
+            return True
+        else:
+            logger.error("Download reported success but file not found")
+    else:
+        logger.error(f"Download failed: {res.stderr}")
+
+    return False
+
+
+def build_prompt(title_context: str) -> str:
+    """
+    Build generation prompt for podcast.
+
+    Args:
+        title_context: Title context for the podcast
+
+    Returns:
+        Formatted prompt string
+    """
+    return f"""
 資料の内容の解析、および解説・対話はすべて日本語で行ってください。
 
 まず最初に、資料のタイトル『{title_context}』をはっきりと明示して、すぐに本題の解析に入ってください。
@@ -226,63 +250,90 @@ def main():
 
 この審議会資料（PDF）の全内容を技術面・政策面から統合・分析し、日本のエネルギー業界で働く従業員の方々の「知識アップ」に資するポッドキャスト音声を作成してください。
 今日の世界的なエネルギー情勢の中で、この会議で議論された技術開発の進展、法規制や基準の改正、現場レベルでの対応が必要なリスク、および今後の具体的スケジュールを多角的に要約・解説してください。
-"""
-    
-    normalized_prompt = " ".join(prompt.strip().split())
-    
-    task_id = None
-    max_gen_attempts = 3
-    for attempt in range(max_gen_attempts):
-        print(f"[*] Generating podcast audio (Attempt {attempt+1}/{max_gen_attempts})...")
-        gen_res = run_notebooklm(["generate", "audio", normalized_prompt, "--language", "ja", "--no-wait"])
-        
-        if gen_res.returncode == 0:
-            import re
-            task_match = re.search(r'(?:Task: )?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})', gen_res.stdout, re.IGNORECASE)
-            if task_match:
-                task_id = task_match.group(1)
-                print(f"[+] Audio generation started. Task ID: {task_id}")
-                break
-        
-        print(f"[!] Audio generation start failed (Attempt {attempt+1})")
-        if attempt < max_gen_attempts - 1:
-            time.sleep(20)
-            
-    if not task_id:
-        print("[!] Exhausted all attempts to start audio generation.")
+""".strip()
+
+
+def main():
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description="Generate a podcast from PDF links.")
+    parser.add_argument("--url", help="URL of the METI article page")
+    parser.add_argument("--pdfs", help="JSON string of PDF URLs")
+    parser.add_argument("--name", help="Name of the Notebook")
+    parser.add_argument("--output", default=OUTPUT_MP3, help="Output filename for MP3")
+    args = parser.parse_args()
+
+    # Initialize auth
+    init_auth()
+
+    # Step 0: Get PDF URLs
+    pdf_urls = []
+
+    if args.pdfs:
+        logger.info("Using provided PDF URL list (direct mode)")
+        pdf_urls = json.loads(args.pdfs)
+    elif args.url:
+        soup = fetch_article_page(args.url)
+        if soup:
+            pdf_urls = extract_pdf_urls(args.url, soup)
+
+    if not pdf_urls:
+        logger.error("No PDF links found")
         sys.exit(1)
-    print(f"[*] Waiting for completion (Extended timeout: 5400s)...")
-    
-    # Wait for completion using monitoring loop
-    success = wait_for_task(task_id, notebook_identifier=notebook_id, timeout_seconds=5400)
-    
+
+    logger.info(f"Found {len(pdf_urls)} PDF documents")
+
+    # Step 1: Setup Notebook
+    notebook_name = (
+        args.name or f"METI_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
+    notebook_id = create_notebook(notebook_name)
+
+    if not notebook_id:
+        logger.error("Failed to create notebook")
+        sys.exit(1)
+
+    # Step 2: Select Notebook
+    run_notebooklm(["use", notebook_id])
+
+    # Step 3: Add Sources
+    for url in pdf_urls:
+        if not add_source(url):
+            logger.error(f"Failed to add source: {url}. Aborting.")
+            sys.exit(1)
+
+    logger.info("Waiting for sources to process (30s)...")
+    time.sleep(30)
+
+    # Step 4: Generate Audio
+    title_context = args.name or "今回の資料"
+    prompt = build_prompt(title_context)
+
+    task_id = generate_audio(prompt)
+    if not task_id:
+        logger.error("Failed to start audio generation")
+        sys.exit(1)
+
+    logger.info("Waiting for completion (timeout: 5400s)...")
+    success = wait_for_task(task_id, notebook_identifier=notebook_id)
+
     if not success:
-        print(f"[!] Audio generation failed or timed out.")
-        # Attempt fail-safe download anyway after a small buffer
-        print(f"[*] Waiting for an additional 300s buffer before attempting fail-safe download...")
+        logger.warning("Audio generation failed or timed out. Waiting 300s buffer...")
         time.sleep(300)
     else:
-        print("[+] Audio generation completed successfully.")
+        logger.info("Audio generation completed successfully")
 
-    # 6. Download
+    # Step 5: Download
     final_output = "podcast_summary.mp3"
-    print(f"[*] Attempting to download podcast to: {final_output}")
-    dl_res = run_notebooklm(["download", "audio", final_output])
-    
-    if dl_res.returncode == 0:
-        if os.path.exists(final_output):
-            print(f"\n[🎉 SUCCESS] Podcast summary saved to: {os.path.abspath(final_output)}")
-            if args.output != final_output:
-                if os.path.exists(args.output):
-                    os.remove(args.output)
-                os.rename(final_output, args.output)
-                print(f"[*] Renamed to display requested: {args.output}")
-        else:
-            print("[!] Download reported success but file not found.")
-            sys.exit(1)
-    else:
-        print(f"[!] Download failed: {dl_res.stderr}")
+    if not download_audio(final_output):
         sys.exit(1)
+
+    # Rename to requested output if different
+    if args.output != final_output:
+        if os.path.exists(args.output):
+            os.remove(args.output)
+        os.rename(final_output, args.output)
+        logger.info(f"Renamed to: {args.output}")
+
 
 if __name__ == "__main__":
     main()

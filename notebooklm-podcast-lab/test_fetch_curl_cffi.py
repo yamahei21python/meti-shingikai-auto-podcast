@@ -11,18 +11,31 @@ SOCKS5_PROXY = "socks5://127.0.0.1:40000"
 def test_fetch_with_curl_cffi():
     print(f"[*] Testing fetch with curl-cffi: {URL}")
     
-    # Pre-check proxy if on GitHub Actions
-    if os.getenv("GITHUB_ACTIONS"):
-        print(f"[*] Running on GitHub Actions, using proxy: {SOCKS5_PROXY}")
+    # Pre-check proxy: use if specified or if on GHA (unless USE_PROXY=false)
+    use_proxy_env = os.getenv("USE_PROXY", "").lower()
+    
+    if use_proxy_env == "false":
+        print("[*] Proxy explicitly disabled via USE_PROXY=false")
+        proxies = None
+    elif use_proxy_env == "true" or os.getenv("GITHUB_ACTIONS"):
+        print(f"[*] Using proxy: {SOCKS5_PROXY}")
         proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
     else:
-        print("[*] Running locally, proxy skipped unless specified.")
+        print("[*] Running locally, proxy skipped unless USE_PROXY=true.")
         proxies = None
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        "Referer": "https://www.google.com/"
+        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
     }
 
     try:
