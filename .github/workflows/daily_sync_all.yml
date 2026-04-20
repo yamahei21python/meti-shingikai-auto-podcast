@@ -57,7 +57,7 @@ jobs:
       - name: Run Sync Pipeline
         run: |
           # 統合本番スクレイパーを実行
-          uv run --project notebooklm-podcast-lab python3 sync_all_production.py
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/sync_all_production.py
 
       - name: Run Podcast Generation Worker (1 item per day - TEST)
         id: podcast_gen
