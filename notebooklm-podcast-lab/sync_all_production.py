@@ -86,6 +86,20 @@ def fetch_meti_categories(url: str) -> list[str]:
     Returns:
         List of category strings
     """
+    try:
+        client = NetworkClient()
+        soup = client.fetch_soup(url, headers={"Referer": METI_URL})
+        if not soup:
+            return ["METI"]
+
+        # Breadcrumb (通常 <div class="pan"> または <div id="breadcrumb">)
+        breadcrumb = soup.find("div", class_="pan") or soup.find("div", id="breadcrumb")
+
+        if not breadcrumb:
+            title = soup.title.string if soup.title else "No Title"
+            logger.warning(f"Breadcrumb not found. Title: {title}")
+            return ["METI"]
+
         # Extract category text from breadcrumb
         items = []
         for li in breadcrumb.find_all(["li", "a"]):
