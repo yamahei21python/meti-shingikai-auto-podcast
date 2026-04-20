@@ -1,11 +1,33 @@
 """Shared utilities for Energy Audio system."""
 
 from .config import (
+    # Base Paths
+    PROJECT_ROOT,
+    PODCASTS_DIR,
     DB_PATH,
+    RSS_OUTPUT_PATH,
+    # URLs
     METI_URL,
     OCCTO_URL,
+    # Proxy / Network
     SOCKS5_PROXY,
+    # Worker Settings
+    MAX_PROCESS_PER_RUN,
+    MAX_CATEGORIES,
     TARGET_CATS_METI,
+    # R2 Credentials
+    R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY,
+    R2_ENDPOINT,
+    R2_BUCKET_NAME,
+    R2_PUBLIC_URL,
+    # Podcast Metadata
+    PODCAST_TITLE,
+    PODCAST_DESCRIPTION,
+    PODCAST_LINK,
+    PODCAST_AUTHOR,
+    RSS_FILENAME,
+    # Helpers
     get_venv_python,
     is_github_actions,
 )
@@ -34,11 +56,26 @@ from .utils import (
 
 __all__ = [
     # config
+    "PROJECT_ROOT",
+    "PODCASTS_DIR",
     "DB_PATH",
+    "RSS_OUTPUT_PATH",
     "METI_URL",
     "OCCTO_URL",
     "SOCKS5_PROXY",
+    "MAX_PROCESS_PER_RUN",
+    "MAX_CATEGORIES",
     "TARGET_CATS_METI",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "R2_ENDPOINT",
+    "R2_BUCKET_NAME",
+    "R2_PUBLIC_URL",
+    "PODCAST_TITLE",
+    "PODCAST_DESCRIPTION",
+    "PODCAST_LINK",
+    "PODCAST_AUTHOR",
+    "RSS_FILENAME",
     "get_venv_python",
     "is_github_actions",
     # db
