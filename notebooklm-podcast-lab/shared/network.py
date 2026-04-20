@@ -4,8 +4,8 @@ Shared Network Client - Robust HTTP requests for METI/OCCTO scraping.
 
 import time
 import os
-from typing import Optional, Dict, Any, Union
-from curl_cffi import requests as curl_requests
+from typing import Optional, Dict, Any
+from curl_cffi import requests
 from bs4 import BeautifulSoup
 from .logging import get_logger
 from .config import SOCKS5_PROXY
@@ -19,6 +19,7 @@ class NetworkClient:
     """
     
     def __init__(self, use_proxy: bool = True):
+        self.use_proxy = use_proxy
         self.proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY} if use_proxy else None
         
         # Chrome 120 (Windows) compliant headers
@@ -36,9 +37,9 @@ class NetworkClient:
             "Upgrade-Insecure-Requests": "1",
         }
 
-    def fetch(self, url: str, headers: Optional[Dict[str, str]] = None, retries: int = 3, timeout: int = 30) -> Optional[curl_requests.Response]:
+    def fetch(self, url: str, headers: Optional[Dict[str, str]] = None, retries: int = 3, timeout: int = 30) -> Optional[Any]:
         """
-        Fetch URL with retries and impersonation.
+        Fetch URL with retries and impersonation using curl-cffi Session.
         """
         request_headers = self.default_headers.copy()
         if headers:
@@ -47,13 +48,15 @@ class NetworkClient:
         for attempt in range(retries):
             try:
                 logger.info(f"Fetching (attempt {attempt + 1}/{retries}): {url}")
-                response = curl_requests.get(
-                    url,
-                    impersonate="chrome120",
-                    timeout=timeout,
-                    proxies=self.proxies,
-                    headers=request_headers,
-                )
+                
+                # Use Session for explicit impersonation support
+                with requests.Session(impersonate="chrome120") as s:
+                    response = s.get(
+                        url,
+                        timeout=timeout,
+                        proxies=self.proxies,
+                        headers=request_headers,
+                    )
                 
                 if response.status_code == 200:
                     return response
