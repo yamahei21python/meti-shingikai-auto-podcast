@@ -42,9 +42,21 @@ def fetch_meti_updates() -> list[dict]:
     """
     logger.info(f"Fetching METI: {METI_URL}")
     proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
+    
+    # Chrome 120 compliant headers
     headers = {
-        "Referer": "https://www.google.com/",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1",
+        "Referer": "https://www.google.com/",
     }
 
     try:
@@ -108,7 +120,21 @@ def fetch_meti_categories(url: str) -> list[str]:
     """
     proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
     try:
-        headers = {"Referer": METI_URL}
+        # Chrome 120 compliant headers
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+            "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+            "Referer": METI_URL,
+        }
         response = curl_requests.get(
             url, impersonate="chrome120", timeout=30, proxies=proxies, headers=headers
         )

@@ -150,7 +150,10 @@ def process_single_item(item: tuple) -> bool:
 
     logger.info(f"Executing: {' '.join(cmd)}")
     mp3_res = subprocess.run(cmd, capture_output=True, text=True)
-    print(mp3_res.stdout)
+    if mp3_res.stdout:
+        print(mp3_res.stdout)
+    if mp3_res.returncode != 0:
+        print(f"ERROR: {mp3_res.stderr}")
 
     mp3_success = False
     notebook_identifier = notebook_name
