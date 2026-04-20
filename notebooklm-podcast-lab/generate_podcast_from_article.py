@@ -14,9 +14,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urljoin
+from typing import Optional
 
 import bs4
-from curl_cffi import requests as curl_requests
 from bs4 import BeautifulSoup
 
 # Add parent to path
@@ -24,7 +24,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared import (
     METI_URL,
+    PODCASTS_DIR,
     SOCKS5_PROXY,
+    NetworkClient,
+    format_date_yyyymmdd,
     init_auth,
     run_notebooklm,
     parse_notebook_id,
@@ -32,6 +35,7 @@ from shared import (
     wait_for_task,
     logger,
     is_github_actions,
+    sanitize_filename,
 )
 
 # === Configuration ===
@@ -39,9 +43,10 @@ OUTPUT_MP3 = "podcast_summary.mp3"
 BASE_URL = "https://www.meti.go.jp"
 
 
-def fetch_article_page(url: str) -> BeautifulSoup | None:
+def fetch_article_page(url: str) -> Optional[BeautifulSoup]:
     """
-    Fetch article page using curl-cffi.
+    Fetch article page and parse with BeautifulSoup.
+    Uses centralized NetworkClient for robust 403 avoidance.
 
     Args:
         url: Article URL
@@ -49,58 +54,8 @@ def fetch_article_page(url: str) -> BeautifulSoup | None:
     Returns:
         BeautifulSoup object or None on failure
     """
-    proxies = None
-    if is_github_actions() or os.path.exists("/usr/bin/warp-cli"):
-        proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
-
-    # === IMPORTANT: Header Matching Strategy ===
-    # curl-cffiの 'impersonate' で指定したブラウザバージョン（ここではchrome120）と、
-    # 'headers' 内の User-Agent および Client Hints (sec-ch-*) は必ず一致させる必要があります。
-    # 
-    # [理由] TLSフィンガープリント（通信の癖）と自己申告（UA）が矛盾すると、 WAFによってボットと判定され
-    # METIサイトから 403 Forbidden を返されます。そのため、UAのランダム化は行わないでください。
-    # ===========================================
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-    }
-
-    for attempt in range(3):
-        try:
-            logger.info(f"Fetching article (attempt {attempt + 1}/3): {url}")
-            response = curl_requests.get(
-                url,
-                impersonate="chrome120",
-                timeout=30,
-                proxies=proxies,
-                headers=headers,
-            )
-
-            if response.status_code == 200:
-                return BeautifulSoup(response.content, "html.parser")
-
-            logger.warning(f"Status {response.status_code} for {url}")
-            if response.status_code == 403:
-                logger.warning("403 Forbidden - METI security blocking")
-
-        except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed: {e}")
-
-        if attempt < 2:
-            wait_time = 15 * (attempt + 1)
-            logger.info(f"Waiting {wait_time}s before retry...")
-            time.sleep(wait_time)
-
-    return None
+    client = NetworkClient()
+    return client.fetch_soup(url)
 
 
 def extract_pdf_urls(page_url: str, soup: BeautifulSoup) -> list[str]:

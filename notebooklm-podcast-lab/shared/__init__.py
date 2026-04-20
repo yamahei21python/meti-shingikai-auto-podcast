@@ -39,6 +39,7 @@ from .db import (
     update_status,
 )
 from .logging import get_logger, logger, setup_logging
+from .network import NetworkClient
 from .notebooklm import (
     init_auth,
     parse_notebook_id,
@@ -103,4 +104,5 @@ __all__ = [
     "format_date_yyyymmdd",
     "normalize_date",
     "format_timestamp",
+    "NetworkClient",
 ]

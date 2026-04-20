@@ -10,7 +10,6 @@ from datetime import datetime
 from urllib.parse import urljoin
 
 import bs4
-import requests as curl_requests
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
@@ -21,6 +20,7 @@ from shared import (
     METI_URL,
     OCCTO_URL,
     SOCKS5_PROXY,
+    NetworkClient,
     init_db,
     is_url_in_db,
     save_updates,
@@ -40,72 +40,40 @@ def fetch_meti_updates() -> list[dict]:
     Returns:
         List of update dictionaries with date, title, url, categories
     """
-    logger.info(f"Fetching METI: {METI_URL}")
-    proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
-    
-    # Chrome 120 compliant headers
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-        "Referer": "https://www.google.com/",
-    }
-
-    try:
-        response = curl_requests.get(
-            METI_URL,
-            impersonate="chrome120",
-            timeout=60,
-            proxies=proxies,
-            headers=headers,
-        )
-
-        if response.status_code != 200:
-            logger.warning(f"METI returned status: {response.status_code}")
-            return []
-
-        soup = BeautifulSoup(response.content, "html.parser")
-        content_area = (
-            soup.find("div", id="main_contents")
-            or soup.find("div", id="contents")
-            or soup
-        )
-        dl_list = content_area.find("dl")
-        if not dl_list:
-            return []
-
-        updates = []
-        dt_tags = dl_list.find_all("dt")
-        dd_tags = dl_list.find_all("dd")
-
-        for dt, dd in zip(dt_tags, dd_tags):
-            date_str = dt.get_text(strip=True)
-            link_tag = dd.find("a")
-            if not link_tag:
-                continue
-
-            updates.append(
-                {
-                    "date": normalize_date(date_str),
-                    "title": link_tag.get_text(strip=True),
-                    "url": urljoin(METI_URL, link_tag.get("href")),
-                    "categories": ["METI"],
-                }
-            )
-
-        return updates
-
-    except Exception as e:
-        logger.error(f"METI fetch error: {e}")
+    client = NetworkClient()
+    soup = client.fetch_soup(METI_URL)
+    if not soup:
         return []
+
+    content_area = (
+        soup.find("div", id="main_contents")
+        or soup.find("div", id="contents")
+        or soup
+    )
+    dl_list = content_area.find("dl")
+    if not dl_list:
+        return []
+
+    updates = []
+    dt_tags = dl_list.find_all("dt")
+    dd_tags = dl_list.find_all("dd")
+
+    for dt, dd in zip(dt_tags, dd_tags):
+        date_str = dt.get_text(strip=True)
+        link_tag = dd.find("a")
+        if not link_tag:
+            continue
+
+        updates.append(
+            {
+                "date": normalize_date(date_str),
+                "title": link_tag.get_text(strip=True),
+                "url": urljoin(METI_URL, link_tag.get("href")),
+                "categories": ["METI"],
+            }
+        )
+
+    return updates
 
 
 def fetch_meti_categories(url: str) -> list[str]:
@@ -118,38 +86,6 @@ def fetch_meti_categories(url: str) -> list[str]:
     Returns:
         List of category strings
     """
-    proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
-    try:
-        # Chrome 120 compliant headers
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-            "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": '"Windows"',
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1",
-            "Referer": METI_URL,
-        }
-        response = curl_requests.get(
-            url, impersonate="chrome120", timeout=30, proxies=proxies, headers=headers
-        )
-
-        if response.status_code != 200:
-            return ["METI"]
-
-        soup = BeautifulSoup(response.content, "html.parser")
-        breadcrumb = soup.find("div", class_="pan") or soup.find("div", id="breadcrumb")
-
-        if not breadcrumb:
-            title = soup.title.string if soup.title else "No Title"
-            logger.warning(f"Breadcrumb not found. Title: {title}")
-            return ["METI"]
-
         # Extract category text from breadcrumb
         items = []
         for li in breadcrumb.find_all(["li", "a"]):
