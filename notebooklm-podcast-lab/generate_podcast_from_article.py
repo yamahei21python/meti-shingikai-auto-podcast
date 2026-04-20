@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 import bs4
-import curl_requests
+from curl_cffi import requests as curl_requests
 from bs4 import BeautifulSoup
 
 # Add parent to path
