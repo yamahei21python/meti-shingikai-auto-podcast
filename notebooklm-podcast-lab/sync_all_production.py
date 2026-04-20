@@ -33,14 +33,12 @@ from shared import (
 MAX_CATEGORIES = 10
 
 
-def fetch_meti_updates() -> list[dict]:
+def fetch_meti_updates(client: NetworkClient) -> list[dict]:
     """
     Fetch latest updates from METI website.
-
-    Returns:
-        List of update dictionaries with date, title, url, categories
+    Uses persistent NetworkClient for session reuse.
     """
-    client = NetworkClient()
+    logger.info(f"Fetching METI: {METI_URL}")
     soup = client.fetch_soup(METI_URL)
     if not soup:
         return []
@@ -76,18 +74,12 @@ def fetch_meti_updates() -> list[dict]:
     return updates
 
 
-def fetch_meti_categories(url: str) -> list[str]:
+def fetch_meti_categories(client: NetworkClient, url: str) -> list[str]:
     """
     Fetch categories from individual METI page via breadcrumb.
-
-    Args:
-        url: Individual article URL
-
-    Returns:
-        List of category strings
+    Uses persistent NetworkClient for session reuse.
     """
     try:
-        client = NetworkClient()
         soup = client.fetch_soup(url, headers={"Referer": METI_URL})
         if not soup:
             return ["METI"]
@@ -187,40 +179,43 @@ def fetch_occto_updates() -> list[dict]:
 
 def main():
     """Main sync pipeline."""
-    print(f"\n=== Sync Pipeline Start: {datetime.now()} ===")
+    logger.info(f"=== Sync Pipeline Start: {datetime.now()} ===")
 
     # Initialize DB
     conn = init_db()
+    
+    # Initialize shared network client for persistent session
+    client = NetworkClient()
 
-    # 1. Fetch METI
-    meti_data = fetch_meti_updates()
-    logger.info(f"METI: Found {len(meti_data)} items")
+    try:
+        # 1. METI Updates
+        logger.info("Syncing METI...")
+        meti_data = fetch_meti_updates(client)
+        logger.info(f"METI: Found {len(meti_data)} items")
+        
+        processed_meti = []
+        for item in meti_data:
+            if not is_url_in_db(conn, item["url"]):
+                logger.info(f"Fetching categories: {item['title'][:40]}...")
+                item["categories"] = fetch_meti_categories(client, item["url"])
+                # No extra sleep here as NetworkClient has internal jitter
+            processed_meti.append(item)
+            
+        if processed_meti:
+            save_updates(conn, processed_meti)
+            logger.info(f"Saved {len(processed_meti)} METI updates to DB.")
 
-    # Check new items for categories
-    processed_meti = []
-    logger.info("Checking for new METI items...")
+        # 2. OCCTO Updates
+        logger.info("Syncing OCCTO...")
+        occto_data = fetch_occto_updates() # OCCTO uses Playwright, keep as is
+        if occto_data:
+            save_updates(conn, occto_data)
+            logger.info(f"Saved {len(occto_data)} OCCTO updates to DB.")
 
-    for item in meti_data:
-        if not is_url_in_db(conn, item["url"]):
-            logger.info(f"Fetching categories: {item['title'][:40]}...")
-            item["categories"] = fetch_meti_categories(item["url"])
-            import time
-
-            time.sleep(1)  # Rate limiting
-        processed_meti.append(item)
-
-    # 2. Fetch OCCTO
-    occto_data = fetch_occto_updates()
-    logger.info(f"OCCTO: Found {len(occto_data)} items")
-
-    # 3. Save to DB
-    all_data = processed_meti + occto_data
-    added = save_updates(conn, all_data)
-    logger.info(f"Added {added} new items to DB")
-
-    conn.close()
-    print("=== Sync Pipeline Finished ===\n")
-
+    finally:
+        client.close()
+        conn.close()
+        logger.info(f"=== Sync Pipeline Finished ===")
 
 if __name__ == "__main__":
     main()

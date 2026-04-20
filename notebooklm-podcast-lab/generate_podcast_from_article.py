@@ -43,19 +43,33 @@ OUTPUT_MP3 = "podcast_summary.mp3"
 BASE_URL = "https://www.meti.go.jp"
 
 
-def fetch_article_page(url: str) -> Optional[BeautifulSoup]:
+def fetch_article_page(client: NetworkClient, url: str) -> Optional[BeautifulSoup]:
     """
     Fetch article page and parse with BeautifulSoup.
-    Uses centralized NetworkClient for robust 403 avoidance.
-
-    Args:
-        url: Article URL
-
-    Returns:
-        BeautifulSoup object or None on failure
+    Uses shared NetworkClient for session reuse.
     """
-    client = NetworkClient()
     return client.fetch_soup(url)
+
+
+def download_pdf_locally(client: NetworkClient, url: str, temp_dir: Path) -> Optional[Path]:
+    """
+    Download PDF file to a local temporary directory.
+    """
+    filename = sanitize_filename(url.split("/")[-1])
+    if not filename.lower().endswith(".pdf"):
+        filename += ".pdf"
+    
+    local_path = temp_dir / filename
+    logger.info(f"Downloading PDF: {url} -> {local_path}")
+    
+    res = client.fetch(url)
+    if res and res.status_code == 200:
+        with open(local_path, "wb") as f:
+            f.write(res.content)
+        return local_path
+    
+    logger.error(f"Failed to download PDF: {url}")
+    return None
 
 
 def extract_pdf_urls(page_url: str, soup: BeautifulSoup) -> list[str]:
@@ -112,25 +126,18 @@ def create_notebook(name: str, max_attempts: int = 3) -> str | None:
     return None
 
 
-def add_source(url: str, max_attempts: int = 3) -> bool:
+def add_source(source_path_or_url: str, max_attempts: int = 3) -> bool:
     """
-    Add source URL to notebook.
-
-    Args:
-        url: PDF URL to add
-        max_attempts: Maximum retry attempts
-
-    Returns:
-        True if successful
+    Add source (PDF path or URL) to notebook.
     """
     for attempt in range(max_attempts):
-        logger.info(f"Adding source: {url} (Attempt {attempt + 1}/{max_attempts})")
-        res = run_notebooklm(["source", "add", url])
+        logger.info(f"Adding source: {source_path_or_url} (Attempt {attempt + 1}/{max_attempts})")
+        res = run_notebooklm(["source", "add", source_path_or_url])
 
         if res.returncode == 0:
             return True
 
-        logger.warning(f"Source add failed for {url}")
+        logger.warning(f"Source add failed for {source_path_or_url}")
         if attempt < max_attempts - 1:
             time.sleep(15)
 
@@ -227,44 +234,78 @@ def main():
     # Initialize auth
     init_auth()
 
-    # Step 0: Get PDF URLs
-    pdf_urls = []
+    # Initialize Network Client
+    client = NetworkClient()
+    
+    try:
+        # Step 0: Get PDF URLs
+        pdf_urls = []
 
-    if args.pdfs:
-        logger.info("Using provided PDF URL list (direct mode)")
-        pdf_urls = json.loads(args.pdfs)
-    elif args.url:
-        soup = fetch_article_page(args.url)
-        if soup:
-            pdf_urls = extract_pdf_urls(args.url, soup)
+        if args.pdfs:
+            logger.info("Using provided PDF URL list (direct mode)")
+            pdf_urls = json.loads(args.pdfs)
+        elif args.url:
+            soup = fetch_article_page(client, args.url)
+            if soup:
+                pdf_urls = extract_pdf_urls(args.url, soup)
 
-    if not pdf_urls:
-        logger.error("No PDF links found")
-        sys.exit(1)
-
-    logger.info(f"Found {len(pdf_urls)} PDF documents")
-
-    # Step 1: Setup Notebook
-    notebook_name = (
-        args.name or f"METI_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    )
-    notebook_id = create_notebook(notebook_name)
-
-    if not notebook_id:
-        logger.error("Failed to create notebook")
-        sys.exit(1)
-
-    # Step 2: Select Notebook
-    run_notebooklm(["use", notebook_id])
-
-    # Step 3: Add Sources
-    for url in pdf_urls:
-        if not add_source(url):
-            logger.error(f"Failed to add source: {url}. Aborting.")
+        if not pdf_urls:
+            logger.error("No PDF links found")
             sys.exit(1)
 
-    logger.info("Waiting for sources to process (30s)...")
-    time.sleep(30)
+        logger.info(f"Found {len(pdf_urls)} PDF documents")
+
+        # Step 1: Download PDFs to temp directory
+        temp_dir = Path("temp_pdfs")
+        temp_dir.mkdir(exist_ok=True)
+        local_pdfs = []
+        
+        for url in pdf_urls:
+            local_path = download_pdf_locally(client, url, temp_dir)
+            if local_path:
+                local_pdfs.append(str(local_path))
+        
+        if not local_pdfs:
+            logger.error("Failed to download any PDF documents")
+            sys.exit(1)
+
+        # Step 2: Setup Notebook
+        notebook_name = (
+            args.name or f"METI_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
+        notebook_id = create_notebook(notebook_name)
+
+        if not notebook_id:
+            logger.error("Failed to create notebook")
+            sys.exit(1)
+
+        # Step 3: Select Notebook
+        run_notebooklm(["use", notebook_id])
+
+        # Step 4: Add Sources (Local Files)
+        for pdf_path in local_pdfs:
+            if not add_source(pdf_path):
+                logger.error(f"Failed to add source: {pdf_path}. Aborting.")
+                sys.exit(1)
+
+        logger.info("Waiting for sources to process (30s)...")
+        time.sleep(30)
+    finally:
+        # Cleanup and close
+        client.close()
+        
+        # Cleanup temp PDFs
+        if 'temp_dir' in locals() and temp_dir.exists():
+            logger.info("Cleaning up temporary PDF files...")
+            for f in temp_dir.glob("*.pdf"):
+                try:
+                    f.unlink()
+                except Exception:
+                    pass
+            try:
+                temp_dir.rmdir()
+            except Exception:
+                pass
 
     # Step 4: Generate Audio
     title_context = args.name or "今回の資料"
