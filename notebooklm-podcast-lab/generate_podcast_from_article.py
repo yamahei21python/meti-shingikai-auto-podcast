@@ -20,7 +20,7 @@ from curl_cffi import requests as curl_requests
 from bs4 import BeautifulSoup
 
 # Add parent to path
-sys.path.insert(0, ".")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared import (
     METI_URL,
