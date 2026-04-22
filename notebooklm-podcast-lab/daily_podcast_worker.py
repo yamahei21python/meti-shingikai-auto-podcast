@@ -210,6 +210,15 @@ def process_single_item(item: tuple) -> bool:
         print(f"PODCAST_ASSET_PATH={final_mp3_path}")
         print(f"ORIGINAL_URL={url}")
 
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+        md_success = False
+
+    # === Cleanup Notebook (always run) ===
+    logger.info(f"Cleaning up Notebook: {notebook_identifier}")
+    run_notebooklm(["delete", "-n", notebook_identifier, "-y"])
+
+    if mp3_success and md_success:
         return True
     else:
         # Failed: Cleanup temp files
@@ -219,10 +228,6 @@ def process_single_item(item: tuple) -> bool:
         if os.path.exists(md_temp):
             os.remove(md_temp)
         return False
-
-    # === Step 4: Cleanup Notebook ===
-    logger.info(f"Cleaning up Notebook: {notebook_identifier}")
-    run_notebooklm(["delete", "-n", notebook_identifier, "-y"])
 
 
 def main():
