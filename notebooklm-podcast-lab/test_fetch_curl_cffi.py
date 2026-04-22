@@ -1,7 +1,7 @@
 """Test curl-cffi network connectivity for METI/OCCTO scraping."""
 
-import os
 import sys
+import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -9,14 +9,9 @@ from shared import NetworkClient, METI_URL, OCCTO_URL, logger, setup_logging
 
 setup_logging()
 
-USE_PROXY = os.getenv("USE_PROXY", "true").lower() in ("true", "1", "yes")
-
 
 def main():
-    use_proxy = USE_PROXY
-    logger.info(f"Proxy mode: {use_proxy}")
-
-    client = NetworkClient(use_proxy=use_proxy)
+    client = NetworkClient(use_proxy=False)
 
     try:
         # Test METI

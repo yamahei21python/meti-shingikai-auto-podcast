@@ -1,12 +1,12 @@
 name: Network & Scraping Verification
 
 on:
-  workflow_dispatch: # 手動実行用
+  workflow_dispatch:
 
 jobs:
   verify-network:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,61 +23,6 @@ jobs:
         working-directory: notebooklm-podcast-lab
         run: uv sync
 
-      - name: "[Diagnose] METI 403 Root Cause Analysis"
+      - name: "[Test] Fetch METI (safari17_0 impersonation)"
         run: |
-          export USE_PROXY=false
-          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/meti_403_diagnostic.py
-
-      - name: "[Verify] Native GHA Network (No Proxy)"
-        run: |
-          echo "=== Native IP Info ==="
-          curl -s https://ip-api.com/json/ | jq .
-          echo "Country: $(curl -s https://ip-api.com/json/ | jq -r .country)"
-          
-      - name: "[Test] Fetch METI without Proxy"
-        run: |
-          export USE_PROXY=false
-          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/test_fetch_curl_cffi.py || echo "FAILED as expected or blocked."
-
-      - name: Setup Cloudflare WARP
-        run: |
-          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
-          sudo apt-get update && sudo apt-get install cloudflare-warp -y
-
-      - name: Connect WARP with Japan IP Verification
-        run: |
-          warp-cli --accept-tos registration delete 2>/dev/null || true
-          for i in $(seq 1 10); do
-            echo "=== WARP registration attempt $i/10 ==="
-            warp-cli --accept-tos registration delete 2>/dev/null || true
-            warp-cli --accept-tos registration new
-            warp-cli --accept-tos mode proxy
-            warp-cli --accept-tos connect
-            sleep 5
-            COUNTRY=$(curl -s --proxy socks5://127.0.0.1:40000 --max-time 10 \
-              "http://ip-api.com/json/?fields=countryCode" 2>/dev/null | jq -r '.countryCode // empty')
-            echo "WARP exit country: $COUNTRY"
-            if [ "$COUNTRY" = "JP" ]; then
-              echo "✓ Japanese IP confirmed"
-              warp-cli --accept-tos status
-              exit 0
-            fi
-            echo "Not Japanese IP ($COUNTRY). Retrying..."
-            warp-cli --accept-tos disconnect 2>/dev/null || true
-            sleep 3
-          done
-          echo "::warning::Could not get Japanese IP after 10 attempts."
-          warp-cli --accept-tos disconnect 2>/dev/null || true
-
-      - name: "[Verify] WARP Network (Proxy Mode)"
-        run: |
-          echo "=== WARP Proxy IP Info ==="
-          curl -s --proxy socks5://127.0.0.1:40000 http://ip-api.com/json/?fields=query,country | jq .
-          echo "Country: $(curl -s --proxy socks5://127.0.0.1:40000 http://ip-api.com/json/?fields=country | jq -r '.country // empty')"
-
-      - name: "[Test] Fetch METI with WARP Proxy"
-        run: |
-          export USE_PROXY=true
-          export SOCKS5_PROXY=socks5://127.0.0.1:40000
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/test_fetch_curl_cffi.py

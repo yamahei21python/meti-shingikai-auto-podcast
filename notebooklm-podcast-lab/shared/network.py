@@ -25,8 +25,10 @@ class NetworkClient:
         self.proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY} if use_proxy else None
         
         # Initialize persistent session
+        # Note: METI WAF blocks Chrome TLS fingerprints on GHA (US IPs).
+        # Safari and Firefox fingerprints pass through.
         self.session = requests.Session(
-            impersonate="chrome120",
+            impersonate="safari17_0",
             proxies=self.proxies
         )
         

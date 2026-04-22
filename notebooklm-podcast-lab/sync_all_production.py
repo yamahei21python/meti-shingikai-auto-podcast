@@ -153,7 +153,7 @@ def deduplicate(updates: list[CouncilUpdate]) -> list[CouncilUpdate]:
 def main():
     logger.info(f"=== Sync Production Start: {datetime.now()} ===")
 
-    use_proxy = os.getenv("USE_PROXY", "true").lower() in ("true", "1", "yes")
+    use_proxy = bool(os.getenv("SOCKS5_PROXY"))
     client = NetworkClient(use_proxy=use_proxy)
     conn = init_db()
 

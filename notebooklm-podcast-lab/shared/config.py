@@ -15,7 +15,7 @@ METI_URL = "https://www.meti.go.jp/shingikai/index.html"
 OCCTO_URL = "https://www.occto.or.jp/iinkai/"
 
 # === Proxy ===
-SOCKS5_PROXY = os.getenv("SOCKS5_PROXY", "socks5://127.0.0.1:40000")
+SOCKS5_PROXY = os.getenv("SOCKS5_PROXY", "")
 
 # === Database ===
 MAX_CATEGORIES = 10

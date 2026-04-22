@@ -17,45 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Cloudflare WARP
-        run: |
-          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
-          sudo apt-get update && sudo apt-get install cloudflare-warp -y
-
-      - name: Connect WARP with Japan IP Verification
-        run: |
-          # WARP free tierはランダムな国のIPを割り当てるため、
-          # 日本IPになるまで最大10回リトライする
-          warp-cli --accept-tos registration delete 2>/dev/null || true
-
-          for i in $(seq 1 10); do
-            echo "=== WARP registration attempt $i/10 ==="
-            warp-cli --accept-tos registration delete 2>/dev/null || true
-            warp-cli --accept-tos registration new
-            warp-cli --accept-tos mode proxy
-            warp-cli --accept-tos connect
-            sleep 5
-
-            # ip-api.com → http (not https) + jqで正しくパース
-            COUNTRY=$(curl -s --proxy socks5://127.0.0.1:40000 --max-time 10 \
-              "http://ip-api.com/json/?fields=countryCode" 2>/dev/null | jq -r '.countryCode // empty')
-            echo "WARP exit country: $COUNTRY"
-
-            if [ "$COUNTRY" = "JP" ]; then
-              echo "✓ Japanese IP confirmed"
-              warp-cli --accept-tos status
-              exit 0
-            fi
-
-            echo "Not Japanese IP ($COUNTRY). Retrying..."
-            warp-cli --accept-tos disconnect 2>/dev/null || true
-            sleep 3
-          done
-
-          echo "::warning::Could not get Japanese IP after 10 attempts. Falling back to non-proxy mode."
-          warp-cli --accept-tos disconnect 2>/dev/null || true
-
       - name: Install uv and Setup Python
         uses: astral-sh/setup-uv@v3
         with:
@@ -74,25 +35,22 @@ jobs:
         env:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
-          # 認証ファイルを一時的に作成して言語を設定
           mkdir -p ~/.notebooklm
           echo "$NOTEBOOKLM_AUTH_JSON" > ~/.notebooklm/auth.json
           uv run --project notebooklm-podcast-lab notebooklm language set ja
 
       - name: Run Sync Pipeline
         run: |
-          # 統合本番スクレイパーを実行
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/sync_all_production.py
 
-      - name: Run Podcast Generation Worker (1 item per day - TEST)
+      - name: Run Podcast Generation Worker
         id: podcast_gen
         env:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
-          # ポッドキャスト生成ワーカーを実行
           set -o pipefail
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py 2>&1 | tee worker_output.log
-          
+
           if grep -q "COMPLETE:" worker_output.log; then
             echo "has_asset=true" >> $GITHUB_OUTPUT
           else
@@ -107,19 +65,16 @@ jobs:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
           R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
         run: |
-          # R2へアップロードし、podcast.xmlを更新
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/upload_and_rss.py
 
       - name: Commit and Push Updates
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
-          # 変更をステージング
+
           git add councils.db podcasts/*.md podcast.xml 2>/dev/null || true
-          
+
           if git status --porcelain | grep -q '.'; then
-            # ローカルでコミットを作成してからリベース
             git commit -m "chore: daily sync, podcast update, and R2 synchronization [skip ci]"
             git pull --rebase origin main
             git push

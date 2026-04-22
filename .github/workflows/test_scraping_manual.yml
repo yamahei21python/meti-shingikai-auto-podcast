@@ -1,7 +1,7 @@
 name: Manual Scraping Test
 
 on:
-  workflow_dispatch: # 手動実行用
+  workflow_dispatch:
 
 jobs:
   test-scraping:
@@ -14,37 +14,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install Cloudflare WARP
-        run: |
-          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
-          sudo apt-get update && sudo apt-get install cloudflare-warp -y
-
-      - name: Connect WARP with Japan IP Verification
-        run: |
-          warp-cli --accept-tos registration delete 2>/dev/null || true
-          for i in $(seq 1 10); do
-            echo "=== WARP registration attempt $i/10 ==="
-            warp-cli --accept-tos registration delete 2>/dev/null || true
-            warp-cli --accept-tos registration new
-            warp-cli --accept-tos mode proxy
-            warp-cli --accept-tos connect
-            sleep 5
-            COUNTRY=$(curl -s --proxy socks5://127.0.0.1:40000 --max-time 10 \
-              "http://ip-api.com/json/?fields=countryCode" 2>/dev/null | jq -r '.countryCode // empty')
-            echo "WARP exit country: $COUNTRY"
-            if [ "$COUNTRY" = "JP" ]; then
-              echo "✓ Japanese IP confirmed"
-              warp-cli --accept-tos status
-              exit 0
-            fi
-            echo "Not Japanese IP ($COUNTRY). Retrying..."
-            warp-cli --accept-tos disconnect 2>/dev/null || true
-            sleep 3
-          done
-          echo "::warning::Could not get Japanese IP after 10 attempts."
-          warp-cli --accept-tos disconnect 2>/dev/null || true
 
       - name: Install uv and Setup Python
         uses: astral-sh/setup-uv@v3
@@ -62,12 +31,10 @@ jobs:
 
       - name: Run curl-cffi Fetch Test
         run: |
-          # curl-cffiでの取得テストを実行
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/test_fetch_curl_cffi.py
 
       - name: Run Sync Pipeline (Dry Run/Test)
         run: |
-          # 統合本番スクレイパーを実行（DB削除は行わず、新規アイテムの取得確認のみ）
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/sync_all_production.py
 
       - name: Status Check
