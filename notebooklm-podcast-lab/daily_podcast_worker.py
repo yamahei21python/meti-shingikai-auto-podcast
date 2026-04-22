@@ -129,86 +129,87 @@ def process_single_item(item: tuple) -> bool:
     item_id, title, url, date_str, pdf_urls_json = item
     logger.info(f"Processing: {title} ({date_str})")
 
-    # Prepare filenames
-    formatted_date = format_date_yyyymmdd(date_str)
-    sanitized_title = sanitize_filename(title)
-    notebook_name = f"{formatted_date}_{sanitized_title}"
-    output_temp = f"temp_{formatted_date}.mp3"
-    md_temp = f"temp_{formatted_date}_summary.md"
+    try:
+        # Prepare filenames
+        formatted_date = format_date_yyyymmdd(date_str)
+        sanitized_title = sanitize_filename(title)
+        notebook_name = f"{formatted_date}_{sanitized_title}"
+        output_temp = f"temp_{formatted_date}.mp3"
+        md_temp = f"temp_{formatted_date}_summary.md"
 
-    # === Step 1: Generate Podcast MP3 ===
-    python_bin = sys.executable
-    cmd = [
-        python_bin,
-        "generate_podcast_from_article.py",
-        "--url",
-        url,
-        "--output",
-        output_temp,
-        "--name",
-        notebook_name,
-    ]
-    if pdf_urls_json:
-        cmd.extend(["--pdfs", pdf_urls_json])
+        # === Step 1: Generate Podcast MP3 ===
+        python_bin = sys.executable
+        cmd = [
+            python_bin,
+            "generate_podcast_from_article.py",
+            "--url",
+            url,
+            "--output",
+            output_temp,
+            "--name",
+            notebook_name,
+        ]
+        if pdf_urls_json:
+            cmd.extend(["--pdfs", pdf_urls_json])
 
-    logger.info(f"Executing: {' '.join(cmd)}")
-    mp3_res = subprocess.run(cmd, capture_output=True, text=True)
-    if mp3_res.stdout:
-        print(mp3_res.stdout)
-    if mp3_res.returncode != 0:
-        print(f"ERROR: {mp3_res.stderr}")
+        logger.info(f"Executing: {' '.join(cmd)}")
+        mp3_res = subprocess.run(cmd, capture_output=True, text=True)
+        if mp3_res.stdout:
+            print(mp3_res.stdout)
+        if mp3_res.returncode != 0:
+            print(f"ERROR: {mp3_res.stderr}")
 
-    mp3_success = False
-    notebook_identifier = notebook_name
+        mp3_success = False
+        notebook_identifier = notebook_name
 
-    if mp3_res.returncode == 0 and os.path.exists(output_temp):
-        mp3_success = True
-        # Capture real notebook ID from output
-        for line in mp3_res.stdout.splitlines():
-            if line.startswith("NOTEBOOK_ID="):
-                notebook_identifier = line.split("=", 1)[1].strip()
-                break
+        if mp3_res.returncode == 0 and os.path.exists(output_temp):
+            mp3_success = True
+            # Capture real notebook ID from output
+            for line in mp3_res.stdout.splitlines():
+                if line.startswith("NOTEBOOK_ID="):
+                    notebook_identifier = line.split("=", 1)[1].strip()
+                    break
 
-    # === Step 2: Generate Summary MD (Only if MP3 succeeded) ===
-    md_success = False
-    if mp3_success:
-        md_success = generate_summary_report(
-            notebook_id=notebook_identifier, target_path=md_temp
-        )
-
-    # === Step 3: Finalize or Rollback ===
-    final_dir = str(PODCASTS_DIR)
-    if not os.path.exists(final_dir):
-        os.makedirs(final_dir)
-
-    final_mp3_path = os.path.join(final_dir, f"{formatted_date}_{sanitized_title}.mp3")
-    final_md_path = os.path.join(
-        final_dir, f"{formatted_date}_{sanitized_title}_summary.md"
-    )
-
-    if mp3_success and md_success:
-        # Atomic move
-        if os.path.exists(final_mp3_path):
-            os.remove(final_mp3_path)
-        os.rename(output_temp, final_mp3_path)
-
-        if os.path.exists(final_md_path):
-            os.remove(final_md_path)
-        os.rename(md_temp, final_md_path)
-
-        # Save metadata JSON
-        meta_path = final_mp3_path.rsplit(".", 1)[0] + ".json"
-        with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(
-                {"original_url": url, "title": title}, f, ensure_ascii=False, indent=2
+        # === Step 2: Generate Summary MD (Only if MP3 succeeded) ===
+        md_success = False
+        if mp3_success:
+            md_success = generate_summary_report(
+                notebook_id=notebook_identifier, target_path=md_temp
             )
 
-        logger.info("COMPLETE: Both MP3 and MD saved with metadata")
-        update_status(item_id, "done")
+        # === Step 3: Finalize or Rollback ===
+        final_dir = str(PODCASTS_DIR)
+        if not os.path.exists(final_dir):
+            os.makedirs(final_dir)
 
-        # Output for workflow
-        print(f"PODCAST_ASSET_PATH={final_mp3_path}")
-        print(f"ORIGINAL_URL={url}")
+        final_mp3_path = os.path.join(final_dir, f"{formatted_date}_{sanitized_title}.mp3")
+        final_md_path = os.path.join(
+            final_dir, f"{formatted_date}_{sanitized_title}_summary.md"
+        )
+
+        if mp3_success and md_success:
+            # Atomic move
+            if os.path.exists(final_mp3_path):
+                os.remove(final_mp3_path)
+            os.rename(output_temp, final_mp3_path)
+
+            if os.path.exists(final_md_path):
+                os.remove(final_md_path)
+            os.rename(md_temp, final_md_path)
+
+            # Save metadata JSON
+            meta_path = final_mp3_path.rsplit(".", 1)[0] + ".json"
+            with open(meta_path, "w", encoding="utf-8") as f:
+                json.dump(
+                    {"original_url": url, "title": title}, f, ensure_ascii=False, indent=2
+                )
+
+            logger.info("COMPLETE: Both MP3 and MD saved with metadata")
+            update_status(item_id, "done")
+
+            # Output for workflow
+            print(f"PODCAST_ASSET_PATH={final_mp3_path}")
+            print(f"ORIGINAL_URL={url}")
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}")

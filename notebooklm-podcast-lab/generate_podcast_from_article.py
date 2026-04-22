@@ -174,7 +174,7 @@ def generate_audio(prompt: str, max_attempts: int = 3) -> str | None:
 
         logger.warning(f"Audio generation start failed (Attempt {attempt + 1}): {res.stderr.strip() if res.stderr else 'unknown'}")
         if attempt < max_attempts - 1:
-            time.sleep(20)
+            time.sleep(30)
 
     return None
 
@@ -293,10 +293,10 @@ def main():
 
         # Wait for all sources to finish processing (poll notebook status)
         logger.info("Waiting for sources to be ready...")
-        max_source_wait = 300  # 5 minutes max
+        max_source_wait = 600  # 10 minutes max
         poll_start = time.time()
         while time.time() - poll_start < max_source_wait:
-            time.sleep(15)
+            time.sleep(20)
             status_res = run_notebooklm(["artifact", "list", "-n", notebook_id])
             if status_res.returncode == 0 and status_res.stdout.strip():
                 # Any output means sources are processed
