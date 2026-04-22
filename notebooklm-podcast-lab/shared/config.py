@@ -30,7 +30,7 @@ NOTEBOOKLM_VENV_PATH = PROJECT_ROOT / ".venv" / "bin" / "notebooklm"
 NOTEBOOKLM_PYTHON_PATH = PROJECT_ROOT / ".venv" / "bin" / "python3"
 
 # === Audio Generation ===
-AUDIO_TIMEOUT_SECONDS = 5400
+AUDIO_TIMEOUT_SECONDS = 1800
 POLL_INTERVAL_SECONDS = 60
 
 # === Worker ===

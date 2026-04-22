@@ -84,7 +84,7 @@ def wait_for_task(
     task_id: str,
     notebook_id: Optional[str] = None,
     timeout_seconds: int = AUDIO_TIMEOUT_SECONDS,
-    poll_interval: int = 60,
+    poll_interval: int = 30,
 ) -> bool:
     """
     Wait for task completion by polling status.
