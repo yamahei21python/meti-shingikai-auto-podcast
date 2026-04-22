@@ -173,8 +173,8 @@ def main():
     db_items = get_done_items_from_db()
     url_by_title = {item["title"]: item["url"] for item in db_items}
 
-    # Unified publication date for all items (April 22, 2026)
-    unified_now = datetime(2026, 4, 22, tzinfo=timezone.utc)
+    # Unified publication date for all items (Use current execution date)
+    unified_now = datetime.now(timezone.utc)
 
     # Upload MP3s to R2
     podcast_entries = []
