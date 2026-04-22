@@ -320,7 +320,7 @@ def main():
         sys.exit(1)
 
     logger.info("Waiting for completion (timeout: 5400s)...")
-    success = wait_for_task(task_id, notebook_identifier=notebook_id)
+    success = wait_for_task(task_id, notebook_id=notebook_id)
 
     if not success:
         logger.warning("Audio generation failed or timed out. Waiting 300s buffer...")
