@@ -1,221 +1,217 @@
 """
-Sync Production - Fetch METI/OCCTO updates and save to DB.
+Production scraper for METI & OCCTO council updates.
+
+Scrapes both sites, saves new items to SQLite DB.
+Designed for GitHub Actions with WARP proxy.
 
 Usage:
     python sync_all_production.py
 """
 
+import os
+import re
 import sys
 from datetime import datetime
 from urllib.parse import urljoin
 
-import bs4
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
-# Add parent to path for shared modules
-sys.path.insert(0, ".")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared import (
     METI_URL,
     OCCTO_URL,
-    SOCKS5_PROXY,
+    CouncilUpdate,
     NetworkClient,
     init_db,
     is_url_in_db,
-    save_updates,
-    normalize_date,
     logger,
+    normalize_date,
+    save_updates,
+    setup_logging,
 )
 
-
-# === Configuration ===
-MAX_CATEGORIES = 10
+setup_logging()
 
 
-def fetch_meti_updates(client: NetworkClient) -> list[dict]:
+def parse_meti_updates(soup: BeautifulSoup) -> list[CouncilUpdate]:
     """
-    Fetch latest updates from METI website.
-    Uses persistent NetworkClient for session reuse.
+    Parse METI審議会 index page for recent updates.
+
+    Expected structure:
+      - Articles with date + title + link
+      - Each article may belong to a category (審議会名)
     """
-    logger.info(f"Fetching METI: {METI_URL}")
-    soup = client.fetch_soup(METI_URL)
-    if not soup:
-        return []
-
-    content_area = (
-        soup.find("div", id="main_contents")
-        or soup.find("div", id="contents")
-        or soup
-    )
-    dl_list = content_area.find("dl")
-    if not dl_list:
-        return []
-
     updates = []
-    dt_tags = dl_list.find_all("dt")
-    dd_tags = dl_list.find_all("dd")
 
-    for dt, dd in zip(dt_tags, dd_tags):
-        date_str = dt.get_text(strip=True)
-        link_tag = dd.find("a")
-        if not link_tag:
+    # METI 審議会 page structure: list items with date and link
+    items = soup.select("li, tr, dd, div")
+
+    current_category = None
+
+    for el in items:
+        # Detect category headers (審議会名)
+        header = el.find(["h2", "h3", "h4", "dt", "th"])
+        if header:
+            text = header.get_text(strip=True)
+            if any(kw in text for kw in ["審議会", "委員会", "小委員会", "分科会", "作業部会"]):
+                current_category = text
+                continue
+
+        # Find date + link pattern
+        date_match = re.search(r"(\d{4})[年./](\d{1,2})[月./](\d{1,2})", el.get_text())
+        if not date_match:
             continue
 
+        link = el.find("a", href=True)
+        if not link:
+            continue
+
+        href = link.get("href", "")
+        if not href:
+            continue
+
+        abs_url = urljoin(METI_URL, href)
+        title = link.get_text(strip=True)
+        if not title or len(title) < 5:
+            continue
+
+        date_str = normalize_date(f"{date_match.group(1)}年{date_match.group(2)}月{date_match.group(3)}日")
+
+        categories = ["METI"]
+        if current_category:
+            categories.append(current_category)
+
         updates.append(
-            {
-                "date": normalize_date(date_str),
-                "title": link_tag.get_text(strip=True),
-                "url": urljoin(METI_URL, link_tag.get("href")),
-                "categories": ["METI"],
-            }
+            CouncilUpdate(
+                date=date_str or "",
+                title=title,
+                url=abs_url,
+                categories=categories,
+            )
         )
 
     return updates
 
 
-def fetch_meti_categories(client: NetworkClient, url: str) -> list[str]:
+def parse_occto_updates(soup: BeautifulSoup) -> list[CouncilUpdate]:
     """
-    Fetch categories from individual METI page via breadcrumb.
-    Uses persistent NetworkClient for session reuse.
+    Parse OCCTO委員会 page for recent updates.
+
+    Expected structure:
+      - Committee sections with meeting links and dates
     """
-    try:
-        soup = client.fetch_soup(url, headers={"Referer": METI_URL})
-        if not soup:
-            return ["METI"]
-
-        # Breadcrumb (通常 <div class="pan"> または <div id="breadcrumb">)
-        breadcrumb = soup.find("div", class_="pan") or soup.find("div", id="breadcrumb")
-
-        if not breadcrumb:
-            title = soup.title.string if soup.title else "No Title"
-            logger.warning(f"Breadcrumb not found. Title: {title}")
-            return ["METI"]
-
-        # Extract category text from breadcrumb
-        items = []
-        for li in breadcrumb.find_all(["li", "a"]):
-            text = li.get_text(strip=True)
-            if text and text not in items:
-                items.append(text)
-
-        # Filter out common non-category items
-        exclude = ["ホーム", "審議会・研究会", "HOME", "审议会・研究会"]
-        categories = ["METI"]
-        for item in items:
-            if item and item not in exclude and item not in categories:
-                categories.append(item)
-
-        # Remove last item (current page title)
-        if len(categories) > 2:
-            categories.pop()
-
-        if len(categories) > 1:
-            logger.info(f"Categories: {'>'.join(categories)}")
-
-        return categories
-
-    except Exception as e:
-        logger.error(f"Category fetch error ({url}): {e}")
-        return ["METI"]
-
-
-def fetch_occto_updates() -> list[dict]:
-    """
-    Fetch latest updates from OCCTO website using Playwright.
-
-    Returns:
-        List of update dictionaries
-    """
-    logger.info(f"Fetching OCCTO: {OCCTO_URL}")
     updates = []
 
-    with sync_playwright() as p:
-        try:
-            browser = p.chromium.launch(headless=True, proxy={"server": SOCKS5_PROXY})
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+    # Look for links with dates on OCCTO page
+    links = soup.find_all("a", href=True)
+
+    for link in links:
+        href = link.get("href", "")
+        text = link.get_text(strip=True)
+
+        # Must have a date
+        date_match = re.search(r"(\d{4})[年./](\d{1,2})[月./](\d{1,2})", text)
+        if not date_match:
+            continue
+
+        # Only process committee-related links
+        if not any(kw in text for kw in ["委員会", "会議", "開催", "資料"]):
+            continue
+
+        if "occto.or.jp" not in href:
+            abs_url = urljoin(OCCTO_URL, href)
+        else:
+            abs_url = href
+
+        title = text.strip()
+        date_str = normalize_date(f"{date_match.group(1)}年{date_match.group(2)}月{date_match.group(3)}日")
+
+        updates.append(
+            CouncilUpdate(
+                date=date_str or "",
+                title=title,
+                url=abs_url,
+                categories=["OCCTO"],
             )
-            page = context.new_page()
-            page.goto(OCCTO_URL, wait_until="domcontentloaded", timeout=60000)
-            page.wait_for_selector("a.linklist-cms02__link", timeout=30000)
-
-            soup = BeautifulSoup(page.content(), "html.parser")
-            blocks = soup.find_all("a", class_="linklist-cms02__link")
-
-            import re
-
-            for block in blocks:
-                date_tag = block.find("span", string=re.compile(r"開催日："))
-                date_raw = (
-                    date_tag.get_text(strip=True).replace("開催日：", "")
-                    if date_tag
-                    else ""
-                )
-                spans = block.find_all("span")
-                committee = (
-                    spans[1].get_text(strip=True) if len(spans) > 1 else "Unknown"
-                )
-                title_tag = block.find("p")
-
-                updates.append(
-                    {
-                        "date": normalize_date(date_raw),
-                        "title": title_tag.get_text(strip=True)
-                        if title_tag
-                        else "No Title",
-                        "url": urljoin(OCCTO_URL, block.get("href")),
-                        "categories": ["OCCTO", committee],
-                    }
-                )
-
-            browser.close()
-
-        except Exception as e:
-            logger.error(f"OCCTO fetch error: {e}")
+        )
 
     return updates
 
 
-def main():
-    """Main sync pipeline."""
-    logger.info(f"=== Sync Pipeline Start: {datetime.now()} ===")
+def deduplicate(updates: list[CouncilUpdate]) -> list[CouncilUpdate]:
+    """Remove duplicates by URL."""
+    seen = set()
+    result = []
+    for u in updates:
+        if u.url not in seen:
+            seen.add(u.url)
+            result.append(u)
+    return result
 
-    # Initialize DB
+
+def main():
+    logger.info(f"=== Sync Production Start: {datetime.now()} ===")
+
+    use_proxy = os.getenv("USE_PROXY", "true").lower() in ("true", "1", "yes")
+    client = NetworkClient(use_proxy=use_proxy)
     conn = init_db()
-    
-    # Initialize shared network client for persistent session
-    client = NetworkClient()
 
     try:
-        # 1. METI Updates
-        logger.info("Syncing METI...")
-        meti_data = fetch_meti_updates(client)
-        logger.info(f"METI: Found {len(meti_data)} items")
-        
-        processed_meti = []
-        for item in meti_data:
-            if not is_url_in_db(conn, item["url"]):
-                logger.info(f"Fetching categories: {item['title'][:40]}...")
-                item["categories"] = fetch_meti_categories(client, item["url"])
-                # No extra sleep here as NetworkClient has internal jitter
-            processed_meti.append(item)
-            
-        if processed_meti:
-            save_updates(conn, processed_meti)
-            logger.info(f"Saved {len(processed_meti)} METI updates to DB.")
+        all_updates: list[CouncilUpdate] = []
 
-        # 2. OCCTO Updates
-        logger.info("Syncing OCCTO...")
-        occto_data = fetch_occto_updates() # OCCTO uses Playwright, keep as is
-        if occto_data:
-            save_updates(conn, occto_data)
-            logger.info(f"Saved {len(occto_data)} OCCTO updates to DB.")
+        # === Scrape METI ===
+        logger.info(f"Fetching METI: {METI_URL}")
+        meti_soup = client.fetch_soup(METI_URL)
+        if meti_soup:
+            meti_items = parse_meti_updates(meti_soup)
+            logger.info(f"METI: found {len(meti_items)} items")
+            all_updates.extend(meti_items)
+        else:
+            logger.error("METI fetch failed")
+
+        # === Scrape OCCTO ===
+        logger.info(f"Fetching OCCTO: {OCCTO_URL}")
+        occto_soup = client.fetch_soup(OCCTO_URL)
+        if occto_soup:
+            occto_items = parse_occto_updates(occto_soup)
+            logger.info(f"OCCTO: found {len(occto_items)} items")
+            all_updates.extend(occto_items)
+        else:
+            logger.error("OCCTO fetch failed")
+
+        # === Deduplicate & Filter ===
+        all_updates = deduplicate(all_updates)
+
+        # Filter out already-known URLs
+        new_items = [u for u in all_updates if not is_url_in_db(conn, u.url)]
+
+        logger.info(f"Total: {len(all_updates)}, New: {len(new_items)}")
+
+        # === Save to DB ===
+        if new_items:
+            count = save_updates(
+                conn,
+                [
+                    {
+                        "date": u.date,
+                        "title": u.title,
+                        "url": u.url,
+                        "categories": u.categories,
+                    }
+                    for u in new_items
+                ],
+            )
+            logger.info(f"Saved {count} new items to DB")
+        else:
+            logger.info("No new items to save")
 
     finally:
         client.close()
         conn.close()
-        logger.info(f"=== Sync Pipeline Finished ===")
+
+    logger.info("=== Sync Complete ===")
+
 
 if __name__ == "__main__":
     main()

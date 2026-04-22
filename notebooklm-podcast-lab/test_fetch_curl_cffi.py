@@ -1,82 +1,48 @@
-import sys
+"""Test curl-cffi network connectivity for METI/OCCTO scraping."""
+
 import os
-from curl_cffi import requests as curl_requests
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+import sys
 
-# Config
-URL = "https://www.meti.go.jp/shingikai/enecho/shoene_shinene/suiso_seisaku/015.html"
-SOCKS5_PROXY = "socks5://127.0.0.1:40000"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def test_fetch_with_curl_cffi():
-    print(f"[*] Testing fetch with curl-cffi: {URL}")
-    
-    # Pre-check proxy: use if specified or if on GHA (unless USE_PROXY=false)
-    use_proxy_env = os.getenv("USE_PROXY", "").lower()
-    
-    if use_proxy_env == "false":
-        print("[*] Proxy explicitly disabled via USE_PROXY=false")
-        proxies = None
-    elif use_proxy_env == "true" or os.getenv("GITHUB_ACTIONS"):
-        print(f"[*] Using proxy: {SOCKS5_PROXY}")
-        proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY}
-    else:
-        print("[*] Running locally, proxy skipped unless USE_PROXY=true.")
-        proxies = None
+from shared import NetworkClient, METI_URL, OCCTO_URL, logger, setup_logging
 
-    # === 注意：ヘッダー整合性の重要性 ===
-    # impersonate="chrome120" を使用する場合、headers内の User-Agent も
-    # Chrome 120 のものに固定する必要があります。
-    # TLSフィンガープリント（癖）と自己申告（UA）を一致させることが 403 回避の鍵です。
-    # ================================
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
-        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Sec-Fetch-User": "?1",
-        "Upgrade-Insecure-Requests": "1",
-    }
+setup_logging()
+
+USE_PROXY = os.getenv("USE_PROXY", "true").lower() in ("true", "1", "yes")
+
+
+def main():
+    use_proxy = USE_PROXY
+    logger.info(f"Proxy mode: {use_proxy}")
+
+    client = NetworkClient(use_proxy=use_proxy)
 
     try:
-        # Impersonate chrome120
-        response = curl_requests.get(
-            URL, 
-            impersonate="chrome120", 
-            timeout=30, 
-            proxies=proxies, 
-            headers=headers
-        )
-        
-        print(f"[+] Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            print("[+] Successfully fetched the page!")
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Check for PDF links
-            pdf_links = []
-            for link in soup.find_all('a', href=True):
-                href = link.get('href')
-                if href and (href.lower().endswith('.pdf') or '/pdf/' in href.lower()):
-                    pdf_links.append(urljoin(URL, href))
-            
-            unique_pdfs = list(dict.fromkeys(pdf_links))
-            print(f"[+] Found {len(unique_pdfs)} PDF links:")
-            for pdf in unique_pdfs[:5]: # Show first 5
-                print(f"  - {pdf}")
+        # Test METI
+        logger.info(f"Fetching METI: {METI_URL}")
+        soup = client.fetch_soup(METI_URL)
+        if soup:
+            title = soup.title.string if soup.title else "N/A"
+            logger.info(f"[OK] METI title: {title}")
         else:
-            print(f"[!] Failed to fetch. Content snippet: {response.text[:200]}")
+            logger.error("[FAIL] METI fetch returned None")
             sys.exit(1)
 
-    except Exception as e:
-        print(f"[!] Error occurred: {e}")
-        sys.exit(1)
+        # Test OCCTO
+        logger.info(f"Fetching OCCTO: {OCCTO_URL}")
+        soup2 = client.fetch_soup(OCCTO_URL)
+        if soup2:
+            title2 = soup2.title.string if soup2.title else "N/A"
+            logger.info(f"[OK] OCCTO title: {title2}")
+        else:
+            logger.error("[FAIL] OCCTO fetch returned None")
+            sys.exit(1)
+
+        logger.info("All tests passed.")
+    finally:
+        client.close()
+
 
 if __name__ == "__main__":
-    test_fetch_with_curl_cffi()
+    main()

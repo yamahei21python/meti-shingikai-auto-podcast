@@ -26,7 +26,10 @@ from shared import (
     sanitize_filename,
     format_date_yyyymmdd,
     logger,
+    setup_logging,
 )
+
+setup_logging()
 
 
 def generate_summary_report(notebook_id: str, target_path: str) -> bool:

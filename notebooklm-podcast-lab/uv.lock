@@ -477,12 +477,12 @@ dependencies = [
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "boto3", specifier = ">=1.42.81" },
-    { name = "curl-cffi", specifier = ">=0.15.0" },
+    { name = "curl-cffi" },
     { name = "feedgen", specifier = ">=1.0.0" },
     { name = "notebooklm-py", extras = ["browser"], specifier = ">=0.3.4" },
     { name = "playwright", specifier = ">=1.58.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
-    { name = "requests", specifier = ">=2.33.1" },
+    { name = "requests" },
 ]
 
 [[package]]

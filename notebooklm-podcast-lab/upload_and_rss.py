@@ -1,278 +1,238 @@
 """
-Upload to R2 and generate RSS feed.
+Upload podcast MP3s to Cloudflare R2 and regenerate RSS feed.
+
+Reads DB for completed items + local podcasts/ directory,
+uploads MP3s to R2, and generates podcast.xml using feedgen.
 
 Usage:
-    python upload_and_rss.py --file path/to/file.mp3
-    python upload_and_rss.py --source_url "https://..."
+    python upload_and_rss.py
 """
 
-import argparse
-import json
 import os
-import sys
+import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 import boto3
-import xml.etree.ElementTree as ET
-from botocore.config import Config
-from dotenv import load_dotenv
 from feedgen.feed import FeedGenerator
 
-# Add parent to path
-sys.path.insert(0, ".")
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from shared import (
+    DB_PATH,
+    PODCASTS_DIR,
     R2_ACCESS_KEY_ID,
-    R2_SECRET_ACCESS_KEY,
-    R2_ENDPOINT,
     R2_BUCKET_NAME,
+    R2_ENDPOINT,
     R2_PUBLIC_URL,
-    PODCAST_TITLE,
+    R2_SECRET_ACCESS_KEY,
+    RSS_OUTPUT_PATH,
+    PODCAST_AUTHOR,
     PODCAST_DESCRIPTION,
     PODCAST_LINK,
-    PODCAST_AUTHOR,
-    PODCASTS_DIR,
-    RSS_OUTPUT_PATH,
+    PODCAST_TITLE,
     logger,
+    setup_logging,
 )
 
-load_dotenv()
+setup_logging()
 
 
-def get_s3_client():
-    """Get R2 S3 client."""
+def get_r2_client():
+    """Create S3-compatible R2 client."""
+    if not all([R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
+        logger.error("R2 credentials not configured (check env vars)")
+        return None
+
     return boto3.client(
         "s3",
         endpoint_url=R2_ENDPOINT,
         aws_access_key_id=R2_ACCESS_KEY_ID,
         aws_secret_access_key=R2_SECRET_ACCESS_KEY,
-        config=Config(signature_version="s3v4"),
         region_name="auto",
     )
 
 
-def upload_file_if_missing(client, local_path: str, bucket: str, key: str) -> bool:
+def upload_to_r2(s3_client, local_path: Path, remote_key: str) -> bool:
     """
-    Upload file to R2 if not exists.
+    Upload a file to R2.
 
     Args:
-        client: S3 client
+        s3_client: boto3 S3 client
         local_path: Local file path
-        bucket: R2 bucket name
-        key: R2 object key
+        remote_key: R2 object key
 
     Returns:
-        True if upload successful or file exists
+        True if upload succeeded
     """
     try:
-        client.head_object(Bucket=bucket, Key=key)
-        logger.info(f"File already exists in R2: {key}")
+        s3_client.upload_file(
+            str(local_path),
+            R2_BUCKET_NAME,
+            remote_key,
+            ExtraArgs={"ContentType": "audio/mpeg", "CacheControl": "public, max-age=86400"},
+        )
+        logger.info(f"Uploaded: {remote_key}")
         return True
-    except:
-        logger.info(f"Uploading to R2: {key}...")
-        try:
-            with open(local_path, "rb") as f:
-                client.put_object(
-                    Bucket=bucket, Key=key, Body=f, ContentType="audio/mpeg"
-                )
-            logger.info(f"Upload complete: {key}")
-            return True
-        except Exception as e:
-            logger.error(f"Error uploading {key}: {e}")
-            return False
+    except Exception as e:
+        logger.error(f"R2 upload failed for {remote_key}: {e}")
+        return False
 
 
-def load_existing_items(xml_path: str) -> list[dict]:
+def read_summary_md(md_path: Path) -> str:
+    """Read summary markdown content."""
+    if not md_path.exists():
+        return ""
+    return md_path.read_text(encoding="utf-8")
+
+
+def get_done_items_from_db() -> list[dict]:
     """
-    Parse existing items from podcast.xml.
+    Get completed podcast items from DB with their original URLs.
+    """
+    if not DB_PATH.exists():
+        logger.warning(f"DB not found: {DB_PATH}")
+        return []
+
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT title, url, podcast_date
+        FROM council_updates
+        WHERE podcast_status = 'done'
+        ORDER BY podcast_date DESC
+    """
+    )
+
+    rows = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return rows
+
+
+def build_rss_feed(podcast_items: list[dict]) -> str:
+    """
+    Generate RSS feed XML using feedgen.
 
     Args:
-        xml_path: Path to RSS XML file
+        podcast_items: List of dicts with keys:
+            - title: Episode title
+            - url: R2 public URL for MP3
+            - description: Summary text (optional)
+            - size: File size in bytes
+            - pub_date: Publication datetime (optional)
 
     Returns:
-        List of item dictionaries
-    """
-    items = []
-    if not os.path.exists(xml_path):
-        return items
-
-    try:
-        tree = ET.parse(xml_path)
-        root = tree.getroot()
-        channel = root.find("channel")
-        if channel is None:
-            return items
-
-        for item in channel.findall("item"):
-            title = item.findtext("title")
-            link = item.findtext("link")
-            description = item.findtext("description")
-            pub_date_str = item.findtext("pubDate")
-
-            enclosure = item.find("enclosure")
-            url = enclosure.get("url") if enclosure is not None else link
-            size = (
-                int(enclosure.get("length"))
-                if enclosure is not None and enclosure.get("length")
-                else 0
-            )
-
-            try:
-                mtime = datetime.strptime(
-                    pub_date_str, "%a, %d %b %Y %H:%M:%S %z"
-                ).timestamp()
-            except:
-                mtime = datetime.now().timestamp()
-
-            items.append(
-                {
-                    "title": title,
-                    "description": description,
-                    "url": url,
-                    "original_link": link,
-                    "size": size,
-                    "mtime": mtime,
-                }
-            )
-    except Exception as e:
-        logger.warning(f"Failed to parse existing RSS: {e}")
-
-    return items
-
-
-def generate_rss(files_info: list[dict]) -> None:
-    """
-    Generate RSS feed file.
-
-    Args:
-        files_info: List of file info dictionaries
+        RSS XML string
     """
     fg = FeedGenerator()
     fg.load_extension("podcast")
 
     fg.title(PODCAST_TITLE)
+    fg.link(href=PODCAST_LINK, rel="alternate")
     fg.description(PODCAST_DESCRIPTION)
-    fg.link(href=PODCAST_LINK)
     fg.language("ja")
     fg.podcast.itunes_author(PODCAST_AUTHOR)
-    fg.podcast.itunes_image(f"{PODCAST_LINK.rstrip('/')}/cover.png")
-    fg.podcast.itunes_explicit("no")
     fg.podcast.itunes_category("News")
+    fg.podcast.itunes_image(href=f"{PODCAST_LINK}cover.png")
+    fg.podcast.itunes_explicit("no")
 
-    # Deduplicate by URL, sort by date descending
-    seen_urls = set()
-    unique_files = []
-    sorted_all = sorted(files_info, key=lambda x: x["mtime"], reverse=True)
-
-    for info in sorted_all:
-        if info["url"] not in seen_urls:
-            unique_files.append(info)
-            seen_urls.add(info["url"])
-
-    for info in unique_files:
+    for item in podcast_items:
         fe = fg.add_entry()
-        fe.id(info["url"])
-        fe.title(info["title"])
-        fe.description(info["description"] or info["title"])
-        fe.link(href=info.get("original_link") or info["url"])
-        fe.pubDate(datetime.fromtimestamp(info["mtime"], tz=timezone.utc))
-        fe.enclosure(info["url"], str(info["size"]), "audio/mpeg")
-        fe.podcast.itunes_explicit("no")
-        fe.podcast.itunes_summary(info["description"] or info["title"])
+        fe.id(item["url"])
+        fe.title(item["title"])
+        fe.enclosure(item["url"], str(item.get("size", 0)), "audio/mpeg")
 
-    fg.rss_file(str(RSS_OUTPUT_PATH), pretty=True)
-    logger.info(f"RSS Feed updated: {RSS_OUTPUT_PATH} ({len(unique_files)} items)")
+        if item.get("description"):
+            fe.description(item["description"])
+
+        if item.get("pub_date"):
+            fe.published(item["pub_date"])
+
+    return fg.rss_str(pretty=True).decode("utf-8")
 
 
 def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--file", help="Path to a single MP3 file to add")
-    parser.add_argument("--source_url", help="Original source URL for the meeting")
-    args = parser.parse_args()
+    logger.info("=== R2 Upload & RSS Generation Start ===")
 
-    # Check credentials
-    if not all([R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT, R2_BUCKET_NAME]):
-        logger.error("R2 credentials not found in environment")
+    s3 = get_r2_client()
+    if not s3:
+        logger.error("Cannot proceed without R2 client")
         return
 
-    s3 = get_s3_client()
+    # Collect local MP3 files (ignored by git, so must have been generated this run)
+    mp3_files = sorted(PODCASTS_DIR.glob("*.mp3")) if PODCASTS_DIR.exists() else []
+    if not mp3_files:
+        logger.info("No MP3 files found in podcasts/")
+        mp3_files = []
 
-    # Load existing items
-    files_info = load_existing_items(str(RSS_OUTPUT_PATH))
-    logger.info(f"Loaded {len(files_info)} existing items")
+    # Build item map from DB (title -> original_url)
+    db_items = get_done_items_from_db()
+    url_by_title = {item["title"]: item["url"] for item in db_items}
 
-    # Process new files
-    to_process = []
-    if args.file:
-        if os.path.exists(args.file):
-            to_process.append(os.path.basename(args.file))
-        else:
-            logger.error(f"File not found: {args.file}")
-    else:
-        logger.info(f"Scanning directory: {PODCASTS_DIR}")
-        if os.path.exists(PODCASTS_DIR):
-            to_process = [
-                f for f in os.listdir(PODCASTS_DIR) if f.lower().endswith(".mp3")
-            ]
+    # Upload MP3s to R2
+    podcast_entries = []
+    for mp3_path in mp3_files:
+        stem = mp3_path.stem
+        remote_key = f"podcasts/{mp3_path.name}"
+        r2_url = f"{R2_PUBLIC_URL}/{remote_key}" if R2_PUBLIC_URL else ""
 
-    for filename in to_process:
-        try:
-            local_path = os.path.join(str(PODCASTS_DIR), filename)
-            if (
-                args.file
-                and filename == os.path.basename(args.file)
-                and not os.path.exists(local_path)
-            ):
-                local_path = args.file
+        # Upload
+        if s3 and R2_BUCKET_NAME:
+            upload_to_r2(s3, mp3_path, remote_key)
 
-            stat = os.stat(local_path)
-            r2_key = f"podcasts/{filename}"
-            upload_file_if_missing(s3, local_path, R2_BUCKET_NAME, r2_key)
+        # Find matching summary
+        md_path = mp3_path.with_name(f"{stem}_summary.md")
+        description = read_summary_md(md_path)
+        original_url = url_by_title.get(stem, "")
 
-            public_url = f"{R2_PUBLIC_URL.rstrip('/')}/{r2_key}"
-            base_name = filename.rsplit(".", 1)[0]
+        # Get file size and mtime
+        size = mp3_path.stat().st_size
+        mtime = datetime.fromtimestamp(mp3_path.stat().st_mtime, tz=timezone.utc)
 
-            # Load metadata (original link)
-            original_link = args.source_url
-            meta_filename = f"{base_name}.json"
-            meta_path = os.path.join(os.path.dirname(local_path), meta_filename)
-            if os.path.exists(meta_path):
-                try:
-                    with open(meta_path, "r", encoding="utf-8") as f:
-                        meta_data = json.load(f)
-                        original_link = meta_data.get("original_url")
-                except Exception as e:
-                    logger.warning(f"Failed to read metadata: {e}")
+        entry = {
+            "title": stem,
+            "url": r2_url,
+            "description": description,
+            "size": size,
+            "pub_date": mtime,
+            "original_url": original_url,
+        }
+        podcast_entries.append(entry)
 
-            # Load summary markdown
-            description = None
-            summary_filename = f"{base_name}_summary.md"
-            summary_path = os.path.join(os.path.dirname(local_path), summary_filename)
-            if os.path.exists(summary_path):
-                with open(summary_path, "r", encoding="utf-8") as f:
-                    description = f.read()
-
-            files_info.append(
+    # Also include already-uploaded items from DB that don't have local MP3s
+    for item in db_items:
+        title = item["title"]
+        if not any(e["title"] == title for e in podcast_entries):
+            # Construct R2 URL from title pattern
+            r2_url = f"{R2_PUBLIC_URL}/podcasts/{title}.mp3" if R2_PUBLIC_URL else ""
+            podcast_entries.append(
                 {
-                    "title": base_name,
-                    "description": description,
-                    "url": public_url,
-                    "original_link": original_link,
-                    "size": stat.st_size,
-                    "mtime": stat.st_mtime,
+                    "title": title,
+                    "url": r2_url,
+                    "description": "",
+                    "size": 0,
+                    "pub_date": None,
+                    "original_url": item.get("url", ""),
                 }
             )
-            logger.info(f"Added new item: {base_name}")
 
-        except Exception as e:
-            logger.error(f"Error processing {filename}: {e}")
+    # Sort by pub_date descending (newest first)
+    podcast_entries.sort(key=lambda x: x.get("pub_date") or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
     # Generate RSS
-    if files_info:
-        generate_rss(files_info)
-    else:
-        logger.info("No items found to process")
+    rss_xml = build_rss_feed(podcast_entries)
+
+    # Write to file
+    RSS_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RSS_OUTPUT_PATH.write_text(rss_xml, encoding="utf-8")
+    logger.info(f"RSS feed written to: {RSS_OUTPUT_PATH} ({len(podcast_entries)} items)")
+
+    logger.info("=== Upload & RSS Complete ===")
 
 
 if __name__ == "__main__":

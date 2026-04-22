@@ -51,7 +51,7 @@ jobs:
       - name: Run Sync Pipeline (Dry Run/Test)
         run: |
           # 統合本番スクレイパーを実行（DB削除は行わず、新規アイテムの取得確認のみ）
-          uv run --project notebooklm-podcast-lab python3 sync_all_production.py
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/sync_all_production.py
 
       - name: Status Check
         run: |

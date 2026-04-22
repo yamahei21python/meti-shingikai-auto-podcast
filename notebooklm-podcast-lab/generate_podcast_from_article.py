@@ -36,7 +36,10 @@ from shared import (
     logger,
     is_github_actions,
     sanitize_filename,
+    setup_logging,
 )
+
+setup_logging()
 
 # === Configuration ===
 OUTPUT_MP3 = "podcast_summary.mp3"

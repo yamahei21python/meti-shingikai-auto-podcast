@@ -68,7 +68,7 @@ jobs:
           set -o pipefail
           uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/daily_podcast_worker.py 2>&1 | tee worker_output.log
           
-          if grep -q "COMPLETE SUCCESS:" worker_output.log; then
+          if grep -q "COMPLETE:" worker_output.log; then
             echo "has_asset=true" >> $GITHUB_OUTPUT
           else
             echo "has_asset=false" >> $GITHUB_OUTPUT
