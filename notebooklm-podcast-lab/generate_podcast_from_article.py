@@ -172,7 +172,7 @@ def generate_audio(prompt: str, max_attempts: int = 3) -> str | None:
                 logger.info(f"Audio generation started. Task ID: {task_id}")
                 return task_id
 
-        logger.warning(f"Audio generation start failed (Attempt {attempt + 1})")
+        logger.warning(f"Audio generation start failed (Attempt {attempt + 1}): {res.stderr.strip() if res.stderr else 'unknown'}")
         if attempt < max_attempts - 1:
             time.sleep(20)
 
@@ -291,8 +291,8 @@ def main():
                 logger.error(f"Failed to add source: {pdf_path}. Aborting.")
                 sys.exit(1)
 
-        logger.info("Waiting for sources to process (30s)...")
-        time.sleep(30)
+        logger.info("Waiting for sources to process (60s)...")
+        time.sleep(60)
     finally:
         # Cleanup and close
         client.close()
