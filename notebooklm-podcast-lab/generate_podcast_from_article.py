@@ -291,16 +291,30 @@ def main():
                 logger.error(f"Failed to add source: {pdf_path}. Aborting.")
                 sys.exit(1)
 
-        # Wait for all sources to finish processing (poll notebook status)
+        # Wait for all sources to finish processing
         logger.info("Waiting for sources to be ready...")
         max_source_wait = 600  # 10 minutes max
         poll_start = time.time()
         while time.time() - poll_start < max_source_wait:
-            time.sleep(20)
-            status_res = run_notebooklm(["artifact", "list", "-n", notebook_id])
+            time.sleep(10)
+            status_res = run_notebooklm(["source", "list", "-n", notebook_id, "--json"])
             if status_res.returncode == 0 and status_res.stdout.strip():
-                # Any output means sources are processed
-                break
+                try:
+                    data = json.loads(status_res.stdout)
+                    sources = data.get("sources", [])
+                    if not sources:
+                        continue  # sources not yet listed
+
+                    # status_id: 1=processing, 2=ready, 3=error, 5=preparing
+                    statuses = [s.get("status_id") for s in sources]
+                    if all(s == 2 for s in statuses):
+                        logger.info(f"All {len(sources)} sources ready.")
+                        break
+                    if any(s == 3 for s in statuses):
+                        logger.error("Source processing error detected")
+                        sys.exit(1)
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    pass
             logger.info("Sources still processing...")
     finally:
         # Cleanup and close
