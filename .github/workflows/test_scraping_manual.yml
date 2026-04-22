@@ -23,28 +23,28 @@ jobs:
 
       - name: Connect WARP with Japan IP Verification
         run: |
-          for i in $(seq 1 5); do
-            echo "=== WARP registration attempt $i/5 ==="
-            warp-cli --accept-tos registration new 2>/dev/null || true
+          warp-cli --accept-tos registration delete 2>/dev/null || true
+          for i in $(seq 1 10); do
+            echo "=== WARP registration attempt $i/10 ==="
+            warp-cli --accept-tos registration delete 2>/dev/null || true
+            warp-cli --accept-tos registration new
             warp-cli --accept-tos mode proxy
             warp-cli --accept-tos connect
             sleep 5
-            COUNTRY=$(curl -s --proxy socks5://127.0.0.1:40000 --max-time 10 "http://ip-api.com/json/?fields=countryCode" 2>/dev/null | tr -d '"')
+            COUNTRY=$(curl -s --proxy socks5://127.0.0.1:40000 --max-time 10 \
+              "http://ip-api.com/json/?fields=countryCode" 2>/dev/null | jq -r '.countryCode // empty')
             echo "WARP exit country: $COUNTRY"
             if [ "$COUNTRY" = "JP" ]; then
               echo "✓ Japanese IP confirmed"
               warp-cli --accept-tos status
               exit 0
             fi
-            echo "Not Japanese IP. Disconnecting and retrying..."
-            warp-cli --accept-tos disconnect
+            echo "Not Japanese IP ($COUNTRY). Retrying..."
+            warp-cli --accept-tos disconnect 2>/dev/null || true
             sleep 3
           done
-          echo "::warning::Could not get Japanese IP after 5 attempts."
-          warp-cli --accept-tos registration new
-          warp-cli --accept-tos mode proxy
-          warp-cli --accept-tos connect
-          sleep 3
+          echo "::warning::Could not get Japanese IP after 10 attempts."
+          warp-cli --accept-tos disconnect 2>/dev/null || true
 
       - name: Install uv and Setup Python
         uses: astral-sh/setup-uv@v3
