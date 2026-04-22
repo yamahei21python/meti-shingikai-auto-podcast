@@ -23,6 +23,11 @@ jobs:
         working-directory: notebooklm-podcast-lab
         run: uv sync
 
+      - name: "[Diagnose] METI 403 Root Cause Analysis"
+        run: |
+          export USE_PROXY=false
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/meti_403_diagnostic.py
+
       - name: "[Verify] Native GHA Network (No Proxy)"
         run: |
           echo "=== Native IP Info ==="
