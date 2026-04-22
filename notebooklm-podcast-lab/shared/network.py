@@ -22,7 +22,8 @@ class NetworkClient:
     
     def __init__(self, use_proxy: bool = True):
         self.use_proxy = use_proxy
-        self.proxies = {"http": SOCKS5_PROXY, "https": SOCKS5_PROXY} if use_proxy else None
+        proxy_url = SOCKS5_PROXY.strip() if SOCKS5_PROXY else None
+        self.proxies = {"http": proxy_url, "https": proxy_url} if (use_proxy and proxy_url) else None
         
         # Initialize persistent session
         # Note: METI WAF blocks Chrome TLS fingerprints on GHA (US IPs).
@@ -63,6 +64,7 @@ class NetworkClient:
                     url,
                     timeout=timeout,
                     headers=request_headers,
+                    proxies=self.proxies
                 )
                 
                 if response.status_code == 200:

@@ -7,6 +7,7 @@ Usage:
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -96,11 +97,14 @@ def generate_summary_report(notebook_id: str, target_path: str) -> bool:
         logger.error(f"No task_id in JSON: {gen_res.stdout}")
         return False
 
-    # Wait for completion
-    success = wait_for_task(task_id, notebook_identifier=notebook_id)
+    # Wait for completion (Max 10 minutes for reports)
+    success = wait_for_task(task_id, notebook_id=notebook_id, timeout_seconds=600)
 
-    if not success:
-        logger.warning("Report generation failed. Waiting 300s buffer...")
+    if success:
+        logger.info("Report completed. Waiting 30s for metadata propagation...")
+        time.sleep(30)
+    else:
+        logger.warning("Report generation failed. Waiting 300s buffer before last attempt...")
         time.sleep(300)
 
     # Download
@@ -134,8 +138,9 @@ def process_single_item(item: tuple) -> bool:
         formatted_date = format_date_yyyymmdd(date_str)
         sanitized_title = sanitize_filename(title)
         notebook_name = f"{formatted_date}_{sanitized_title}"
-        output_temp = f"temp_{formatted_date}.mp3"
-        md_temp = f"temp_{formatted_date}_summary.md"
+        # Use item_id in temp names to avoid collisions if multiple articles on same day
+        output_temp = f"temp_{formatted_date}_{item_id}.mp3"
+        md_temp = f"temp_{formatted_date}_{item_id}_summary.md"
 
         # === Step 1: Generate Podcast MP3 ===
         python_bin = sys.executable
@@ -188,14 +193,14 @@ def process_single_item(item: tuple) -> bool:
         )
 
         if mp3_success and md_success:
-            # Atomic move
+            # Atomic move using shutil (safer for cross-filesystem moves)
             if os.path.exists(final_mp3_path):
                 os.remove(final_mp3_path)
-            os.rename(output_temp, final_mp3_path)
+            shutil.move(output_temp, final_mp3_path)
 
             if os.path.exists(final_md_path):
                 os.remove(final_md_path)
-            os.rename(md_temp, final_md_path)
+            shutil.move(md_temp, final_md_path)
 
             # Save metadata JSON
             meta_path = final_mp3_path.rsplit(".", 1)[0] + ".json"

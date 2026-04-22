@@ -172,7 +172,14 @@ def generate_audio(prompt: str, max_attempts: int = 3) -> str | None:
                 logger.info(f"Audio generation started. Task ID: {task_id}")
                 return task_id
 
-        logger.warning(f"Audio generation start failed (Attempt {attempt + 1}): {res.stderr.strip() if res.stderr else 'unknown'}")
+        # Smart error detection for rate limits and quotas
+        error_msg = (res.stderr or res.stdout or "unknown").lower()
+        if "rate limited" in error_msg or "quota" in error_msg:
+            logger.error(f"CRITICAL: Google Rate Limit or Quota Exceeded detected: {error_msg.strip()}")
+            logger.error("Aborting retries to protect your Google account safety.")
+            return None  # Exit immediately without retrying
+
+        logger.warning(f"Audio generation start failed (Attempt {attempt + 1}): {error_msg.strip()}")
         if attempt < max_attempts - 1:
             time.sleep(30)
 
@@ -216,6 +223,7 @@ def build_prompt(title_context: str) -> str:
     """
     return f"""
 資料の内容の解析、および解説・対話はすべて日本語で行ってください。
+トーンは常に落ち着いており、客観的かつ知的な雰囲気を保ってください。過度な盛り上げやアメリカンなノリ、不自然な相槌は避け、専門家同士が深く議論しているような静かで真剣なトーンで話してください。
 
 まず最初に、資料のタイトル『{title_context}』をはっきりと明示して、すぐに本題の解析に入ってください。
 前置きや一般的な背景説明は最小限に留め、資料の内容に直接関わる核心部分から解説を開始してください。
@@ -291,31 +299,37 @@ def main():
                 logger.error(f"Failed to add source: {pdf_path}. Aborting.")
                 sys.exit(1)
 
-        # Wait for all sources to finish processing
-        logger.info("Waiting for sources to be ready...")
-        max_source_wait = 600  # 10 minutes max
+        # Wait for all sources to finish processing (Extended to 30 min)
+        logger.info("Waiting for sources to be ready (Max 1800s)...")
+        max_source_wait = 1800
         poll_start = time.time()
+        all_ready = False
         while time.time() - poll_start < max_source_wait:
-            time.sleep(10)
+            time.sleep(15)
             status_res = run_notebooklm(["source", "list", "-n", notebook_id, "--json"])
             if status_res.returncode == 0 and status_res.stdout.strip():
                 try:
                     data = json.loads(status_res.stdout)
                     sources = data.get("sources", [])
                     if not sources:
-                        continue  # sources not yet listed
+                        continue
 
-                    # status_id: 1=processing, 2=ready, 3=error, 5=preparing
+                    # status_id: 2=ready, 3=error
                     statuses = [s.get("status_id") for s in sources]
                     if all(s == 2 for s in statuses):
                         logger.info(f"All {len(sources)} sources ready.")
+                        all_ready = True
                         break
                     if any(s == 3 for s in statuses):
-                        logger.error("Source processing error detected")
+                        logger.error("Source processing error detected in NotebookLM")
                         sys.exit(1)
                 except (json.JSONDecodeError, KeyError, TypeError):
                     pass
             logger.info("Sources still processing...")
+
+        if not all_ready:
+            logger.error(f"Sources did not become ready within {max_source_wait}s limit.")
+            sys.exit(1)
     finally:
         # Cleanup and close
         client.close()
@@ -342,14 +356,17 @@ def main():
         logger.error("Failed to start audio generation")
         sys.exit(1)
 
-    logger.info("Waiting for completion (timeout: 5400s)...")
+    logger.info(f"Waiting for completion (timeout: {AUDIO_TIMEOUT_SECONDS}s)...")
     success = wait_for_task(task_id, notebook_id=notebook_id)
 
     if not success:
-        logger.warning("Audio generation failed or timed out. Waiting 300s buffer...")
+        logger.warning("Audio generation failed or timed out. Waiting 300s buffer before last attempt...")
         time.sleep(300)
     else:
         logger.info("Audio generation completed successfully")
+        # Increased to 60s as per request for maximum reliability
+        logger.info("Waiting 60s for metadata/URL propagation (Ultra Robust Mode)...")
+        time.sleep(60)
 
     # Step 5: Download
     final_output = "podcast_summary.mp3"
