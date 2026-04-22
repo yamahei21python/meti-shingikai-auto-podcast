@@ -138,7 +138,7 @@ def build_rss_feed(podcast_items: list[dict]) -> str:
     fg.language("ja")
     fg.podcast.itunes_author(PODCAST_AUTHOR)
     fg.podcast.itunes_category("News")
-    fg.podcast.itunes_image(href=f"{PODCAST_LINK}cover.png")
+    fg.podcast.itunes_image(f"{PODCAST_LINK}cover.png")
     fg.podcast.itunes_explicit("no")
 
     for item in podcast_items:
