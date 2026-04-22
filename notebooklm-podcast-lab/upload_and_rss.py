@@ -161,8 +161,7 @@ def main():
 
     s3 = get_r2_client()
     if not s3:
-        logger.error("Cannot proceed without R2 client")
-        return
+        logger.warning("R2 client not available. Skipping uploads but proceeding to RSS generation.")
 
     # Collect local MP3 files (ignored by git, so must have been generated this run)
     mp3_files = sorted(PODCASTS_DIR.glob("*.mp3")) if PODCASTS_DIR.exists() else []
@@ -173,6 +172,9 @@ def main():
     # Build item map from DB (title -> original_url)
     db_items = get_done_items_from_db()
     url_by_title = {item["title"]: item["url"] for item in db_items}
+
+    # Unified publication date for all items (April 22, 2026)
+    unified_now = datetime(2026, 4, 22, tzinfo=timezone.utc)
 
     # Upload MP3s to R2
     podcast_entries = []
@@ -190,16 +192,15 @@ def main():
         description = read_summary_md(md_path)
         original_url = url_by_title.get(stem, "")
 
-        # Get file size and mtime
+        # Get file size
         size = mp3_path.stat().st_size
-        mtime = datetime.fromtimestamp(mp3_path.stat().st_mtime, tz=timezone.utc)
 
         entry = {
             "title": stem,
             "url": r2_url,
             "description": description,
             "size": size,
-            "pub_date": mtime,
+            "pub_date": unified_now,  # Use unified date
             "original_url": original_url,
         }
         podcast_entries.append(entry)
@@ -216,13 +217,13 @@ def main():
                     "url": r2_url,
                     "description": "",
                     "size": 0,
-                    "pub_date": None,
+                    "pub_date": unified_now,  # Use unified date
                     "original_url": item.get("url", ""),
                 }
             )
 
-    # Sort by pub_date descending (newest first)
-    podcast_entries.sort(key=lambda x: x.get("pub_date") or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    # Sort by title descending (to maintain order by the date in the title since pub_date is unified)
+    podcast_entries.sort(key=lambda x: x.get("title", ""), reverse=True)
 
     # Generate RSS
     rss_xml = build_rss_feed(podcast_entries)

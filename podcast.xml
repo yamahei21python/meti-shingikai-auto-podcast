@@ -7,25 +7,25 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Wed, 22 Apr 2026 06:14:16 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 22 Apr 2026 08:58:12 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://energy-audio.vercel.app/cover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
       <title>第116回　調整力及び需給バランス評価等に関する委員会</title>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/第116回　調整力及び需給バランス評価等に関する委員会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/第116回　調整力及び需給バランス評価等に関する委員会.mp3" length="0" type="audio/mpeg"/>
+      <enclosure url="" length="0" type="audio/mpeg"/>
+      <pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate>
     </item>
     <item>
       <title>第9回 計画評価及び検証小委員会</title>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/第9回 計画評価及び検証小委員会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/第9回 計画評価及び検証小委員会.mp3" length="0" type="audio/mpeg"/>
+      <enclosure url="" length="0" type="audio/mpeg"/>
+      <pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate>
     </item>
     <item>
       <title>総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 水素・アンモニア政策小委員会（第15回）</title>
-      <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 水素・アンモニア政策小委員会（第15回）.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 水素・アンモニア政策小委員会（第15回）.mp3" length="0" type="audio/mpeg"/>
+      <enclosure url="" length="0" type="audio/mpeg"/>
+      <pubDate>Wed, 22 Apr 2026 00:00:00 +0000</pubDate>
     </item>
   </channel>
 </rss>
