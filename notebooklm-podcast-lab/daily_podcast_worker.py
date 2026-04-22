@@ -107,16 +107,34 @@ def generate_summary_report(notebook_id: str, target_path: str) -> bool:
         logger.warning("Report generation failed. Waiting 300s buffer before last attempt...")
         time.sleep(300)
 
-    # Download
-    dl_res = run_notebooklm(
-        ["download", "report", target_path, "-n", notebook_id, "--latest", "--force"]
-    )
+    # Download with retry logic
+    max_report_retries = 5
+    for attempt in range(1, max_report_retries + 1):
+        logger.info(f"Report download attempt {attempt}/{max_report_retries}...")
+        dl_res = run_notebooklm(
+            ["download", "report", target_path, "-n", notebook_id, "--latest", "--force"]
+        )
 
-    if dl_res.returncode == 0:
-        logger.info(f"Summary saved to: {target_path}")
-        return True
+        if dl_res.returncode == 0:
+            if os.path.exists(target_path):
+                file_size = os.path.getsize(target_path)
+                if file_size > 512:
+                    logger.info(f"SUCCESS: Report downloaded. Size: {file_size} bytes")
+                    logger.info(f"Summary saved to: {target_path}")
+                    return True
+                else:
+                    logger.error(f"Report download failed: File size too small ({file_size} bytes)")
+            else:
+                logger.error("Report download reported success but file not found")
+        else:
+            logger.error(f"Report download failed: {dl_res.stderr}")
 
-    logger.error(f"Report download failed: {dl_res.stderr}")
+        if attempt < max_report_retries:
+            wait_time = 30 * attempt
+            logger.info(f"Waiting {wait_time}s before next attempt...")
+            time.sleep(wait_time)
+
+    logger.error(f"All {max_report_retries} report download attempts failed")
     return False
 
 

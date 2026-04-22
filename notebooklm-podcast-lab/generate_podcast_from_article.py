@@ -188,7 +188,7 @@ def generate_audio(prompt: str, max_attempts: int = 3) -> str | None:
 
 def download_audio(output_filename: str) -> bool:
     """
-    Download generated audio file.
+    Download generated audio file with retry logic.
 
     Args:
         output_filename: Output file path
@@ -197,17 +197,32 @@ def download_audio(output_filename: str) -> bool:
         True if successful
     """
     logger.info(f"Downloading audio to: {output_filename}")
-    res = run_notebooklm(["download", "audio", output_filename])
 
-    if res.returncode == 0:
-        if os.path.exists(output_filename):
-            logger.info(f"Podcast saved to: {os.path.abspath(output_filename)}")
-            return True
+    max_download_retries = 5
+    for attempt in range(1, max_download_retries + 1):
+        logger.info(f"Download attempt {attempt}/{max_download_retries}...")
+        res = run_notebooklm(["download", "audio", output_filename, "--latest", "--force"])
+
+        if res.returncode == 0:
+            if os.path.exists(output_filename):
+                file_size = os.path.getsize(output_filename)
+                if file_size > 1024:
+                    logger.info(f"SUCCESS: Audio downloaded. Size: {file_size} bytes")
+                    logger.info(f"Podcast saved to: {os.path.abspath(output_filename)}")
+                    return True
+                else:
+                    logger.error(f"Download failed: File size too small ({file_size} bytes)")
+            else:
+                logger.error("Download reported success but file not found")
         else:
-            logger.error("Download reported success but file not found")
-    else:
-        logger.error(f"Download failed: {res.stderr}")
+            logger.error(f"Download failed: {res.stderr}")
 
+        if attempt < max_download_retries:
+            wait_time = 30 * attempt
+            logger.info(f"Waiting {wait_time}s before next attempt...")
+            time.sleep(wait_time)
+
+    logger.error(f"All {max_download_retries} download attempts failed")
     return False
 
 
@@ -318,6 +333,9 @@ def main():
                     statuses = [s.get("status_id") for s in sources]
                     if all(s == 2 for s in statuses):
                         logger.info(f"All {len(sources)} sources ready.")
+                        # Wait for internal indexing to complete (avoid CREATE_ARTIFACT failures)
+                        logger.info("Waiting 60s for internal indexing to complete...")
+                        time.sleep(60)
                         all_ready = True
                         break
                     if any(s == 3 for s in statuses):
@@ -360,12 +378,13 @@ def main():
     success = wait_for_task(task_id, notebook_id=notebook_id)
 
     if not success:
-        logger.warning("Audio generation failed or timed out. Waiting 300s buffer before last attempt...")
-        time.sleep(300)
+        # Note: Google may continue generating even after our timeout
+        # The download retry loop will handle cases where file isn't ready yet
+        logger.warning("Audio generation polling timed out. Proceeding to download attempt with retry logic...")
     else:
         logger.info("Audio generation completed successfully")
-        # Increased to 60s as per request for maximum reliability
-        logger.info("Waiting 60s for metadata/URL propagation (Ultra Robust Mode)...")
+        # Wait for metadata/URL propagation before download
+        logger.info("Waiting 60s for metadata/URL propagation...")
         time.sleep(60)
 
     # Step 5: Download

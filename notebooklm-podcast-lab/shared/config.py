@@ -31,7 +31,7 @@ NOTEBOOKLM_PYTHON_PATH = PROJECT_ROOT / ".venv" / "bin" / "python3"
 
 # === Audio Generation ===
 AUDIO_TIMEOUT_SECONDS = 5400
-POLL_INTERVAL_SECONDS = 60
+POLL_INTERVAL_SECONDS = 30
 
 # === Worker ===
 MAX_PROCESS_PER_RUN = 2
