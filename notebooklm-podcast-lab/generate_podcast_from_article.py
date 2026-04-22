@@ -291,8 +291,17 @@ def main():
                 logger.error(f"Failed to add source: {pdf_path}. Aborting.")
                 sys.exit(1)
 
-        logger.info("Waiting for sources to process (60s)...")
-        time.sleep(60)
+        # Wait for all sources to finish processing (poll notebook status)
+        logger.info("Waiting for sources to be ready...")
+        max_source_wait = 300  # 5 minutes max
+        poll_start = time.time()
+        while time.time() - poll_start < max_source_wait:
+            time.sleep(15)
+            status_res = run_notebooklm(["artifact", "list", "-n", notebook_id])
+            if status_res.returncode == 0 and status_res.stdout.strip():
+                # Any output means sources are processed
+                break
+            logger.info("Sources still processing...")
     finally:
         # Cleanup and close
         client.close()
