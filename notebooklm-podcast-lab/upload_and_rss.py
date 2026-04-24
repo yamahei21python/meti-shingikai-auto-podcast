@@ -147,8 +147,8 @@ def build_rss_feed(podcast_items: list[dict]) -> str:
         fe.title(item["title"])
         fe.enclosure(item["url"], str(item.get("size", 0)), "audio/mpeg")
 
-        if item.get("description"):
-            fe.description(item["description"])
+        # Always set description (even if empty) to ensure XML structure
+        fe.description(item.get("description", ""))
 
         if item.get("pub_date"):
             fe.published(item["pub_date"])

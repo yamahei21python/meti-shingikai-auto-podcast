@@ -149,7 +149,7 @@
                 const pubDate = new Date(pubDateRaw).toLocaleDateString('ja-JP', {
                     year: 'numeric', month: 'long', day: 'numeric'
                 });
-                const description = item.querySelector('description').textContent;
+                const description = item.querySelector('description')?.textContent || '';
                 const audioUrl = item.querySelector('enclosure').getAttribute('url');
 
                 const sections = description.split(/### \d\.\s*/);
