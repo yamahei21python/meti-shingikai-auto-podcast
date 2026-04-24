@@ -207,16 +207,31 @@ def main():
         podcast_entries.append(entry)
 
     # Also include already-uploaded items from DB that don't have local MP3s
+    # Scan podcasts/ for matching summary.md files by title substring match
+    summary_files = (
+        list(PODCASTS_DIR.glob("*_summary.md")) if PODCASTS_DIR.exists() else []
+    )
+
     for item in db_items:
         title = item["title"]
         if not any(e["title"] == title for e in podcast_entries):
             # Construct R2 URL from title pattern
             r2_url = f"{R2_PUBLIC_URL}/podcasts/{title}.mp3" if R2_PUBLIC_URL else ""
+
+            # Try to find matching summary.md by title substring
+            # DB title uses spaces, filename uses underscores
+            normalized_title = title.replace(" ", "_").replace("　", "_")
+            description = ""
+            for md_path in summary_files:
+                if normalized_title in md_path.stem:
+                    description = read_summary_md(md_path)
+                    break
+
             podcast_entries.append(
                 {
                     "title": title,
                     "url": r2_url,
-                    "description": "",
+                    "description": description,
                     "size": 0,
                     "pub_date": unified_now,  # Use unified date
                     "original_url": item.get("url", ""),
