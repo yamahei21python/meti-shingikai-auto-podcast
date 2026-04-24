@@ -1,0 +1,50 @@
+name: Test RSS Generation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-rss:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install libcurl-dev (for curl-cffi)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Setup Dependencies
+        working-directory: notebooklm-podcast-lab
+        run: uv sync
+
+      - name: Run upload_and_rss.py
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv run python upload_and_rss.py 2>&1 | tee rss_output.log
+
+      - name: Check podcast.xml description tags
+        run: |
+          echo "=== Checking description tags in podcast.xml ==="
+          ITEMS_TOTAL=$(grep -c '<item>' podcast.xml || echo "0")
+          ITEMS_WITH_DESC=$(grep -A1 '<item>' podcast.xml | grep -c '<description>' || echo "0")
+          echo "Total items: $ITEMS_TOTAL"
+          echo "Items with <description>: $ITEMS_WITH_DESC"
+
+          if [ "$ITEMS_TOTAL" -gt 0 ] && [ "$ITEMS_WITH_DESC" -eq "$ITEMS_TOTAL" ]; then
+            echo "✅ All items have description tags"
+          else
+            echo "❌ Some items missing description tags"
+            exit 1
+          fi
+
+      - name: Upload podcast.xml as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: podcast-xml
+          path: podcast.xml
