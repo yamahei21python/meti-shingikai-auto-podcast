@@ -147,8 +147,9 @@ def build_rss_feed(podcast_items: list[dict]) -> str:
         fe.title(item["title"])
         fe.enclosure(item["url"], str(item.get("size", 0)), "audio/mpeg")
 
-        # Always set description (even if empty) to ensure XML structure
-        fe.description(item.get("description", ""))
+        # Set description from summary.md (feedgen skips empty strings)
+        description_text = item.get("description", "") or "No summary available."
+        fe.description(description_text)
 
         if item.get("pub_date"):
             fe.published(item["pub_date"])
