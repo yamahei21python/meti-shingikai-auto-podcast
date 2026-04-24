@@ -21,16 +21,17 @@ class NetworkClient:
     """
     
     # Browser impersonation profiles in order of preference
-    BROWSER_PROFILES = ["firefox133", "safari17_0"]
+    # Updated: older profiles (firefox133, safari17_0) blocked by METI WAF
+    BROWSER_PROFILES = ["firefox135", "safari18_0", "chrome133a"]
     
     def __init__(self, use_proxy: bool = True, initial_profile: str = "firefox133"):
         self.use_proxy = use_proxy
         proxy_url = SOCKS5_PROXY.strip() if SOCKS5_PROXY else None
         self.proxies = {"http": proxy_url, "https": proxy_url} if (use_proxy and proxy_url) else None
         
-        # Initialize persistent session with Firefox 133 (works on GitHub Actions)
-        # Note: METI WAF blocks Chrome TLS fingerprints on GHA (US IPs).
-        # Firefox and Safari fingerprints pass through.
+        # Initialize persistent session with Firefox 135 (latest fingerprint)
+        # Note: METI WAF blocks older profiles (firefox133, safari17_0) on GHA.
+        # Fallback chain: firefox135 -> safari18_0 -> chrome133a
         self.current_profile = initial_profile
         self.session = requests.Session(
             impersonate=self.current_profile,
