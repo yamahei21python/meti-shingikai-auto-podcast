@@ -1,4 +1,4 @@
-name: Pipeline Dry Run (Scrape + PDF Extract)
+name: Pipeline Dry Run (15 items)
 
 on:
   workflow_dispatch:
@@ -38,56 +38,49 @@ jobs:
         working-directory: notebooklm-podcast-lab
         run: uv sync
 
-      - name: Pipeline Dry Run
+      - name: Pipeline Dry Run (15 items)
         working-directory: notebooklm-podcast-lab
-        env:
-          NOTEBOOKLM_AUTH_JSON: ""
         run: |
           uv run python -c "
-          import sys, os
+          import sys, os, sqlite3, time
           sys.path.insert(0, '.')
-          from shared import (
-              NetworkClient, get_pending_items, get_remaining_quota,
-              DAILY_GENERATION_LIMIT, MAX_PROCESS_PER_RUN,
-              format_date_yyyymmdd, sanitize_filename,
-              setup_logging, logger,
-          )
+          from shared import NetworkClient, DB_PATH, sanitize_filename, setup_logging
           from urllib.parse import urljoin
-          from bs4 import BeautifulSoup
           from pathlib import Path
           setup_logging()
 
-          print('=== Pipeline Dry Run ===')
+          # Get 15 pending items (bypass category filter)
+          conn = sqlite3.connect(str(DB_PATH))
+          conn.row_factory = sqlite3.Row
+          c = conn.cursor()
+          c.execute('SELECT id, title, url, date, category1 FROM council_updates WHERE podcast_status = \"pending\" ORDER BY date DESC, id DESC LIMIT 15')
+          items = [(r['id'], r['title'], r['url'], r['date'], r['category1']) for r in c.fetchall()]
+          conn.close()
+
+          print(f'=== Pipeline Dry Run: {len(items)} items ===')
           print()
 
-          # 1. Quota check
-          remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
-          print(f'[1] Quota: {remaining}/{DAILY_GENERATION_LIMIT}')
-          if remaining <= 0:
-              print('    -> Would skip (quota exhausted)')
-          print()
-
-          # 2. Get pending items
-          items = get_pending_items(limit=min(MAX_PROCESS_PER_RUN, max(remaining, 1)))
-          print(f'[2] Pending items to process: {len(items)}')
-          print()
-
-          # 3. Test each item
           client = NetworkClient()
           temp_dir = Path('temp_pdfs')
           temp_dir.mkdir(exist_ok=True)
 
+          ok_page = 0
+          ok_pdf_extract = 0
+          ok_pdf_dl = 0
+          ng_page = 0
+          ng_pdf = 0
+
           for item in items:
-              item_id, title, url, date_str, pdf_urls_json = item
-              print(f'--- Item id={item_id}: {title} ---')
-              print(f'    URL: {url}')
+              item_id, title, url, date_str, cat1 = item
+              print(f'[{item_id:4d}] {cat1} | {title[:55]}')
 
               # Fetch page
               soup = client.fetch_soup(url)
               if not soup:
-                  print(f'    ❌ FAILED to fetch page')
+                  print(f'      ❌ Page fetch FAILED')
+                  ng_page += 1
                   continue
-              print(f'    ✅ Page fetched ({len(str(soup))} chars)')
+              ok_page += 1
 
               # Extract PDFs
               links = soup.find_all('a', href=True)
@@ -95,35 +88,45 @@ jobs:
                   urljoin(url, href) for href in [l.get('href','') for l in links]
                   if href.lower().endswith('.pdf') or '/pdf/' in href.lower()
               ))
-              print(f'    ✅ PDF links: {len(pdf_urls)}')
+              if not pdf_urls:
+                  print(f'      ⚠️ Page OK ({len(str(soup))} chars) but 0 PDF links')
+                  continue
+              ok_pdf_extract += 1
 
-              # Download first PDF (smoke test)
-              if pdf_urls:
-                  test_url = pdf_urls[0]
-                  resp = client.fetch(test_url, timeout=30)
-                  if resp and resp.status_code == 200:
-                      fname = sanitize_filename(test_url.split('/')[-1])
-                      if not fname.lower().endswith('.pdf'):
-                          fname += '.pdf'
-                      fpath = temp_dir / fname
-                      fpath.write_bytes(resp.content)
-                      print(f'    ✅ PDF downloaded: {fpath.name} ({len(resp.content)} bytes)')
-                      fpath.unlink()
-                  else:
-                      status = resp.status_code if resp else 'None'
-                      print(f'    ❌ PDF download failed: status={status}')
-
-              print()
+              # Download first PDF
+              test_url = pdf_urls[0]
+              resp = client.fetch(test_url, timeout=30)
+              if resp and resp.status_code == 200 and len(resp.content) > 1024:
+                  ok_pdf_dl += 1
+                  kb = len(resp.content) // 1024
+                  print(f'      ✅ page:{len(str(soup)):>5} chars | {len(pdf_urls)} PDFs | DL: {kb}KB')
+              else:
+                  ng_pdf += 1
+                  status = resp.status_code if resp else 'None'
+                  print(f'      ❌ page OK but PDF download failed (status={status})')
 
           client.close()
 
-          # 4. Cleanup
+          # Cleanup
           for f in temp_dir.glob('*.pdf'):
               f.unlink()
-          temp_dir.rmdir()
+          try:
+              temp_dir.rmdir()
+          except:
+              pass
 
-          # 5. Summary
-          print('=== Dry Run Complete ===')
-          print(f'  Items tested: {len(items)}')
-          print(f'  No NotebookLM calls made (dry run)')
-          " 2>&1
+          print()
+          print(f'=== Summary ===')
+          print(f'  Total:       {len(items)}')
+          print(f'  Page OK:     {ok_page} / {len(items)}')
+          print(f'  PDF found:   {ok_pdf_extract} / {len(items)}')
+          print(f'  PDF DL OK:   {ok_pdf_dl} / {len(items)}')
+          if ng_page > 0:
+              print(f'  Page FAILED: {ng_page}')
+          if ng_pdf > 0:
+              print(f'  PDF FAILED:  {ng_pdf}')
+          if ok_page == len(items) and ok_pdf_dl == len(items):
+              print('  ✅ ALL PASSED')
+          else:
+              print('  ⚠️ SOME FAILURES - see above')
+          " 2>&1 | tee dry_run_output.log
