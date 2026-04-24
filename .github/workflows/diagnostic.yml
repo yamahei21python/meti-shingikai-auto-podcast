@@ -1,0 +1,39 @@
+name: METI 403 Diagnostic
+
+on:
+  workflow_dispatch: # 手動実行用
+  schedule:
+    - cron: '0 12 * * *' # 日本時間 21:00 (毎日)
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install libcurl-dev (for curl-cffi)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Setup Dependencies
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv sync
+          uv run playwright install --with-deps chromium
+
+      - name: Run METI 403 Diagnostic
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv run python meti_403_diagnostic.py 2>&1 | tee diagnostic_output.log
+
+      - name: Upload diagnostic log as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostic-log
+          path: notebooklm-podcast-lab/diagnostic_output.log
