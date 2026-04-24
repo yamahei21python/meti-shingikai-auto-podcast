@@ -25,6 +25,9 @@ setup_logging()
 
 METI_URL = "https://www.meti.go.jp/shingikai/index.html"
 METI_PRESS = "https://www.meti.go.jp/press/index.html"
+# Specific pages that previously returned 403
+ENECHO_URL = "https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/gas_business_wg/007.html"
+ENERGY_ENV_URL = "https://www.meti.go.jp/shingikai/energy_environment/sogo_energy/2025_001.html"
 
 
 def run_curl(url: str, extra_args: list[str] = None) -> dict:
@@ -59,16 +62,16 @@ def run_curl_body(url: str, extra_args: list[str] = None) -> tuple[int, str]:
         return -1, str(e)
 
 
-def test_curl_cffi(profile: str) -> dict:
+def test_curl_cffi(profile: str, url: str = METI_URL) -> dict:
     """Test with curl-cffi impersonation."""
     try:
         from curl_cffi import requests
         session = requests.Session(impersonate=profile)
-        resp = session.get(METI_URL, timeout=10)
-        return {"profile": profile, "status": resp.status_code, "size": len(resp.content),
+        resp = session.get(url, timeout=10)
+        return {"profile": profile, "url": url, "status": resp.status_code, "size": len(resp.content),
                 "headers": dict(list(resp.headers.items())[:10])}
     except Exception as e:
-        return {"profile": profile, "error": str(e)}
+        return {"profile": profile, "url": url, "error": str(e)}
 
 
 def test_requests_lib() -> dict:
@@ -200,6 +203,27 @@ def main():
     print(f"  Runner OS: {os.getenv('RUNNER_OS', 'not set')}")
     print(f"  USE_PROXY: {os.getenv('USE_PROXY', 'not set')}")
     print(f"  SOCKS5_PROXY: {os.getenv('SOCKS5_PROXY', 'not set')}")
+
+    # 7. Specific pages test (enecho, energy_environment)
+    print("\n--- [7] Specific pages test (enecho, energy_environment) ---")
+    specific_pages = [
+        ("ENECHO page", ENECHO_URL),
+        ("Energy Environment page", ENERGY_ENV_URL),
+    ]
+    profiles = ["safari17_0", "firefox133", "chrome120", "chrome131"]
+    
+    for label, url in specific_pages:
+        print(f"\n  Testing: {label} ({url})")
+        for profile in profiles:
+            try:
+                result = test_curl_cffi(profile, url)
+                status = result.get("status", "?")
+                size = result.get("size", "?")
+                mark = "✅" if status == 200 else "❌"
+                err = result.get("error", "")
+                print(f"    {mark} {profile}: status={status}, size={size}" + (f" ERR:{err}" if err else ""))
+            except Exception as e:
+                print(f"    ❌ {profile}: ERROR {e}")
 
     print("\n" + "=" * 60)
     print("DIAGNOSTIC COMPLETE")
