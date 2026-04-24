@@ -1,4 +1,4 @@
-name: Pipeline Dry Run (15 items)
+name: Pipeline Dry Run (5 items + 120s cooldown)
 
 on:
   workflow_dispatch:
@@ -38,7 +38,7 @@ jobs:
         working-directory: notebooklm-podcast-lab
         run: uv sync
 
-      - name: Pipeline Dry Run (15 items)
+      - name: Pipeline Dry Run (5 items + 120s cooldown)
         working-directory: notebooklm-podcast-lab
         run: |
           uv run python -c "
@@ -53,11 +53,11 @@ jobs:
           conn = sqlite3.connect(str(DB_PATH))
           conn.row_factory = sqlite3.Row
           c = conn.cursor()
-          c.execute('SELECT id, title, url, date, category1 FROM council_updates WHERE podcast_status = \"pending\" ORDER BY date DESC, id DESC LIMIT 15')
+          c.execute('SELECT id, title, url, date, category1 FROM council_updates WHERE podcast_status = \"pending\" ORDER BY date DESC, id DESC LIMIT 5')
           items = [(r['id'], r['title'], r['url'], r['date'], r['category1']) for r in c.fetchall()]
           conn.close()
 
-          print(f'=== Pipeline Dry Run: {len(items)} items ===')
+          print(f'=== Pipeline Dry Run: {len(items)} items (120s cooldown) ===')
           print()
 
           client = NetworkClient()
@@ -70,7 +70,12 @@ jobs:
           ng_page = 0
           ng_pdf = 0
 
-          for item in items:
+          for idx, item in enumerate(items):
+              # 120s cooldown between items (WAF mitigation)
+              if idx > 0:
+                  print(f'    ... waiting 120s (WAF cooldown) ...')
+                  time.sleep(120)
+
               item_id, title, url, date_str, cat1 = item
               print(f'[{item_id:4d}] {cat1} | {title[:55]}')
 
