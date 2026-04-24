@@ -291,12 +291,18 @@ def main():
 
     # Process items
     processed_count = 0
-    for item in items:
+    for i, item in enumerate(items):
         # Re-check quota before each item (another worker might have consumed it)
         remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
         if remaining <= 0:
             logger.warning("Daily quota exhausted mid-run. Skipping remaining items.")
             break
+
+        # Wait between items to avoid WAF rate limiting (METI blocks rapid sequential access)
+        if i > 0:
+            wait_sec = 120
+            logger.info(f"Waiting {wait_sec}s between items (WAF mitigation)...")
+            time.sleep(wait_sec)
 
         if process_single_item(item):
             processed_count += 1
