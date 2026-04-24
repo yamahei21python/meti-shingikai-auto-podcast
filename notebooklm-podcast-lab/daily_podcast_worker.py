@@ -19,6 +19,7 @@ sys.path.insert(0, ".")
 from shared import (
     PODCASTS_DIR,
     MAX_PROCESS_PER_RUN,
+    DAILY_GENERATION_LIMIT,
     init_auth,
     get_pending_items,
     update_status,
@@ -26,6 +27,8 @@ from shared import (
     wait_for_task,
     sanitize_filename,
     format_date_yyyymmdd,
+    get_remaining_quota,
+    increment_daily_quota,
     logger,
     setup_logging,
 )
@@ -229,6 +232,7 @@ def process_single_item(item: tuple) -> bool:
 
             logger.info("COMPLETE: Both MP3 and MD saved with metadata")
             update_status(item_id, "done")
+            increment_daily_quota()
 
             # Output for workflow
             print(f"PODCAST_ASSET_PATH={final_mp3_path}")
@@ -267,8 +271,19 @@ def main():
     # Initialize auth
     init_auth()
 
-    # Get pending items
-    items = get_pending_items(limit=MAX_PROCESS_PER_RUN)
+    # Check daily quota before doing anything
+    remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
+    if remaining <= 0:
+        logger.warning(
+            f"Daily generation quota exhausted ({DAILY_GENERATION_LIMIT}/{DAILY_GENERATION_LIMIT}). Skipping all items."
+        )
+        print("\n=== Worker Finished. Processed: 0 items (quota exhausted) ===")
+        return
+    logger.info(f"Daily quota remaining: {remaining}/{DAILY_GENERATION_LIMIT}")
+
+    # Get pending items (capped by remaining quota)
+    effective_limit = min(MAX_PROCESS_PER_RUN, remaining)
+    items = get_pending_items(limit=effective_limit)
 
     if not items:
         logger.info("No pending items in queue")
@@ -277,6 +292,12 @@ def main():
     # Process items
     processed_count = 0
     for item in items:
+        # Re-check quota before each item (another worker might have consumed it)
+        remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
+        if remaining <= 0:
+            logger.warning("Daily quota exhausted mid-run. Skipping remaining items.")
+            break
+
         if process_single_item(item):
             processed_count += 1
 

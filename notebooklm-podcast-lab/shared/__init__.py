@@ -17,6 +17,7 @@ from .config import (
     TARGET_CATS_METI,
     AUDIO_TIMEOUT_SECONDS,
     POLL_INTERVAL_SECONDS,
+    DAILY_GENERATION_LIMIT,
     # R2 Credentials
     R2_ACCESS_KEY_ID,
     R2_SECRET_ACCESS_KEY,
@@ -39,6 +40,8 @@ from .db import (
     is_url_in_db,
     save_updates,
     update_status,
+    get_remaining_quota,
+    increment_daily_quota,
 )
 from .logging import get_logger, logger, setup_logging
 from .network import NetworkClient
@@ -89,6 +92,8 @@ __all__ = [
     "save_updates",
     "get_pending_items",
     "update_status",
+    "get_remaining_quota",
+    "increment_daily_quota",
     # logging
     "setup_logging",
     "get_logger",

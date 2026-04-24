@@ -35,6 +35,7 @@ POLL_INTERVAL_SECONDS = 30
 
 # === Worker ===
 MAX_PROCESS_PER_RUN = 2
+DAILY_GENERATION_LIMIT = 3  # NotebookLM free plan: 3 audio overviews/day
 
 # === R2 Cloud (Cloudflare) ===
 R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")

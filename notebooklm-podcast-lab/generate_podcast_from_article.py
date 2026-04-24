@@ -175,11 +175,18 @@ def generate_audio(prompt: str, max_attempts: int = 3) -> str | None:
                 return task_id
 
         # Smart error detection for rate limits and quotas
-        error_msg = (res.stderr or res.stdout or "unknown").lower()
-        if "rate limited" in error_msg or "quota" in error_msg:
-            logger.error(f"CRITICAL: Google Rate Limit or Quota Exceeded detected: {error_msg.strip()}")
+        error_msg = res.stderr or res.stdout or "unknown"
+        error_lower = error_msg.lower()
+        is_quota_error = (
+            "rate limited" in error_lower
+            or "quota" in error_lower
+            or "create_artifact failed" in error_lower
+            or ("rpc" in error_lower and "failed" in error_lower)
+        )
+        if is_quota_error:
+            logger.error(f"CRITICAL: NotebookLM quota/API error detected: {error_msg.strip()}")
             logger.error("Aborting retries to protect your Google account safety.")
-            return None  # Exit immediately without retrying
+            return None
 
         logger.warning(f"Audio generation start failed (Attempt {attempt + 1}): {error_msg.strip()}")
         if attempt < max_attempts - 1:

@@ -39,6 +39,13 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> sqlite3.Connection:
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS daily_quota (
+            date TEXT PRIMARY KEY,
+            generation_count INTEGER DEFAULT 0
+        )
+    """)
     conn.commit()
 
     return conn
@@ -171,3 +178,71 @@ def update_status(item_id: int, status: str) -> None:
 def get_db_path() -> str:
     """Get database path."""
     return str(DB_PATH)
+
+
+def _today_str() -> str:
+    return datetime.now().strftime("%Y-%m-%d")
+
+
+def get_remaining_quota(daily_limit: int = 3) -> int:
+    """
+    Get remaining podcast generation quota for today.
+
+    Args:
+        daily_limit: Maximum generations per day (default: 3 for NotebookLM free tier)
+
+    Returns:
+        Number of remaining generations (0 if exhausted)
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Ensure table exists (in case init_db wasn't called yet)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS daily_quota (
+            date TEXT PRIMARY KEY,
+            generation_count INTEGER DEFAULT 0
+        )
+    """)
+
+    today = _today_str()
+    cursor.execute(
+        "SELECT generation_count FROM daily_quota WHERE date = ?", (today,)
+    )
+    row = cursor.fetchone()
+    count = row[0] if row else 0
+    conn.close()
+
+    remaining = max(daily_limit - count, 0)
+    return remaining
+
+
+def increment_daily_quota() -> int:
+    """
+    Increment today's generation count by 1.
+
+    Returns:
+        New count after increment
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    today = _today_str()
+    cursor.execute(
+        """
+        INSERT INTO daily_quota (date, generation_count)
+        VALUES (?, 1)
+        ON CONFLICT(date) DO UPDATE SET generation_count = generation_count + 1
+        """,
+        (today,),
+    )
+
+    cursor.execute(
+        "SELECT generation_count FROM daily_quota WHERE date = ?", (today,)
+    )
+    row = cursor.fetchone()
+    count = row[0] if row else 0
+    conn.commit()
+    conn.close()
+
+    return count
