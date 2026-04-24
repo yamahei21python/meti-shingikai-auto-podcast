@@ -156,7 +156,7 @@ def main():
 
     # 3. curl-cffi impersonation tests
     print("\n--- [3] curl-cffi impersonation tests ---")
-    profiles = ["chrome120", "chrome131", "safari17_0", "firefox133", "edge131"]
+    profiles = ["chrome120", "chrome131", "chrome133a", "safari17_0", "safari18_0", "firefox133", "firefox135", "edge131"]
     for profile in profiles:
         try:
             result = test_curl_cffi(profile)
@@ -210,7 +210,7 @@ def main():
         ("ENECHO page", ENECHO_URL),
         ("Energy Environment page", ENERGY_ENV_URL),
     ]
-    profiles = ["safari17_0", "firefox133", "chrome120", "chrome131"]
+    profiles = ["safari17_0", "safari18_0", "firefox133", "firefox135", "chrome120", "chrome131", "chrome133a"]
     
     for label, url in specific_pages:
         print(f"\n  Testing: {label} ({url})")
