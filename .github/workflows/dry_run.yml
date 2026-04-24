@@ -1,0 +1,129 @@
+name: Pipeline Dry Run (Scrape + PDF Extract)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install libcurl-dev (for curl-cffi)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Install Cloudflare WARP
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update
+          sudo apt-get install -y cloudflare-warp
+
+      - name: Connect WARP (Proxy Mode)
+        run: |
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos mode proxy
+          warp-cli --accept-tos connect
+          sleep 5
+          echo "SOCKS5_PROXY=socks5://127.0.0.1:40000" >> $GITHUB_ENV
+
+      - name: Setup Dependencies
+        working-directory: notebooklm-podcast-lab
+        run: uv sync
+
+      - name: Pipeline Dry Run
+        working-directory: notebooklm-podcast-lab
+        env:
+          NOTEBOOKLM_AUTH_JSON: ""
+        run: |
+          uv run python -c "
+          import sys, os
+          sys.path.insert(0, '.')
+          from shared import (
+              NetworkClient, get_pending_items, get_remaining_quota,
+              DAILY_GENERATION_LIMIT, MAX_PROCESS_PER_RUN,
+              format_date_yyyymmdd, sanitize_filename,
+              setup_logging, logger,
+          )
+          from urllib.parse import urljoin
+          from bs4 import BeautifulSoup
+          from pathlib import Path
+          setup_logging()
+
+          print('=== Pipeline Dry Run ===')
+          print()
+
+          # 1. Quota check
+          remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
+          print(f'[1] Quota: {remaining}/{DAILY_GENERATION_LIMIT}')
+          if remaining <= 0:
+              print('    -> Would skip (quota exhausted)')
+          print()
+
+          # 2. Get pending items
+          items = get_pending_items(limit=min(MAX_PROCESS_PER_RUN, max(remaining, 1)))
+          print(f'[2] Pending items to process: {len(items)}')
+          print()
+
+          # 3. Test each item
+          client = NetworkClient()
+          temp_dir = Path('temp_pdfs')
+          temp_dir.mkdir(exist_ok=True)
+
+          for item in items:
+              item_id, title, url, date_str, pdf_urls_json = item
+              print(f'--- Item id={item_id}: {title} ---')
+              print(f'    URL: {url}')
+
+              # Fetch page
+              soup = client.fetch_soup(url)
+              if not soup:
+                  print(f'    ❌ FAILED to fetch page')
+                  continue
+              print(f'    ✅ Page fetched ({len(str(soup))} chars)')
+
+              # Extract PDFs
+              links = soup.find_all('a', href=True)
+              pdf_urls = list(dict.fromkeys(
+                  urljoin(url, href) for href in [l.get('href','') for l in links]
+                  if href.lower().endswith('.pdf') or '/pdf/' in href.lower()
+              ))
+              print(f'    ✅ PDF links: {len(pdf_urls)}')
+
+              # Download first PDF (smoke test)
+              if pdf_urls:
+                  test_url = pdf_urls[0]
+                  resp = client.fetch(test_url, timeout=30)
+                  if resp and resp.status_code == 200:
+                      fname = sanitize_filename(test_url.split('/')[-1])
+                      if not fname.lower().endswith('.pdf'):
+                          fname += '.pdf'
+                      fpath = temp_dir / fname
+                      fpath.write_bytes(resp.content)
+                      print(f'    ✅ PDF downloaded: {fpath.name} ({len(resp.content)} bytes)')
+                      fpath.unlink()
+                  else:
+                      status = resp.status_code if resp else 'None'
+                      print(f'    ❌ PDF download failed: status={status}')
+
+              print()
+
+          client.close()
+
+          # 4. Cleanup
+          for f in temp_dir.glob('*.pdf'):
+              f.unlink()
+          temp_dir.rmdir()
+
+          # 5. Summary
+          print('=== Dry Run Complete ===')
+          print(f'  Items tested: {len(items)}')
+          print(f'  No NotebookLM calls made (dry run)')
+          " 2>&1
