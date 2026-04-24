@@ -16,20 +16,24 @@ logger = get_logger("network")
 
 class NetworkClient:
     """
-    Robust HTTP client using a persistent curl-cffi Session to impersonate Chrome.
+    Robust HTTP client using a persistent curl-cffi Session to impersonate browsers.
     Maintains cookies and TLS session across requests to bypass WAF.
     """
     
-    def __init__(self, use_proxy: bool = True):
+    # Browser impersonation profiles in order of preference
+    BROWSER_PROFILES = ["firefox133", "safari17_0"]
+    
+    def __init__(self, use_proxy: bool = True, initial_profile: str = "firefox133"):
         self.use_proxy = use_proxy
         proxy_url = SOCKS5_PROXY.strip() if SOCKS5_PROXY else None
         self.proxies = {"http": proxy_url, "https": proxy_url} if (use_proxy and proxy_url) else None
         
-        # Initialize persistent session
+        # Initialize persistent session with Firefox 133 (works on GitHub Actions)
         # Note: METI WAF blocks Chrome TLS fingerprints on GHA (US IPs).
-        # Safari and Firefox fingerprints pass through.
+        # Firefox and Safari fingerprints pass through.
+        self.current_profile = initial_profile
         self.session = requests.Session(
-            impersonate="safari17_0",
+            impersonate=self.current_profile,
             proxies=self.proxies
         )
         
@@ -42,7 +46,8 @@ class NetworkClient:
 
     def fetch(self, url: str, headers: Optional[Dict[str, str]] = None, retries: int = 3, timeout: int = 30) -> Optional[Any]:
         """
-        Fetch URL using persistent session. Updates Referer automatically.
+        Fetch URL using persistent session with fallback browser profiles.
+        Updates Referer automatically.
         """
         request_headers = headers or {}
         
@@ -58,7 +63,7 @@ class NetworkClient:
                     wait = random.uniform(1.0, 3.0)
                     time.sleep(wait)
 
-                logger.info(f"Fetching (attempt {attempt + 1}/{retries}): {url}")
+                logger.info(f"Fetching (attempt {attempt + 1}/{retries}): {url} (profile: {self.current_profile})")
                 
                 response = self.session.get(
                     url,
@@ -74,9 +79,13 @@ class NetworkClient:
                 logger.warning(f"Status {response.status_code} for {url} (Attempt {attempt+1})")
                 if response.status_code == 403:
                     logger.error("403 Forbidden detected. Session might be flagged.")
+                    # Fallback to alternative browser profile
+                    self._switch_browser_profile()
                 
             except Exception as e:
                 logger.error(f"Network error on {url} (Attempt {attempt+1}): {e}")
+                # Fallback on network errors too
+                self._switch_browser_profile()
 
             if attempt < retries - 1:
                 wait_time = 10 * (attempt + 1)
@@ -84,6 +93,24 @@ class NetworkClient:
                 time.sleep(wait_time)
         
         return None
+    
+    def _switch_browser_profile(self):
+        """Switch to the next browser profile in the fallback list."""
+        current_index = self.BROWSER_PROFILES.index(self.current_profile)
+        next_index = (current_index + 1) % len(self.BROWSER_PROFILES)
+        self.current_profile = self.BROWSER_PROFILES[next_index]
+        
+        # Recreate session with new profile
+        self.session.close()
+        self.session = requests.Session(
+            impersonate=self.current_profile,
+            proxies=self.proxies
+        )
+        self.session.headers.update({
+            "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        })
+        
+        logger.info(f"Switched to browser profile: {self.current_profile}")
 
     def fetch_soup(self, url: str, headers: Optional[Dict[str, str]] = None) -> Optional[BeautifulSoup]:
         """Fetch URL and return BeautifulSoup object."""
