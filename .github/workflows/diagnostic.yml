@@ -21,13 +21,28 @@ jobs:
       - name: Install libcurl-dev (for curl-cffi)
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
 
+      - name: Install Cloudflare WARP
+        run: |
+          curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor --output /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+          sudo apt-get update
+          sudo apt-get install -y cloudflare-warp
+
+      - name: Connect WARP (Proxy Mode)
+        run: |
+          warp-cli --accept-tos registration new
+          warp-cli --accept-tos mode proxy
+          warp-cli --accept-tos connect
+          sleep 5
+          echo "SOCKS5_PROXY=socks5://127.0.0.1:40000" >> $GITHUB_ENV
+
       - name: Setup Dependencies
         working-directory: notebooklm-podcast-lab
         run: |
           uv sync
           uv run playwright install --with-deps chromium
 
-      - name: Run METI 403 Diagnostic
+      - name: Run METI 403 Diagnostic (with WARP)
         working-directory: notebooklm-podcast-lab
         run: |
           uv run python meti_403_diagnostic.py 2>&1 | tee diagnostic_output.log
