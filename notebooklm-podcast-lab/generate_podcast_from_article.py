@@ -26,6 +26,8 @@ from shared import (
     METI_URL,
     PODCASTS_DIR,
     SOCKS5_PROXY,
+    AUDIO_TIMEOUT_SECONDS,
+    POLL_INTERVAL_SECONDS,
     NetworkClient,
     format_date_yyyymmdd,
     init_auth,
