@@ -9,6 +9,7 @@ Usage:
 """
 
 import os
+import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +34,7 @@ from shared import (
     PODCAST_DESCRIPTION,
     PODCAST_LINK,
     PODCAST_TITLE,
+    format_date_yyyymmdd,
     logger,
     setup_logging,
 )
@@ -86,6 +88,40 @@ def read_summary_md(md_path: Path) -> str:
     if not md_path.exists():
         return ""
     return md_path.read_text(encoding="utf-8")
+
+
+def _normalize_for_compare(text: str) -> str:
+    """Normalize spaces/underscores for title comparison."""
+    return text.replace("_", " ").replace("　", " ").strip()
+
+
+def extract_date_and_title(stem: str, db_items: list[dict]) -> tuple[str, dict | None]:
+    """
+    Extract date prefix from stem and match against DB title.
+
+    Args:
+        stem: MP3 filename without extension (e.g. "20260216_第116回_...")
+        db_items: List of DB dicts with 'title' key
+
+    Returns:
+        (display_title, matched_db_item or None)
+        display_title includes date prefix if found in stem
+    """
+    date_prefix = ""
+    bare_title = stem
+
+    m = re.match(r"^(\d{8})_(.+)$", stem)
+    if m:
+        date_prefix = m.group(1) + "_"
+        bare_title = m.group(2)
+
+    # Compare normalized forms (space/underscore unified)
+    normalized_stem = _normalize_for_compare(bare_title)
+    for item in db_items:
+        if normalized_stem == _normalize_for_compare(item["title"]):
+            return date_prefix + item["title"], item
+
+    return stem, None
 
 
 def get_done_items_from_db() -> list[dict]:
@@ -170,12 +206,11 @@ def main():
         logger.info("No MP3 files found in podcasts/")
         mp3_files = []
 
-    # Build item map from DB (title -> original_url)
+    # Build item list from DB for title matching
     db_items = get_done_items_from_db()
-    url_by_title = {item["title"]: item["url"] for item in db_items}
 
-    # Unified publication date for all items (Use current execution date)
-    unified_now = datetime.now(timezone.utc)
+    # Fallback publication date (used only when DB has no podcast_date)
+    fallback_now = datetime.now(timezone.utc)
 
     # Upload MP3s to R2
     podcast_entries = []
@@ -188,20 +223,26 @@ def main():
         if s3 and R2_BUCKET_NAME:
             upload_to_r2(s3, mp3_path, remote_key)
 
+        # Match stem against DB title (handles date prefix + space/underscore diff)
+        display_title, matched_db = extract_date_and_title(stem, db_items)
+
         # Find matching summary
         md_path = mp3_path.with_name(f"{stem}_summary.md")
         description = read_summary_md(md_path)
-        original_url = url_by_title.get(stem, "")
+        original_url = matched_db["url"] if matched_db else ""
 
         # Get file size
         size = mp3_path.stat().st_size
 
+        # Use actual podcast_date from DB, fallback to current time
+        pub_date = matched_db.get("podcast_date") if matched_db else fallback_now
+
         entry = {
-            "title": stem,
+            "title": display_title,
             "url": r2_url,
             "description": description,
             "size": size,
-            "pub_date": unified_now,  # Use unified date
+            "pub_date": pub_date,
             "original_url": original_url,
         }
         podcast_entries.append(entry)
@@ -214,12 +255,20 @@ def main():
 
     for item in db_items:
         title = item["title"]
-        if not any(e["title"] == title for e in podcast_entries):
-            # Construct R2 URL from title pattern
-            r2_url = f"{R2_PUBLIC_URL}/podcasts/{title}.mp3" if R2_PUBLIC_URL else ""
+        # Skip if already added from local MP3
+        if not any(_normalize_for_compare(e["title"]) == _normalize_for_compare(title) for e in podcast_entries):
+            # Add date prefix for display consistency
+            date_str = item.get("podcast_date", "") or ""
+            date_prefix = ""
+            if date_str:
+                date_prefix = format_date_yyyymmdd(date_str[:10]) + "_"
+            display_title = date_prefix + title
+
+            # Construct R2 URL from sanitized filename pattern
+            sanitized = title.replace(" ", "_").replace("　", "_")
+            r2_url = f"{R2_PUBLIC_URL}/podcasts/{date_prefix}{sanitized}.mp3" if R2_PUBLIC_URL else ""
 
             # Try to find matching summary.md by title substring
-            # DB title uses spaces, filename uses underscores
             normalized_title = title.replace(" ", "_").replace("　", "_")
             description = ""
             for md_path in summary_files:
@@ -229,16 +278,16 @@ def main():
 
             podcast_entries.append(
                 {
-                    "title": title,
+                    "title": display_title,
                     "url": r2_url,
                     "description": description,
                     "size": 0,
-                    "pub_date": unified_now,  # Use unified date
+                    "pub_date": item.get("podcast_date") or fallback_now,
                     "original_url": item.get("url", ""),
                 }
             )
 
-    # Sort by title descending (to maintain order by the date in the title since pub_date is unified)
+    # Sort by title descending (to maintain order by the date in the title)
     podcast_entries.sort(key=lambda x: x.get("title", ""), reverse=True)
 
     # Generate RSS
