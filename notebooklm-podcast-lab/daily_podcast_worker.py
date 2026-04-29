@@ -209,6 +209,7 @@ def process_single_item(item: tuple) -> bool:
             os.makedirs(final_dir)
 
         final_mp3_path = os.path.join(final_dir, f"{formatted_date}_{sanitized_title}.mp3")
+        final_mp3_name = f"{formatted_date}_{sanitized_title}.mp3"
         final_md_path = os.path.join(
             final_dir, f"{formatted_date}_{sanitized_title}_summary.md"
         )
@@ -231,7 +232,7 @@ def process_single_item(item: tuple) -> bool:
                 )
 
             logger.info("COMPLETE: Both MP3 and MD saved with metadata")
-            update_status(item_id, "done")
+            update_status(item_id, "done", r2_filename=final_mp3_name)
             increment_daily_quota()
 
             # Output for workflow

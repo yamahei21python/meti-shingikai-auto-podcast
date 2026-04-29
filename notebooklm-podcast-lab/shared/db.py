@@ -36,9 +36,16 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> sqlite3.Connection:
             podcast_status TEXT DEFAULT 'pending',
             pdf_urls TEXT,
             podcast_date TIMESTAMP,
+            r2_filename TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
+    # Migration: add r2_filename if missing (existing DBs)
+    try:
+        cursor.execute("ALTER TABLE council_updates ADD COLUMN r2_filename TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS daily_quota (
@@ -150,26 +157,37 @@ def get_pending_items(limit: int = 2) -> list[tuple]:
     return rows
 
 
-def update_status(item_id: int, status: str) -> None:
+def update_status(item_id: int, status: str, r2_filename: str = None) -> None:
     """
     Update item status in database.
 
     Args:
         item_id: Database item ID
         status: New status (e.g., 'pending', 'done', 'skipped')
+        r2_filename: Actual MP3 filename on R2 (optional, skip if None)
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    cursor.execute(
-        """
-        UPDATE council_updates 
-        SET podcast_status = ?, podcast_date = ? 
-        WHERE id = ?
-    """,
-        (status, now, item_id),
-    )
+    if r2_filename is not None:
+        cursor.execute(
+            """
+            UPDATE council_updates 
+            SET podcast_status = ?, podcast_date = ?, r2_filename = ?
+            WHERE id = ?
+        """,
+            (status, now, r2_filename, item_id),
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE council_updates 
+            SET podcast_status = ?, podcast_date = ? 
+            WHERE id = ?
+        """,
+            (status, now, item_id),
+        )
 
     conn.commit()
     conn.close()

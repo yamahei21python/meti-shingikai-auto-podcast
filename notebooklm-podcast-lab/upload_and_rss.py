@@ -138,7 +138,7 @@ def get_done_items_from_db() -> list[dict]:
 
     cursor.execute(
         """
-        SELECT title, url, podcast_date
+        SELECT title, url, podcast_date, date, r2_filename
         FROM council_updates
         WHERE podcast_status = 'done'
         ORDER BY podcast_date DESC
@@ -271,16 +271,20 @@ def main():
         title = item["title"]
         # Skip if already added from local MP3
         if not any(_normalize_for_compare(e["title"]) == _normalize_for_compare(title) for e in podcast_entries):
-            # Add date prefix for display consistency
-            date_str = item.get("podcast_date", "") or ""
+            # Date prefix for display: use council date (from DB `date` column)
+            council_date = item.get("date", "") or ""
             date_prefix = ""
-            if date_str:
-                date_prefix = format_date_yyyymmdd(date_str[:10]) + "_"
+            if council_date:
+                date_prefix = format_date_yyyymmdd(council_date[:10]) + "_"
             display_title = date_prefix + title
 
-            # Construct R2 URL from sanitized filename pattern
-            sanitized = title.replace(" ", "_").replace("　", "_")
-            r2_url = f"{R2_PUBLIC_URL}/podcasts/{date_prefix}{sanitized}.mp3" if R2_PUBLIC_URL else ""
+            # R2 URL: r2_filename from DB if available, else construct from council date
+            r2_filename = item.get("r2_filename") or ""
+            if r2_filename:
+                r2_url = f"{R2_PUBLIC_URL}/podcasts/{r2_filename}" if R2_PUBLIC_URL else ""
+            else:
+                sanitized = title.replace(" ", "_").replace("　", "_")
+                r2_url = f"{R2_PUBLIC_URL}/podcasts/{date_prefix}{sanitized}.mp3" if R2_PUBLIC_URL else ""
 
             # Try to find matching summary.md by title substring
             normalized_title = title.replace(" ", "_").replace("　", "_")
