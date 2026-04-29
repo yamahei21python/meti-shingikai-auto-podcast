@@ -150,6 +150,20 @@ def get_done_items_from_db() -> list[dict]:
     return rows
 
 
+def _ensure_tz_aware(dt):
+    """Normalize pub_date to timezone-aware datetime.
+
+    Accepts: datetime (naive or aware), ISO string, or None.
+    """
+    if dt is None:
+        return datetime.now(timezone.utc)
+    if isinstance(dt, str):
+        dt = datetime.fromisoformat(dt)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def build_rss_feed(podcast_items: list[dict]) -> str:
     """
     Generate RSS feed XML using feedgen.
@@ -188,7 +202,7 @@ def build_rss_feed(podcast_items: list[dict]) -> str:
         fe.description(description_text)
 
         if item.get("pub_date"):
-            fe.published(item["pub_date"])
+            fe.published(_ensure_tz_aware(item["pub_date"]))
 
     return fg.rss_str(pretty=True).decode("utf-8")
 
