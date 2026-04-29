@@ -35,6 +35,7 @@ from shared import (
     PODCAST_LINK,
     PODCAST_TITLE,
     format_date_yyyymmdd,
+    init_db,
     logger,
     setup_logging,
 )
@@ -221,6 +222,7 @@ def main():
         mp3_files = []
 
     # Build item list from DB for title matching
+    init_db()
     db_items = get_done_items_from_db()
 
     # Fallback publication date (used only when DB has no podcast_date)
