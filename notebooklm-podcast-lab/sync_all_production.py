@@ -2,7 +2,6 @@
 Production scraper for METI & OCCTO council updates.
 
 Scrapes both sites, saves new items to SQLite DB.
-Designed for GitHub Actions with WARP proxy.
 
 Usage:
     python sync_all_production.py
@@ -153,8 +152,7 @@ def deduplicate(updates: list[CouncilUpdate]) -> list[CouncilUpdate]:
 def main():
     logger.info(f"=== Sync Production Start: {datetime.now()} ===")
 
-    use_proxy = bool(os.getenv("SOCKS5_PROXY"))
-    client = NetworkClient(use_proxy=use_proxy)
+    client = NetworkClient()
     conn = init_db()
 
     try:
