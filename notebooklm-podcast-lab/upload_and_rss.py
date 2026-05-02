@@ -96,6 +96,11 @@ def _normalize_for_compare(text: str) -> str:
     return text.replace("_", " ").replace("　", " ").strip()
 
 
+def _strip_date_prefix(title: str) -> str:
+    """Remove date prefix (e.g. '20260305_') for dedup comparison."""
+    return re.sub(r'^\d{8}_', '', title)
+
+
 def extract_date_and_title(stem: str, db_items: list[dict]) -> tuple[str, dict | None]:
     """
     Extract date prefix from stem and match against DB title.
@@ -272,7 +277,7 @@ def main():
     for item in db_items:
         title = item["title"]
         # Skip if already added from local MP3
-        if not any(_normalize_for_compare(e["title"]) == _normalize_for_compare(title) for e in podcast_entries):
+        if not any(_normalize_for_compare(_strip_date_prefix(e["title"])) == _normalize_for_compare(title) for e in podcast_entries):
             # Date prefix for display: use council date (from DB `date` column)
             council_date = item.get("date", "") or ""
             date_prefix = ""
