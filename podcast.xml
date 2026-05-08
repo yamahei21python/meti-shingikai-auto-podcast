@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Thu, 07 May 2026 22:13:03 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 08 May 2026 22:06:53 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://energy-audio.vercel.app/cover.png"/>
@@ -1188,7 +1188,7 @@ Daigasグループのロードマップに基づき、現在の「サバティ�
 4.  **同時市場（Co-optimization）への詳細検討継続**
     「第二次中間とりまとめ」に基づき、将来的なkWh市場とΔkW市場の統合を目指す「同時市場」の導入に向け、システム設計や全リソースへの参加義務化の是非について、議論を継続します。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260313_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_制度検討作業部会_第二十三次中間とりまとめ.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260313_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_制度検討作業部会_第二十三次中間とりまとめ.mp3" length="35487519" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260313_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_制度検討作業部会_第二十三次中間とりまとめ.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Thu, 07 May 2026 22:12:57 +0000</pubDate>
     </item>
   </channel>
