@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (lastBuildDate && lastUpdateEl) {
             const date = new Date(lastBuildDate);
-            lastUpdateEl.textContent = !isNaN(date) ? date.toLocaleDateString('ja-JP') : '--';
+            lastUpdateEl.textContent = !isNaN(date) ? date.toLocaleString('ja-JP') : '--';
         }
 
         // Clear skeletons

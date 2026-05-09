@@ -128,7 +128,7 @@
                     status.textContent = 'No content.';
                 }
 
-                status.textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+                // Keep lastBuildDate from app.js (don't overwrite with current time)
                 status.classList.remove('animate-pulse');
             } catch (error) {
                 console.error('Error loading podcasts:', error);
