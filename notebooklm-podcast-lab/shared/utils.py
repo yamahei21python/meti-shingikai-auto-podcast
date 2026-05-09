@@ -5,19 +5,29 @@ from datetime import datetime
 from typing import Optional
 
 
-def sanitize_filename(text: str) -> str:
+def sanitize_filename(text: str, max_bytes: int = 180) -> str:
     """
-    Remove invalid characters from filename and limit length.
+    Remove invalid characters from filename and limit byte length.
+
+    Linux has a 255-byte limit on filenames. With date prefix (9 bytes)
+    and extension (.mp3 = 4 bytes), the name part must be <= ~180 bytes.
 
     Args:
         text: Input text
+        max_bytes: Maximum byte length for the sanitized name (default: 180)
 
     Returns:
-        Sanitized filename string
+        Sanitized filename string within byte limit
     """
     text = re.sub(r'[\\/:*?"<>|／]', "", text)
     text = text.replace(" ", "_").replace("　", "_")
-    return text[:200]
+    # Truncate by byte length, respecting UTF-8 boundaries
+    encoded = text.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return text
+    # Binary search for safe truncation point
+    truncated = encoded[:max_bytes]
+    return truncated.decode("utf-8", errors="ignore")
 
 
 def format_date_yyyymmdd(date_str: str) -> str:

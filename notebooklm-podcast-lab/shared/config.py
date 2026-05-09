@@ -34,7 +34,7 @@ AUDIO_TIMEOUT_SECONDS = 5400
 POLL_INTERVAL_SECONDS = 30
 
 # === Worker ===
-MAX_PROCESS_PER_RUN = 2
+MAX_PROCESS_PER_RUN = 3
 DAILY_GENERATION_LIMIT = 3  # NotebookLM free plan: 3 audio overviews/day
 
 # === R2 Cloud (Cloudflare) ===
