@@ -128,7 +128,14 @@
                     status.textContent = 'No content.';
                 }
 
-                // Keep lastBuildDate from app.js (don't overwrite with current time)
+                // Show RSS lastBuildDate as feed update time
+                const lastBuild = xmlDoc.querySelector('lastBuildDate')?.textContent;
+                if (lastBuild) {
+                    const d = new Date(lastBuild);
+                    status.textContent = !isNaN(d) ? `Updated: ${d.toLocaleString('ja-JP')}` : '';
+                } else {
+                    status.textContent = '';
+                }
                 status.classList.remove('animate-pulse');
             } catch (error) {
                 console.error('Error loading podcasts:', error);
