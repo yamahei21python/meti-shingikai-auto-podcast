@@ -92,7 +92,13 @@ def read_summary_md(md_path: Path) -> str:
 
 
 def _normalize_for_compare(text: str) -> str:
-    """Normalize spaces/underscores for title comparison."""
+    """Normalize for title comparison.
+
+    Matches sanitize_filename behavior: remove filesystem-unsafe chars,
+    unify spaces/underscores, then strip whitespace.
+    """
+    # Remove chars that sanitize_filename strips
+    text = re.sub(r'[\\/:*?"<>|／]', '', text)
     return text.replace("_", " ").replace("　", " ").strip()
 
 
@@ -274,43 +280,53 @@ def main():
         list(PODCASTS_DIR.glob("*_summary.md")) if PODCASTS_DIR.exists() else []
     )
 
+    # Track R2 URLs already added from local MP3s (secondary dedup guard)
+    added_urls = {e["url"] for e in podcast_entries}
+
     for item in db_items:
         title = item["title"]
-        # Skip if already added from local MP3
-        if not any(_normalize_for_compare(_strip_date_prefix(e["title"])) == _normalize_for_compare(title) for e in podcast_entries):
-            # Date prefix for display: use council date (from DB `date` column)
-            council_date = item.get("date", "") or ""
-            date_prefix = ""
-            if council_date:
-                date_prefix = format_date_yyyymmdd(council_date[:10]) + "_"
-            display_title = date_prefix + title
+        # Skip if already added from local MP3 (by title match)
+        if any(_normalize_for_compare(_strip_date_prefix(e["title"])) == _normalize_for_compare(title) for e in podcast_entries):
+            continue
 
-            # R2 URL: r2_filename from DB if available, else construct from council date
-            r2_filename = item.get("r2_filename") or ""
-            if r2_filename:
-                r2_url = f"{R2_PUBLIC_URL}/podcasts/{r2_filename}" if R2_PUBLIC_URL else ""
-            else:
-                sanitized = title.replace(" ", "_").replace("　", "_")
-                r2_url = f"{R2_PUBLIC_URL}/podcasts/{date_prefix}{sanitized}.mp3" if R2_PUBLIC_URL else ""
+        # Date prefix for display: use council date (from DB `date` column)
+        council_date = item.get("date", "") or ""
+        date_prefix = ""
+        if council_date:
+            date_prefix = format_date_yyyymmdd(council_date[:10]) + "_"
 
-            # Try to find matching summary.md by title substring
-            normalized_title = title.replace(" ", "_").replace("　", "_")
-            description = ""
-            for md_path in summary_files:
-                if normalized_title in md_path.stem:
-                    description = read_summary_md(md_path)
-                    break
+        # R2 URL: r2_filename from DB if available, else construct from council date
+        r2_filename = item.get("r2_filename") or ""
+        if r2_filename:
+            r2_url = f"{R2_PUBLIC_URL}/podcasts/{r2_filename}" if R2_PUBLIC_URL else ""
+        else:
+            sanitized = title.replace(" ", "_").replace("　", "_")
+            r2_url = f"{R2_PUBLIC_URL}/podcasts/{date_prefix}{sanitized}.mp3" if R2_PUBLIC_URL else ""
 
-            podcast_entries.append(
-                {
-                    "title": display_title,
-                    "url": r2_url,
-                    "description": description,
-                    "size": 0,
-                    "pub_date": item.get("podcast_date") or fallback_now,
-                    "original_url": item.get("url", ""),
-                }
-            )
+        # Skip if same R2 URL already exists (secondary dedup)
+        if r2_url in added_urls:
+            continue
+
+        display_title = date_prefix + title
+
+        # Try to find matching summary.md by title substring
+        normalized_title = title.replace(" ", "_").replace("　", "_")
+        description = ""
+        for md_path in summary_files:
+            if normalized_title in md_path.stem:
+                description = read_summary_md(md_path)
+                break
+
+        entry = {
+            "title": display_title,
+            "url": r2_url,
+            "description": description,
+            "size": 0,
+            "pub_date": item.get("podcast_date") or fallback_now,
+            "original_url": item.get("url", ""),
+        }
+        podcast_entries.append(entry)
+        added_urls.add(r2_url)
 
     # Sort by title descending (to maintain order by the date in the title)
     podcast_entries.sort(key=lambda x: x.get("title", ""), reverse=True)
