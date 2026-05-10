@@ -159,7 +159,19 @@
                 const description = item.querySelector('description')?.textContent || '';
                 const audioUrl = item.querySelector('enclosure').getAttribute('url');
 
-                const sections = description.split(/### \d\.\s*/);
+                // Normalize: remove horizontal rules and leading H1 title
+                const cleanDesc = description
+                    .replace(/^---\s*\n/gm, '')
+                    .replace(/\n---\s*\n/g, '\n')
+                    .replace(/^#\s+.*\n/, '');
+
+                // Split by ### N. pattern (N = 1-4)
+                const sections = cleanDesc.split(/###\s*\d+\.\s*/);
+
+                // sections[0] = preamble (before ### 1.), skip it
+                // sections[1] = guide, sections[2..4] = topics/decisions/timeline
+                const guideRaw = sections[1] || '';
+                const detailSections = sections.slice(2).filter(Boolean);
                 
                 const formatLines = (text) => {
                     if (!text) return '';
@@ -169,9 +181,10 @@
                         .replace(/\n/g, '<br>');
                 };
 
-                const guideContent = formatLines(sections[1]?.replace(/^.*?\n/, ''));
-                const detailedContent = [sections[2], sections[3], sections[4]]
-                    .filter(Boolean)
+                // Remove first line (section heading like "ポッドキャスト解説ガイド")
+                const guideBody = guideRaw.includes('\n') ? guideRaw.substring(guideRaw.indexOf('\n') + 1) : '';
+                const guideContent = formatLines(guideBody);
+                const detailedContent = detailSections
                     .map((s) => {
                         const lines = s.split('\n');
                         const head = lines[0];
