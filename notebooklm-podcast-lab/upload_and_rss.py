@@ -309,13 +309,25 @@ def main():
 
         display_title = date_prefix + title
 
-        # Try to find matching summary.md by title substring
-        normalized_title = title.replace(" ", "_").replace("　", "_")
+        # Find matching summary.md: prefer r2_filename-based lookup, then bidirectional title match
         description = ""
-        for md_path in summary_files:
-            if normalized_title in md_path.stem:
-                description = read_summary_md(md_path)
-                break
+
+        # Strategy 1: Direct lookup via r2_filename stem (truncated filename → exact match)
+        if r2_filename:
+            md_stem = Path(r2_filename).stem  # e.g. "20260316_第8回_...小委員"
+            direct_md = PODCASTS_DIR / f"{md_stem}_summary.md"
+            if direct_md.exists():
+                description = read_summary_md(direct_md)
+
+        # Strategy 2: Bidirectional substring match as fallback
+        if not description:
+            normalized_title = title.replace(" ", "_").replace("　", "_")
+            for md_path in summary_files:
+                stem = md_path.stem
+                # title ⊂ stem OR stem ⊂ title (handles truncation both ways)
+                if normalized_title in stem or stem in normalized_title:
+                    description = read_summary_md(md_path)
+                    break
 
         entry = {
             "title": display_title,
