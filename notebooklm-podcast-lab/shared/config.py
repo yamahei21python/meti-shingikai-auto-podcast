@@ -12,7 +12,7 @@ DB_PATH = PROJECT_ROOT.parent / "councils.db"
 
 # === METI/OCCTO URLs ===
 METI_URL = "https://www.meti.go.jp/shingikai/index.html"
-OCCTO_URL = "https://www.occto.or.jp/iinkai/"
+OCCTO_URL = "https://www.occto.or.jp/"
 
 # === Proxy ===
 SOCKS5_PROXY = os.getenv("SOCKS5_PROXY", "")

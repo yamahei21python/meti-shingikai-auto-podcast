@@ -38,31 +38,113 @@ def parse_meti_updates(soup: BeautifulSoup) -> list[CouncilUpdate]:
     Parse METI審議会 index page for recent updates.
 
     Expected structure:
-      - Articles with date + title + link
-      - Each article may belong to a category (審議会名)
+      - dl list with class 'date_sp' containing dt and dd elements
     """
     updates = []
 
-    # METI 審議会 page structure: list items with date and link
-    items = soup.select("li, tr, dd, div")
+    # Map URL path segment to category name
+    segment_map = {
+        "safety_security": "安全・安心",
+        "sankoshin": "産業構造審議会",
+        "mono_info_service": "ものづくり/情報/流通・サービス",
+        "external_economy": "対外経済",
+        "enecho": "総合資源エネルギー調査会",
+        "energy_environment": "エネルギー・環境",
+        "economy": "経済産業",
+        "hoankyogikai": "中央鉱山保安協議会",
+        "kagakubusshitsu": "化学物質審議会",
+        "shokeishin": "消費経済審議会",
+        "keiryogyoseishin": "計量行政審議会",
+    }
 
-    current_category = None
+    dls = soup.find_all("dl", class_="date_sp")
+    for dl in dls:
+        dts = dl.find_all("dt")
+        dds = dl.find_all("dd")
 
-    for el in items:
-        # Detect category headers (審議会名)
-        header = el.find(["h2", "h3", "h4", "dt", "th"])
-        if header:
-            text = header.get_text(strip=True)
-            if any(kw in text for kw in ["審議会", "委員会", "小委員会", "分科会", "作業部会"]):
-                current_category = text
+        for dt, dd in zip(dts, dds):
+            # Find date in dt
+            date_text = dt.get_text(strip=True)
+            date_match = re.search(r"(\d{4})[年./](\d{1,2})[月./](\d{1,2})", date_text)
+            if not date_match:
                 continue
 
-        # Find date + link pattern
-        date_match = re.search(r"(\d{4})[年./](\d{1,2})[月./](\d{1,2})", el.get_text())
-        if not date_match:
+            date_str = normalize_date(f"{date_match.group(1)}年{date_match.group(2)}月{date_match.group(3)}日")
+
+            # Find link and title in dd
+            link = dd.find("a", href=True)
+            if not link:
+                continue
+
+            href = link.get("href", "")
+            if not href:
+                continue
+
+            abs_url = urljoin(METI_URL, href)
+            title = link.get_text(strip=True)
+            if not title or len(title) < 5:
+                continue
+
+            # Determine category from URL segment
+            category2 = None
+            if "/shingikai/" in abs_url:
+                try:
+                    segment = abs_url.split("/shingikai/")[1].split("/")[0]
+                    category2 = segment_map.get(segment)
+                except Exception as e:
+                    logger.error(f"Error parsing category from URL {abs_url}: {e}")
+
+            categories = ["METI"]
+            if category2:
+                categories.append(category2)
+
+            updates.append(
+                CouncilUpdate(
+                    date=date_str or "",
+                    title=title,
+                    url=abs_url,
+                    categories=categories,
+                )
+            )
+
+    return updates
+
+
+def parse_occto_updates(soup: BeautifulSoup) -> list[CouncilUpdate]:
+    """
+    Parse OCCTO homepage for recent committee updates.
+
+    Expected structure:
+      - News list with class 'linklist-news' containing items of class 'linklist-news__item'
+    """
+    updates = []
+
+    items = soup.find_all("li", class_="linklist-news__item")
+    for item in items:
+        # Check category
+        cat_tag = item.find("div", class_="linklist-news__cats")
+        if not cat_tag or "委員会" not in cat_tag.get_text():
             continue
 
-        link = el.find("a", href=True)
+        # Get date
+        date_tag = item.find("span", class_="linklist-news__date")
+        if not date_tag:
+            continue
+
+        spans = date_tag.find_all("span")
+        if len(spans) >= 2:
+            year = spans[0].get_text(strip=True)
+            month_day = spans[1].get_text(strip=True)
+            if "." in month_day:
+                month, day = month_day.split(".")
+                date_str = normalize_date(f"{year}年{month}月{day}日")
+            else:
+                date_str = normalize_date(f"{year}年{month_day}")
+        else:
+            date_str = normalize_date(date_tag.get_text(strip=True))
+
+        # Get link
+        link = item.find("a", href=True)
         if not link:
             continue
 
@@ -70,68 +152,24 @@ def parse_meti_updates(soup: BeautifulSoup) -> list[CouncilUpdate]:
         if not href:
             continue
 
-        abs_url = urljoin(METI_URL, href)
-        title = link.get_text(strip=True)
-        if not title or len(title) < 5:
-            continue
+        abs_url = urljoin(OCCTO_URL, href)
 
-        date_str = normalize_date(f"{date_match.group(1)}年{date_match.group(2)}月{date_match.group(3)}日")
+        # Get title
+        title_tag = item.find("span", class_="linklist-news__txt")
+        title = title_tag.get_text(strip=True) if title_tag else ""
+        if not title:
+            title = link.get_text(strip=True)
 
-        categories = ["METI"]
-        if current_category:
-            categories.append(current_category)
-
-        updates.append(
-            CouncilUpdate(
-                date=date_str or "",
-                title=title,
-                url=abs_url,
-                categories=categories,
-            )
-        )
-
-    return updates
-
-
-def parse_occto_updates(soup: BeautifulSoup) -> list[CouncilUpdate]:
-    """
-    Parse OCCTO委員会 page for recent updates.
-
-    Expected structure:
-      - Committee sections with meeting links and dates
-    """
-    updates = []
-
-    # Look for links with dates on OCCTO page
-    links = soup.find_all("a", href=True)
-
-    for link in links:
-        href = link.get("href", "")
-        text = link.get_text(strip=True)
-
-        # Must have a date
-        date_match = re.search(r"(\d{4})[年./](\d{1,2})[月./](\d{1,2})", text)
-        if not date_match:
-            continue
-
-        # Only process committee-related links
-        if not any(kw in text for kw in ["委員会", "会議", "開催", "資料"]):
-            continue
-
-        if "occto.or.jp" not in href:
-            abs_url = urljoin(OCCTO_URL, href)
-        else:
-            abs_url = href
-
-        title = text.strip()
-        date_str = normalize_date(f"{date_match.group(1)}年{date_match.group(2)}月{date_match.group(3)}日")
+        # Get committee name as subcategory
+        type_tag = item.find("span", class_="linklist-news__type")
+        committee = type_tag.get_text(strip=True) if type_tag else "OCCTO"
 
         updates.append(
             CouncilUpdate(
                 date=date_str or "",
                 title=title,
                 url=abs_url,
-                categories=["OCCTO"],
+                categories=["OCCTO", committee],
             )
         )
 
