@@ -1,0 +1,32 @@
+name: Test NotebookLM Authentication
+
+on:
+  workflow_dispatch: # 手動実行および CLI からのトリガー用
+
+jobs:
+  test-auth:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Setup Python
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install libcurl-dev (for curl-cffi)
+        run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Setup Dependencies
+        working-directory: notebooklm-podcast-lab
+        run: |
+          uv sync
+          uv run playwright install --with-deps chromium
+
+      - name: Run Authentication Test
+        env:
+          NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
+        run: |
+          uv run --project notebooklm-podcast-lab python3 notebooklm-podcast-lab/test_notebook_creation.py
