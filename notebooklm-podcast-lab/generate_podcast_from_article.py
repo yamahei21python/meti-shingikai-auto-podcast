@@ -124,7 +124,8 @@ def create_notebook(name: str, max_attempts: int = 3) -> str | None:
                 print(f"NOTEBOOK_ID={notebook_id}")
                 return notebook_id
 
-        logger.warning(f"Failed to create notebook (Attempt {attempt + 1})")
+        error_msg = res.stderr or res.stdout or "unknown"
+        logger.warning(f"Failed to create notebook (Attempt {attempt + 1}): {error_msg.strip()}")
         if attempt < max_attempts - 1:
             time.sleep(10)
 
@@ -142,7 +143,8 @@ def add_source(source_path_or_url: str, max_attempts: int = 3) -> bool:
         if res.returncode == 0:
             return True
 
-        logger.warning(f"Source add failed for {source_path_or_url}")
+        error_msg = res.stderr or res.stdout or "unknown"
+        logger.warning(f"Source add failed for {source_path_or_url}: {error_msg.strip()}")
         if attempt < max_attempts - 1:
             time.sleep(15)
 
