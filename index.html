@@ -112,7 +112,7 @@
             const status = document.getElementById('feed-status');
 
             try {
-                const response = await fetch('podcast.xml');
+                const response = await fetch('podcast.xml?t=' + new Date().getTime());
                 const xmlText = await response.text();
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
