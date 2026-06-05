@@ -7,13 +7,14 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Fri, 05 Jun 2026 07:54:14 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 05 Jun 2026 08:18:07 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
       <title>20260317_電力システム改革の検証を踏まえた制度設計ワーキンググループ とりまとめ</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/system_design_wg/20260317_report.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -75,6 +76,7 @@ WGでの議論の結果、次世代電力システムの構築に向けた具体
     </item>
     <item>
       <title>20260317_次世代電力・ガス事業基盤構築小委員会 中間整理</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/20260317_report.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -149,6 +151,7 @@ DXやGXの進展に伴う電力需要の急増、および地政学的リスク�
     </item>
     <item>
       <title>20260316_第8回 総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 再生可能エネルギー大量導入・次世代電力ネットワーク小委員会／電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 次世代電力系統ワーキンググループ</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/008.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -205,6 +208,7 @@ DXやGXの進展に伴う電力需要の急増、および地政学的リスク�
     </item>
     <item>
       <title>20260316_第117回　調整力及び需給バランス評価等に関する委員会</title>
+      <link>https://www.occto.or.jp/iinkai/chousei_jukyu/117.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -243,6 +247,7 @@ DXやGXの進展に伴う電力需要の急増、および地政学的リスク�
     </item>
     <item>
       <title>20260313_総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 制度検討作業部会 第二十三次中間とりまとめ</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/system_review/20260313_report.html</link>
       <description># カスタムレポート：需給調整市場の抜本的改革と市場メカニズムの形骸化に対する専門的考察
 
 制度検討作業部会による「第二十三次中間とりまとめ」は、日本の電力需給調整市場における歴史的な転換点を示しています。本とりまとめの本質は、高騰する調達コストの抑制を至上命題とした「市場外リソースへの回帰」と、それに伴う「市場メカニズムの事実上の機能停止」にあります。2026年度（令和8年度）から施行される新制度は、形式的には運用改善を謳いつつも、実態としては投資シグナルを遮断する極めて介入主義的な内容となっており、市場参加者からは「カントリーリスク」の増大を懸念する声が噴出しています。
@@ -312,6 +317,7 @@ DXやGXの進展に伴う電力需要の急増、および地政学的リスク�
     </item>
     <item>
       <title>20260312_第2回 石油製品需要想定検討会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/demand_forecast/2026_002.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -359,6 +365,7 @@ DXやGXの進展に伴う電力需要の急増、および地政学的リスク�
     </item>
     <item>
       <title>20260311_第16回 メタネーション推進官民協議会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/methanation_suishin/016.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -417,6 +424,7 @@ Daigasグループのロードマップに基づき、現在の「サバティ�
     </item>
     <item>
       <title>20260311_第11回 環境整備ワーキング・グループ</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/e_fuel/kankyo_wg/011.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド
@@ -477,6 +485,7 @@ SHK制度やGX排出量取引制度およびJクレジット制度等との整�
     </item>
     <item>
       <title>20260310_第4回 電力・ガス需給と燃料（LNG）調達に関する官民連絡会議</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/lng/004.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -533,6 +542,7 @@ OCCTOが把握した最新の燃料在庫状況および、それに基づく2�
     </item>
     <item>
       <title>20260310_第11回 将来の電力需給シナリオに関する検討会</title>
+      <link>https://www.occto.or.jp/iinkai/shorai_jukyu/11.html</link>
       <description># 第11回 将来の電力需給シナリオに関する検討会 分析レポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -595,6 +605,7 @@ OCCTOが把握した最新の燃料在庫状況および、それに基づく2�
     </item>
     <item>
       <title>20260306_総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 省エネルギー小委員会／ 省エネルギー・新エネルギー分科会／電力・ガス事業分科会 再生可能エネルギー大量導入・次世代電力ネットワーク小委員会／ 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会／分散型エネルギー推進戦略ワーキンググループ（第2回）</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/distributed_energy_wg/002.html</link>
       <description># 分散型エネルギー推進戦略の現状と2040年に向けた論点分析
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -647,6 +658,7 @@ OCCTOが把握した最新の燃料在庫状況および、それに基づく2�
     </item>
     <item>
       <title>20260305_第3回 プラスチック製容器包装及び分別収集物の再商品化入札制度に係る検討会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/plastic_containers/003.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -699,6 +711,7 @@ MRで製造された製品（ペレット等）をCR事業者に販売可能と�
     </item>
     <item>
       <title>20260304_第112回 総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 制度検討作業部会</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/system_review/112.html</link>
       <description># 長期脱炭素電源オークション制度変更の核心：第112回制度検討作業部会分析レポート
 
 ### 1. 2026年度（第4回）入札に向けた政策的背景と論点
@@ -750,6 +763,7 @@ MRで製造された製品（ペレット等）をCR事業者に販売可能と�
     </item>
     <item>
       <title>20260303_第60回需給調整市場検討小委員会（第77回　調整力の細分化及び広域調達の技術的検討に関する作業会と合同開催）</title>
+      <link>https://www.occto.or.jp/iinkai/jukyuchousei/60.html</link>
       <description># 次期中央給電指令所システム開発の進展と構造的転換：2032年度運用開始に向けた実務的論点
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -796,6 +810,7 @@ MRで製造された製品（ペレット等）をCR事業者に販売可能と�
     </item>
     <item>
       <title>20260302_2025年度 第6回 運用容量検討会</title>
+      <link>https://www.occto.or.jp/iinkai/unyouyouryou/25006.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -852,6 +867,7 @@ MRで製造された製品（ペレット等）をCR事業者に販売可能と�
     </item>
     <item>
       <title>20260227_第21回 同時市場の在り方等に関する検討会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/doji_shijo_kento/021.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -911,6 +927,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260227_第13回 トランジション・ファイナンス環境整備検討会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/transition_finance/013.html</link>
       <description># 第13回トランジション・ファイナンス環境整備検討会：戦略的要旨と市場インサイト
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -967,6 +984,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260227_第111回 総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 制度検討作業部会（書面審議）</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/system_review/111.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -1016,6 +1034,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260226_第12回 総合資源エネルギー調査会 電力・ガス事業分科会 原子力小委員会 革新炉ワーキンググループ</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/genshiryoku/kakushinro_wg/012.html</link>
       <description># カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -1065,6 +1084,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260224_第98回 広域系統整備委員会</title>
+      <link>https://www.occto.or.jp/iinkai/kouikikeitouseibi/98.html</link>
       <description># 第98回広域系統整備委員会 カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -1135,6 +1155,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260224_2025年度第1回 総合エネルギー統計検討会</title>
+      <link>https://www.meti.go.jp/shingikai/energy_environment/sogo_energy/2025_001.html</link>
       <description># 令和7年度総合エネルギー統計検討会 カスタムレポート
 
 本レポートは、令和8年2月に開催された「令和7年度総合エネルギー統計検討会（第1回会合）」における議論および決定事項に基づき、エネルギー需給統計の精度向上に向けた修正の背景とその実務的意義を専門的見地から整理したものである。
@@ -1209,6 +1230,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260218_総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 水素・アンモニア政策小委員会（第15回）</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/shoene_shinene/suiso_seisaku/015.html</link>
       <description># 第15回 水素・アンモニア政策小委員会 カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -1266,6 +1288,7 @@ SCUC（電源起動停止計画）およびSCED（出力配分）の計算処理
     </item>
     <item>
       <title>20260218_第7回 総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 ガス事業環境整備ワーキンググループ</title>
+      <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/gas_business_wg/007.html</link>
       <description># 第7回 ガス事業環境整備ワーキンググループ カスタムレポート
 
 本レポートは、2026年2月18日に開催された第7回ガス事業環境整備ワーキンググループ（WG）における議論を、エネルギー政策・市場規制の専門コンサルタントの視点から分析・集約したものである。
@@ -1349,6 +1372,7 @@ WGでは、制度の実効性と現場への負荷を巡り、専門的な視点
     </item>
     <item>
       <title>20260217_第9回 計画評価及び検証小委員会</title>
+      <link>https://www.occto.or.jp/iinkai/kouikikeitouseibi_hyouka/9.html</link>
       <description># 第9回 計画評価及び検証小委員会 カスタムレポート
 
 ### 1. ポッドキャスト解説ガイド（内容のポイント）
@@ -1403,6 +1427,7 @@ WGでは、制度の実効性と現場への負荷を巡り、専門的な視点
     </item>
     <item>
       <title>20260216_第116回　調整力及び需給バランス評価等に関する委員会</title>
+      <link>https://www.occto.or.jp/iinkai/chousei_jukyu/116.html</link>
       <description># 再エネ予測精度向上に向けた取り組みについて カスタムレポート
 
 本レポートは、再生可能エネルギー（以下、再エネ）の導入拡大に伴う供給力変動への対応策として、出力予測技術の高度化および需給調整市場における三次調整力②の調達最適化に関する最新動向を専門的見地から整理したものである。

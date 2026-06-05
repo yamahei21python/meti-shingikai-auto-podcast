@@ -212,6 +212,9 @@ def build_rss_feed(podcast_items: list[dict]) -> str:
         fe.id(item["url"])
         fe.title(item["title"])
         fe.enclosure(item["url"], str(item.get("size", 0)), "audio/mpeg")
+        
+        if item.get("original_url"):
+            fe.link(href=item["original_url"])
 
         # Set description from summary.md (feedgen skips empty strings)
         description_text = item.get("description", "") or "No summary available."
