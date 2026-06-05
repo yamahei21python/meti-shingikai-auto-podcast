@@ -115,8 +115,7 @@
                 const response = await fetch('podcast.xml');
                 const xmlText = await response.text();
                 const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                allItems = Array.from(xmlDoc.querySelectorAll('item')).reverse();
+                allItems = Array.from(xmlDoc.querySelectorAll('item'));
 
                 root.innerHTML = '';
                 currentIndex = 0;

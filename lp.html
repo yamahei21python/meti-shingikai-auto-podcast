@@ -295,8 +295,7 @@
                 const response = await fetch('podcast.xml');
                 const xmlText = await response.text();
                 const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-                const items = Array.from(xmlDoc.querySelectorAll('item')).reverse();
+                const items = Array.from(xmlDoc.querySelectorAll('item'));
 
                 if (items.length === 0) {
                     grid.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500">No episodes found.</div>';
