@@ -13,6 +13,9 @@ import re
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 import boto3
 from feedgen.feed import FeedGenerator
@@ -204,7 +207,7 @@ def build_rss_feed(podcast_items: list[dict]) -> str:
     fg.podcast.itunes_explicit("no")
 
     for item in podcast_items:
-        fe = fg.add_entry()
+        fe = fg.add_entry(order="append")
         fe.id(item["url"])
         fe.title(item["title"])
         fe.enclosure(item["url"], str(item.get("size", 0)), "audio/mpeg")
