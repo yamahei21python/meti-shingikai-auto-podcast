@@ -73,5 +73,41 @@ def backfill():
     
     print(f"Backfill Complete. Updated: {updated_count}, Skipped: {skipped_count}")
 
+def fix_skipped_status():
+    if not DB_PATH.exists():
+        print(f"DB not found at: {DB_PATH}")
+        return
+
+    conn = sqlite3.connect(str(DB_PATH))
+    cursor = conn.cursor()
+
+    # TARGET_CATS_METI = ["エネルギー・環境", "総合資源エネルギー調査会"]
+    cursor.execute("""
+        SELECT id, title, category2 
+        FROM council_updates 
+        WHERE category1 = 'METI' 
+          AND category2 IN ('エネルギー・環境', '総合資源エネルギー調査会') 
+          AND podcast_status = 'skipped'
+    """)
+    rows = cursor.fetchall()
+    
+    print(f"Found {len(rows)} items that should be 'pending' but are currently 'skipped'.")
+    
+    updated_count = 0
+    for item_id, title, cat2 in rows:
+        cursor.execute("""
+            UPDATE council_updates 
+            SET podcast_status = 'pending' 
+            WHERE id = ?
+        """, (item_id,))
+        print(f"Updated status to 'pending' for ID {item_id}: {title} ({cat2})")
+        updated_count += 1
+        
+    conn.commit()
+    conn.close()
+    print(f"Status Fix Complete. Updated: {updated_count}")
+
 if __name__ == "__main__":
     backfill()
+    print("\n--- Fixing skipped status for target categories ---")
+    fix_skipped_status()
