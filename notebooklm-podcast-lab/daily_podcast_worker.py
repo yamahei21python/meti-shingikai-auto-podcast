@@ -31,6 +31,7 @@ from shared import (
     format_date_yyyymmdd,
     get_remaining_quota,
     increment_daily_quota,
+    increment_retry_count,
     logger,
     setup_logging,
 )
@@ -322,6 +323,9 @@ def process_single_item(item: tuple) -> bool:
             os.remove(output_temp)
         if os.path.exists(md_temp):
             os.remove(md_temp)
+            
+        # Increment retry count and auto-fail if it reaches maximum limit
+        increment_retry_count(item_id)
         return False
 
 

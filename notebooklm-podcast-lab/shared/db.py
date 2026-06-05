@@ -47,6 +47,12 @@ def init_db(conn: Optional[sqlite3.Connection] = None) -> sqlite3.Connection:
     except sqlite3.OperationalError:
         pass  # Column already exists
 
+    # Migration: add retry_count if missing (existing DBs)
+    try:
+        cursor.execute("ALTER TABLE council_updates ADD COLUMN retry_count INTEGER DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS daily_quota (
             date TEXT PRIMARY KEY,
@@ -264,3 +270,48 @@ def increment_daily_quota() -> int:
     conn.close()
 
     return count
+
+
+def increment_retry_count(item_id: int, max_retries: int = 3) -> None:
+    """
+    Increment retry_count for a given item.
+    If retry_count reaches max_retries, update its status to 'failed' so it is excluded from queue.
+
+    Args:
+        item_id: Database item ID
+        max_retries: Maximum allowed failed attempts (default: 3)
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT retry_count FROM council_updates WHERE id = ?", (item_id,))
+    row = cursor.fetchone()
+    current_retries = row[0] if (row and row[0] is not None) else 0
+    new_retries = current_retries + 1
+
+    if new_retries >= max_retries:
+        cursor.execute(
+            """
+            UPDATE council_updates 
+            SET retry_count = ?, podcast_status = 'failed' 
+            WHERE id = ?
+        """,
+            (new_retries, item_id),
+        )
+        logger.warning(
+            f"Item ID {item_id} exceeded max retries ({max_retries}). Marked as failed."
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE council_updates 
+            SET retry_count = ? 
+            WHERE id = ?
+        """,
+            (new_retries, item_id),
+        )
+        logger.info(f"Item ID {item_id} retry_count incremented to {new_retries}.")
+
+    conn.commit()
+    conn.close()
+

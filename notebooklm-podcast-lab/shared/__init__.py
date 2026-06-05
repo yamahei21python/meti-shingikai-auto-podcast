@@ -42,6 +42,7 @@ from .db import (
     update_status,
     get_remaining_quota,
     increment_daily_quota,
+    increment_retry_count,
 )
 from .logging import get_logger, logger, setup_logging
 from .network import NetworkClient
@@ -94,6 +95,7 @@ __all__ = [
     "update_status",
     "get_remaining_quota",
     "increment_daily_quota",
+    "increment_retry_count",
     # logging
     "setup_logging",
     "get_logger",
