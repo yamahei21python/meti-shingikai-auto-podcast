@@ -11,7 +11,7 @@ Usage:
 import os
 import re
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -170,12 +170,13 @@ def _ensure_tz_aware(dt):
 
     Accepts: datetime (naive or aware), ISO string, or None.
     """
+    jst = timezone(timedelta(hours=9))
     if dt is None:
-        return datetime.now(timezone.utc)
+        return datetime.now(jst)
     if isinstance(dt, str):
         dt = datetime.fromisoformat(dt)
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=jst)
     return dt
 
 
