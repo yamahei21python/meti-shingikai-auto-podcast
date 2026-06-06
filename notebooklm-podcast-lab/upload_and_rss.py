@@ -347,8 +347,8 @@ def main():
         podcast_entries.append(entry)
         added_urls.add(r2_url)
 
-    # Sort by title descending (to maintain order by the date in the title)
-    podcast_entries.sort(key=lambda x: x.get("title", ""), reverse=True)
+    # Sort by pub_date descending (to maintain perfect chronological order of publication)
+    podcast_entries.sort(key=lambda x: _ensure_tz_aware(x.get("pub_date")), reverse=True)
 
     # Generate RSS
     rss_xml = build_rss_feed(podcast_entries)
