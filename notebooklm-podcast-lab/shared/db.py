@@ -1,7 +1,7 @@
 """Database helper functions for Energy Audio system."""
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from .config import DB_PATH, MAX_CATEGORIES, TARGET_CATS_METI
@@ -174,7 +174,7 @@ def update_status(item_id: int, status: str, r2_filename: str = None) -> None:
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
 
     if r2_filename is not None:
         cursor.execute(
@@ -205,7 +205,7 @@ def get_db_path() -> str:
 
 
 def _today_str() -> str:
-    return datetime.now().strftime("%Y-%m-%d")
+    return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
 
 
 def get_remaining_quota(daily_limit: int = 3) -> int:

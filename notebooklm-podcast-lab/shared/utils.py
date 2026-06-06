@@ -1,7 +1,7 @@
 """Utility functions for Energy Audio system."""
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 
@@ -48,7 +48,7 @@ def format_date_yyyymmdd(date_str: str) -> str:
             return f"{int(nums[0]):04d}{int(nums[1]):02d}{int(nums[2]):02d}"
     except Exception:
         pass
-    return datetime.now().strftime("%Y%m%d")
+    return datetime.now(timezone(timedelta(hours=9))).strftime("%Y%m%d")
 
 
 def normalize_date(date_str: Optional[str]) -> Optional[str]:
@@ -73,5 +73,5 @@ def normalize_date(date_str: Optional[str]) -> Optional[str]:
 
 
 def format_timestamp() -> str:
-    """Get current timestamp string."""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    """Get current timestamp string in JST."""
+    return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
