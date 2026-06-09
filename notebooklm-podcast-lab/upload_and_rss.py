@@ -253,7 +253,8 @@ def main():
     db_items, r2_fn_map = get_done_items_from_db()
 
     # Fallback publication date (used only when DB has no podcast_date)
-    fallback_now = datetime.now(timezone.utc)
+    jst = timezone(timedelta(hours=9))
+    fallback_now = datetime.now(jst)
 
     # Upload MP3s to R2
     podcast_entries = []

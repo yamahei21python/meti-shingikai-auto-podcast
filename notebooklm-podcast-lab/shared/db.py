@@ -141,26 +141,28 @@ def get_pending_items(limit: int = 2) -> list[tuple]:
         List of (id, title, url, date, pdf_urls) tuples
     """
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT id, title, url, date, pdf_urls 
-        FROM council_updates 
-        WHERE podcast_status = 'pending' 
-        AND (
-            category1 = 'OCCTO' OR 
-            (category1 = 'METI' AND category2 IN (?, ?))
+        cursor.execute(
+            """
+            SELECT id, title, url, date, pdf_urls 
+            FROM council_updates 
+            WHERE podcast_status = 'pending' 
+            AND (
+                category1 = 'OCCTO' OR 
+                (category1 = 'METI' AND category2 IN (?, ?))
+            )
+            ORDER BY date ASC, id ASC 
+            LIMIT ?
+        """,
+            (*TARGET_CATS_METI, limit),
         )
-        ORDER BY date ASC, id ASC 
-        LIMIT ?
-    """,
-        (*TARGET_CATS_METI, limit),
-    )
 
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
+        rows = cursor.fetchall()
+        return rows
+    finally:
+        conn.close()
 
 
 def update_status(item_id: int, status: str, r2_filename: str = None) -> None:
@@ -173,30 +175,32 @@ def update_status(item_id: int, status: str, r2_filename: str = None) -> None:
         r2_filename: Actual MP3 filename on R2 (optional, skip if None)
     """
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    now = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        cursor = conn.cursor()
+        now = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S")
 
-    if r2_filename is not None:
-        cursor.execute(
-            """
-            UPDATE council_updates 
-            SET podcast_status = ?, podcast_date = ?, r2_filename = ?
-            WHERE id = ?
-        """,
-            (status, now, r2_filename, item_id),
-        )
-    else:
-        cursor.execute(
-            """
-            UPDATE council_updates 
-            SET podcast_status = ?, podcast_date = ? 
-            WHERE id = ?
-        """,
-            (status, now, item_id),
-        )
+        if r2_filename is not None:
+            cursor.execute(
+                """
+                UPDATE council_updates 
+                SET podcast_status = ?, podcast_date = ?, r2_filename = ?
+                WHERE id = ?
+            """,
+                (status, now, r2_filename, item_id),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE council_updates 
+                SET podcast_status = ?, podcast_date = ? 
+                WHERE id = ?
+            """,
+                (status, now, item_id),
+            )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def get_db_path() -> str:
@@ -219,26 +223,28 @@ def get_remaining_quota(daily_limit: int = 3) -> int:
         Number of remaining generations (0 if exhausted)
     """
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    # Ensure table exists (in case init_db wasn't called yet)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS daily_quota (
-            date TEXT PRIMARY KEY,
-            generation_count INTEGER DEFAULT 0
+        # Ensure table exists (in case init_db wasn't called yet)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS daily_quota (
+                date TEXT PRIMARY KEY,
+                generation_count INTEGER DEFAULT 0
+            )
+        """)
+
+        today = _today_str()
+        cursor.execute(
+            "SELECT generation_count FROM daily_quota WHERE date = ?", (today,)
         )
-    """)
+        row = cursor.fetchone()
+        count = row[0] if row else 0
 
-    today = _today_str()
-    cursor.execute(
-        "SELECT generation_count FROM daily_quota WHERE date = ?", (today,)
-    )
-    row = cursor.fetchone()
-    count = row[0] if row else 0
-    conn.close()
-
-    remaining = max(daily_limit - count, 0)
-    return remaining
+        remaining = max(daily_limit - count, 0)
+        return remaining
+    finally:
+        conn.close()
 
 
 def increment_daily_quota() -> int:
@@ -249,27 +255,28 @@ def increment_daily_quota() -> int:
         New count after increment
     """
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    today = _today_str()
-    cursor.execute(
-        """
-        INSERT INTO daily_quota (date, generation_count)
-        VALUES (?, 1)
-        ON CONFLICT(date) DO UPDATE SET generation_count = generation_count + 1
-        """,
-        (today,),
-    )
+        today = _today_str()
+        cursor.execute(
+            """
+            INSERT INTO daily_quota (date, generation_count)
+            VALUES (?, 1)
+            ON CONFLICT(date) DO UPDATE SET generation_count = generation_count + 1
+            """,
+            (today,),
+        )
 
-    cursor.execute(
-        "SELECT generation_count FROM daily_quota WHERE date = ?", (today,)
-    )
-    row = cursor.fetchone()
-    count = row[0] if row else 0
-    conn.commit()
-    conn.close()
-
-    return count
+        cursor.execute(
+            "SELECT generation_count FROM daily_quota WHERE date = ?", (today,)
+        )
+        row = cursor.fetchone()
+        count = row[0] if row else 0
+        conn.commit()
+        return count
+    finally:
+        conn.close()
 
 
 def increment_retry_count(item_id: int, max_retries: int = 3) -> None:
@@ -282,36 +289,37 @@ def increment_retry_count(item_id: int, max_retries: int = 3) -> None:
         max_retries: Maximum allowed failed attempts (default: 3)
     """
     conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    cursor.execute("SELECT retry_count FROM council_updates WHERE id = ?", (item_id,))
-    row = cursor.fetchone()
-    current_retries = row[0] if (row and row[0] is not None) else 0
-    new_retries = current_retries + 1
+        cursor.execute("SELECT retry_count FROM council_updates WHERE id = ?", (item_id,))
+        row = cursor.fetchone()
+        current_retries = row[0] if (row and row[0] is not None) else 0
+        new_retries = current_retries + 1
 
-    if new_retries >= max_retries:
-        cursor.execute(
-            """
-            UPDATE council_updates 
-            SET retry_count = ?, podcast_status = 'failed' 
-            WHERE id = ?
-        """,
-            (new_retries, item_id),
-        )
-        logger.warning(
-            f"Item ID {item_id} exceeded max retries ({max_retries}). Marked as failed."
-        )
-    else:
-        cursor.execute(
-            """
-            UPDATE council_updates 
-            SET retry_count = ? 
-            WHERE id = ?
-        """,
-            (new_retries, item_id),
-        )
-        logger.info(f"Item ID {item_id} retry_count incremented to {new_retries}.")
+        if new_retries >= max_retries:
+            cursor.execute(
+                """
+                UPDATE council_updates 
+                SET retry_count = ?, podcast_status = 'failed' 
+                WHERE id = ?
+            """,
+                (new_retries, item_id),
+            )
+            logger.warning(
+                f"Item ID {item_id} exceeded max retries ({max_retries}). Marked as failed."
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE council_updates 
+                SET retry_count = ? 
+                WHERE id = ?
+            """,
+                (new_retries, item_id),
+            )
+            logger.info(f"Item ID {item_id} retry_count incremented to {new_retries}.")
 
-    conn.commit()
-    conn.close()
-
+        conn.commit()
+    finally:
+        conn.close()
