@@ -145,7 +145,7 @@ def get_done_items_from_db() -> list[dict]:
     """
     if not DB_PATH.exists():
         logger.warning(f"DB not found: {DB_PATH}")
-        return []
+        return [], {}
 
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -157,12 +157,21 @@ def get_done_items_from_db() -> list[dict]:
         FROM council_updates
         WHERE podcast_status = 'done'
         ORDER BY podcast_date DESC
-    """
+        """
     )
 
-    rows = [dict(r) for r in cursor.fetchall()]
+    # Build r2_filename -> row lookup for fallback matching
+    r2_fn_map: dict[str, dict] = {}
+    rows = []
+    for r in cursor.fetchall():
+        row = dict(r)
+        rows.append(row)
+        if row.get("r2_filename"):
+            stem_key = Path(row["r2_filename"]).stem
+            r2_fn_map[stem_key] = row
+
     conn.close()
-    return rows
+    return rows, r2_fn_map
 
 
 def _ensure_tz_aware(dt):
@@ -241,7 +250,7 @@ def main():
 
     # Build item list from DB for title matching
     init_db()
-    db_items = get_done_items_from_db()
+    db_items, r2_fn_map = get_done_items_from_db()
 
     # Fallback publication date (used only when DB has no podcast_date)
     fallback_now = datetime.now(timezone.utc)
@@ -265,11 +274,19 @@ def main():
         description = read_summary_md(md_path)
         original_url = matched_db["url"] if matched_db else ""
 
+        # Fallback: look up by r2_filename stem (covers truncated titles)
+        fallback_db = None
+        if not original_url and stem in r2_fn_map:
+            fallback_db = r2_fn_map[stem]
+            original_url = fallback_db["url"]
+            logger.info(f"Matched {stem} via r2_filename fallback")
+
         # Get file size
         size = mp3_path.stat().st_size
 
         # Use actual podcast_date from DB, fallback to current time
-        pub_date = matched_db.get("podcast_date") if matched_db else fallback_now
+        db_source = matched_db or fallback_db
+        pub_date = db_source.get("podcast_date") if db_source else fallback_now
 
         entry = {
             "title": display_title,
