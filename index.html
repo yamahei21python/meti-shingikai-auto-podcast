@@ -166,7 +166,7 @@
                     .replace(/^#\s+.*\n/, '');
 
                 // Split by ### N. pattern (N = 1-4)
-                const sections = cleanDesc.split(/###\s*\d+\.\s*/);
+                const sections = cleanDesc.split(/###\s*\d+\.?\s*/);
 
                 // sections[0] = preamble (before ### 1.), skip it
                 // sections[1] = guide, sections[2..4] = topics/decisions/timeline
