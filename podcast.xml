@@ -7,13 +7,13 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Tue, 07 Jul 2026 22:31:22 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 08 Jul 2026 21:44:03 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>20260707_第1回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー</title>
+      <title>20260707_第1回 総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 電力事業環境整備ワーキンググループ</title>
       <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/electric_power_wg/001.html</link>
       <description># カスタムレポート：電力事業環境整備に向けた市場構造分析と今後の論点
 
@@ -71,7 +71,7 @@
 3.  **令和8年度（2026年度）以降の継続的な制度検討と法制度への反映**
     本WGでの検討結果は、令和8年度以降も継続して深掘りされ、順次、電気事業法等の法制度への反映や実務的なルール形成へと繋げられる予定です。これは、2030年のエネルギーミックス達成に向けた長期的な制度基盤の構築プロセスとなります。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260707_第1回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260707_第1回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー.mp3" length="32602159" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260707_第1回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Wed, 08 Jul 2026 07:31:13 +0900</pubDate>
     </item>
     <item>
@@ -117,7 +117,7 @@
 3.  **船舶輸送案件およびCCU連携の制度設計**
     パイプライン以外の船舶輸送案件については、排出源のクラスター化や輸送効率化を前提としたビジネスモデルの構築を進めます。また、合成燃料やメタネーション等のCCU事業との連携も視野に入れ、制度間の「二重計上」や「重複・齟齬」を完全に排除した整合的な制度設計を推進する方針です。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260707_総合資源エネルギー調査会_資源・燃料分科会_カーボンマネジメント小委員会_中間とりまとめ.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260707_総合資源エネルギー調査会_資源・燃料分科会_カーボンマネジメント小委員会_中間とりまとめ.mp3" length="31611238" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260707_総合資源エネルギー調査会_資源・燃料分科会_カーボンマネジメント小委員会_中間とりまとめ.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Wed, 08 Jul 2026 07:12:01 +0900</pubDate>
     </item>
     <item>
