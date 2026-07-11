@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Fri, 10 Jul 2026 21:51:09 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 11 Jul 2026 21:23:57 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
@@ -61,7 +61,7 @@
 * **運用を通じた制度の継続的な改善と検証**
 制度開始後は、プラチナグレードの取得企業数や製品ごとの認定状況を詳細に分析します。本制度が実際にGX製品の需要創出にどれだけ寄与しているかを検証し、その結果に基づき、現在は目標設定のない製品への新たな閾値設定や、市場環境に合わせた更なる制度改善を適宜実施していく方針です。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260710_GX需要創出に向けた研究会_中間とりまとめ.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260710_GX需要創出に向けた研究会_中間とりまとめ.mp3" length="33422756" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260710_GX需要創出に向けた研究会_中間とりまとめ.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sat, 11 Jul 2026 06:51:02 +0900</pubDate>
     </item>
     <item>
