@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Fri, 17 Jul 2026 21:56:20 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 18 Jul 2026 21:25:34 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
@@ -62,7 +62,7 @@
 3. **容量市場メインオークションへの数値反映**
 確定した2030年度以降の運用容量値は、将来の供給力を確保するための容量市場メインオークションにおける連系線制約の諸元として、順次反映される予定です。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260717_2026年度_第3回_運用容量検討会_配布資料.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260717_2026年度_第3回_運用容量検討会_配布資料.mp3" length="30195020" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260717_2026年度_第3回_運用容量検討会_配布資料.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sat, 18 Jul 2026 06:56:12 +0900</pubDate>
     </item>
     <item>
@@ -118,7 +118,7 @@
 3. **2035年〜2040年：大規模社会実装と海外市場の1TW超え**
 2035年までに、公共施設やインフラ空間（空港、道路、鉄道等）へ累積5GWを導入。2040年には国内で約20GWの累積導入を達成するとともに、コスト10円/kWh台の実現により、需要が1TW（1,000GW）以上に拡大するグローバル市場への本格展開を完遂します。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260717_第2回_次世代型太陽電池の導入拡大及び産業競争力強化に向けた実装加速連絡会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260717_第2回_次世代型太陽電池の導入拡大及び産業競争力強化に向けた実装加速連絡会.mp3" length="32097676" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260717_第2回_次世代型太陽電池の導入拡大及び産業競争力強化に向けた実装加速連絡会.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sat, 18 Jul 2026 06:38:16 +0900</pubDate>
     </item>
     <item>
