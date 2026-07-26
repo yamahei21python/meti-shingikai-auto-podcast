@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Sat, 25 Jul 2026 22:01:30 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 26 Jul 2026 21:28:14 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
@@ -59,7 +59,7 @@ DRready機器のセキュリティ水準として、JC-STARスマートホーム
 3. **DRready対応燃料電池の市場投入時期の再報告**
 JC-STAR★2の要件確定に伴う開発コストや期間への影響を精査するため、各機器メーカーによる検討状況を踏まえたDRready対応燃料電池の具体的な市場投入スケジュールについて、次回以降の勉強会で改めて報告が行われる。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260724_第9回_DRready勉強会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260724_第9回_DRready勉強会.mp3" length="26247770" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260724_第9回_DRready勉強会.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sun, 26 Jul 2026 07:01:19 +0900</pubDate>
     </item>
     <item>
@@ -113,7 +113,7 @@ JC-STAR★2の要件確定に伴う開発コストや期間への影響を精査
 1. **2030年代初頭の国内CCS事業の開始目標**
 2025年2月に閣議決定予定の第7次エネルギー基本計画を指針とし、事業者主導によるビジネスモデルの確立を目指す。先進的CCS事業から得られた知見を基に、地理的状況に合致した効率的なバリューチェーンを構築し、エネルギー安定供給と脱炭素の同時達成を具現化する。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260724_第47回総合資源エネルギー調査会_資源・燃料分科会（書面審議）.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260724_第47回総合資源エネルギー調査会_資源・燃料分科会（書面審議）.mp3" length="28780412" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260724_第47回総合資源エネルギー調査会_資源・燃料分科会（書面審議）.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sun, 26 Jul 2026 06:42:06 +0900</pubDate>
     </item>
     <item>
