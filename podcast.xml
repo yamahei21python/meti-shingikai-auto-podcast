@@ -7,13 +7,13 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Wed, 29 Jul 2026 22:02:39 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 30 Jul 2026 21:44:51 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>20260729_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第5回</title>
+      <title>20260729_総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 電力安定供給ワーキンググループ（第5回）</title>
       <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/stable_power_supply_wg/005.html</link>
       <description># 電力市場制度の抜本的見直しと排出量取引制度（GX-ETS）の統合に向けた論点整理
 
@@ -64,7 +64,7 @@ GXリーグにおける排出量取引の義務化が開始される。直接排
 3. **2033年度：発電事業者への有償オークション導入**
 成長志向型カーボンプライシング構想の第3フェーズとして、発電部門に対する排出枠の有償割当てが段階的に導入・強化される。これにより、火力電源の経済性に直接的な影響を与え、脱炭素電源への移行インセンティブが最大化される。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260729_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第5回.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260729_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第5回.mp3" length="25258343" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260729_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第5回.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Thu, 30 Jul 2026 07:02:27 +0900</pubDate>
     </item>
     <item>
@@ -123,7 +123,7 @@ GXリーグにおける排出量取引の義務化が開始される。直接排
 * **約定結果の公表と容量確保契約の締結（2026年12月以降）**
 2026年12月頃に約定結果が公表され、市場価格と落札容量が確定します。落札した事業者は、公表直後から2027年3月頃にかけて容量確保契約書の締結手続きを完了させる必要があります。契約締結を経て、2030年度の供給力提供に向けた法的義務と報酬受領権が正式に確立されます。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260728_第75回_容量市場の在り方等に関する検討会_配布資料.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260728_第75回_容量市場の在り方等に関する検討会_配布資料.mp3" length="31833972" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260728_第75回_容量市場の在り方等に関する検討会_配布資料.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Thu, 30 Jul 2026 06:44:42 +0900</pubDate>
     </item>
     <item>
