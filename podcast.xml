@@ -7,13 +7,13 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Fri, 07 Aug 2026 05:37:09 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 07 Aug 2026 21:20:09 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>20260806_第12回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー主力電源化小委員会電力・ガス事業分科会_</title>
+      <title>20260806_第12回 総合資源エネルギー調査会 省エネルギー・新エネルギー分科会 再生可能エネルギー主力電源化小委員会／電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 次世代電力系統ワーキンググループ</title>
       <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/012.html</link>
       <description># カスタムレポート
 
@@ -68,7 +68,7 @@ FIT電源をFIP電源よりも先に制御するルール変更が、FIP電源�
 3. **系統連系プロセスの合理化に向けた制度設計**
 系統用蓄電池や大規模需要家の連系を加速させるため、「充電制限契約」などの具体的な運用ルールや契約条件の詳細設計を、今後数ヶ月以内に取りまとめます。これにより、系統の空き容量を最大限活用できる制度環境を早期に整備する予定です。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260806_第12回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー主力電源化小委員会電力・ガス事業分科会_.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260806_第12回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー主力電源化小委員会電力・ガス事業分科会_.mp3" length="36163074" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260806_第12回_総合資源エネルギー調査会_省エネルギー・新エネルギー分科会_再生可能エネルギー主力電源化小委員会電力・ガス事業分科会_.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Fri, 07 Aug 2026 14:34:57 +0900</pubDate>
     </item>
     <item>
