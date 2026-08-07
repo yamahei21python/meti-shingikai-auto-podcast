@@ -35,8 +35,6 @@ jobs:
         env:
           NOTEBOOKLM_AUTH_JSON: ${{ secrets.NOTEBOOKLM_AUTH_JSON }}
         run: |
-          mkdir -p ~/.notebooklm
-          echo "$NOTEBOOKLM_AUTH_JSON" > ~/.notebooklm/auth.json
           uv run --project notebooklm-podcast-lab notebooklm language set ja
 
       - name: Run Sync Pipeline
