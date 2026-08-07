@@ -7,10 +7,14 @@ requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.14.3",
     "boto3>=1.42.81",
+    "cryptography>=50.0.0",
     "curl-cffi",
     "feedgen>=1.0.0",
-    "notebooklm-py[browser]>=0.3.4",
+    "notebooklm-py[browser,impersonate]>=0.8.0",
     "playwright>=1.58.0",
+    "pyscrypt>=1.6.2",
     "python-dotenv>=1.2.2",
     "requests",
+    "rnet>=2.4.2",
+    "structlog>=26.1.0",
 ]

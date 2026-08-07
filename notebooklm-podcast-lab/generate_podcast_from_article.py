@@ -40,6 +40,7 @@ from shared import (
     sanitize_filename,
     setup_logging,
 )
+from shared.waf_network import WafNetworkClient, load_cached_token
 
 setup_logging()
 
@@ -132,13 +133,21 @@ def create_notebook(name: str, max_attempts: int = 3) -> str | None:
     return None
 
 
-def add_source(source_path_or_url: str, max_attempts: int = 3) -> bool:
+def add_source(source_path_or_url: str, title: Optional[str] = None, max_attempts: int = 3) -> bool:
     """
     Add source (PDF path or URL) to notebook.
+
+    Local PDF paths use --type file for reliable upload.
     """
+    cmd = ["source", "add", source_path_or_url]
+    if title:
+        cmd += ["--title", title]
+    if os.path.exists(source_path_or_url):
+        cmd += ["--type", "file"]
+
     for attempt in range(max_attempts):
         logger.info(f"Adding source: {source_path_or_url} (Attempt {attempt + 1}/{max_attempts})")
-        res = run_notebooklm(["source", "add", source_path_or_url])
+        res = run_notebooklm(cmd)
 
         if res.returncode == 0:
             return True
@@ -271,8 +280,12 @@ def main():
     # Initialize auth
     init_auth()
 
-    # Initialize Network Client
-    client = NetworkClient()
+    # Initialize WAF-aware Network Client (rnet + aws-waf-token solver)
+    client = WafNetworkClient()
+    cached_token = load_cached_token()
+    if cached_token:
+        client.token = cached_token
+        logger.info("Loaded cached aws-waf-token")
     
     try:
         # Step 0: Get PDF URLs
@@ -321,7 +334,8 @@ def main():
 
         # Step 4: Add Sources (Local Files)
         for pdf_path in local_pdfs:
-            if not add_source(pdf_path):
+            title = Path(pdf_path).name.replace(".pdf", "").replace("_", " ")
+            if not add_source(pdf_path, title=title):
                 logger.error(f"Failed to add source: {pdf_path}. Aborting.")
                 sys.exit(1)
 

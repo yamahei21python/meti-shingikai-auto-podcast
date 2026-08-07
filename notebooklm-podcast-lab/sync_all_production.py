@@ -190,7 +190,8 @@ def deduplicate(updates: list[CouncilUpdate]) -> list[CouncilUpdate]:
 def main():
     logger.info(f"=== Sync Production Start: {datetime.now()} ===")
 
-    client = NetworkClient()
+    from shared.waf_network import WafNetworkClient
+    client = WafNetworkClient()
     conn = init_db()
 
     try:
