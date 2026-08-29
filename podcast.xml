@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Sat, 29 Aug 2026 03:11:54 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 29 Aug 2026 22:45:23 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
@@ -57,7 +57,7 @@
 3.  **令和10年度（2028年度）からの新枠および複数ジョイント本格稼働**
     当初3万トン規模からスタートする「新枠」の入札を開始します。同時に、1代表事業者と複数構成事業者、あるいは1事業者内複数施設によるジョイントグループの登録・運用を全面的に稼働させ、新たな資源循環体制へ移行します。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260831_第5回_プラスチック製容器包装及び分別収集物の再商品化入札制度に係る検討会.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260831_第5回_プラスチック製容器包装及び分別収集物の再商品化入札制度に係る検討会.mp3" length="37548547" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260831_第5回_プラスチック製容器包装及び分別収集物の再商品化入札制度に係る検討会.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sat, 29 Aug 2026 12:11:46 +0900</pubDate>
     </item>
     <item>
