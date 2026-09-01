@@ -7,13 +7,13 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Tue, 01 Sep 2026 00:16:06 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 01 Sep 2026 22:45:08 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>20260831_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第6回</title>
+      <title>20260831_総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 電力安定供給ワーキンググループ（第6回）</title>
       <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/stable_power_supply_wg/006.html</link>
       <description># カスタムレポート
 
@@ -62,7 +62,7 @@ DR（デマンドレスポンス）を含む発動指令電源には、供給信
 3. **第4回長期脱炭素電源オークションの募集開始（令和8年度内）**
 パブリックコメントの結果および再発防止策を反映した募集要綱を確定させ、令和8年度中に第4回オークションの実施プロセスへ移行する。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260831_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第6回.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260831_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第6回.mp3" length="30020960" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260831_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力安定供給ワーキンググループ（第6回.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Tue, 01 Sep 2026 09:15:59 +0900</pubDate>
     </item>
     <item>
