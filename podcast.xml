@@ -7,13 +7,13 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Fri, 11 Sep 2026 22:59:05 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 12 Sep 2026 22:29:17 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>20260911_第8回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力広域的運営推進機関検証ワーキ</title>
+      <title>20260911_第8回 総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 電力広域的運営推進機関検証ワーキンググループ</title>
       <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/occto/008.html</link>
       <description># カスタムレポート
 
@@ -62,7 +62,7 @@
 3. **公布後1年以内：卸電力取引所の多様化に関する規定の施行**
 中長期市場や需給調整市場を開設する各卸電力取引所の指定・監督に関する規定が施行されます。これにより、翌日市場以外の取引においても市場運営の健全性と透明性が確保され、卸電力取引の更なる活性化が図られる予定です。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260911_第8回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力広域的運営推進機関検証ワーキ.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260911_第8回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力広域的運営推進機関検証ワーキ.mp3" length="35581646" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260911_第8回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力広域的運営推進機関検証ワーキ.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sat, 12 Sep 2026 07:58:58 +0900</pubDate>
     </item>
     <item>
