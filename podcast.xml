@@ -7,13 +7,13 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>ja</language>
-    <lastBuildDate>Fri, 18 Sep 2026 23:02:11 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 19 Sep 2026 22:26:02 +0000</lastBuildDate>
     <itunes:author>Kohei</itunes:author>
     <itunes:category text="News"/>
     <itunes:image href="https://github.com/yamahei21python/meti-shingikai-auto-podcastcover.png"/>
     <itunes:explicit>no</itunes:explicit>
     <item>
-      <title>20260918_第4回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー</title>
+      <title>20260918_第4回 総合資源エネルギー調査会 電力・ガス事業分科会 次世代電力・ガス事業基盤構築小委員会 電力事業環境整備ワーキンググループ</title>
       <link>https://www.meti.go.jp/shingikai/enecho/denryoku_gas/jisedai_kiban/electric_power_wg/004.html</link>
       <description># カスタムレポート
 
@@ -67,7 +67,7 @@
 * **2030年2月 供給計画におけるkWh確保状況の初回提出期限**
 2030年度の供給計画提出タイミングをもって本制度が本格始動します。小売電気事業者は、定められた算定基準に基づき、実需給の3年度前および1年度前の量的な供給力確保状況を当局へ報告する法的義務を負うことになります。</description>
       <guid isPermaLink="false">https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260918_第4回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー.mp3</guid>
-      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260918_第4回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー.mp3" length="26796329" type="audio/mpeg"/>
+      <enclosure url="https://pub-98e439fc5c7b400e9c112767c999e6f8.r2.dev/podcasts/20260918_第4回_総合資源エネルギー調査会_電力・ガス事業分科会_次世代電力・ガス事業基盤構築小委員会_電力事業環境整備ワーキンググルー.mp3" length="0" type="audio/mpeg"/>
       <pubDate>Sat, 19 Sep 2026 08:01:53 +0900</pubDate>
     </item>
     <item>
