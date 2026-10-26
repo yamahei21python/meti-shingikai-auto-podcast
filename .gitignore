@@ -18,3 +18,6 @@ temp_pdfs_test/
 test_temp_pdfs/
 worker_output.log
 temp_clone_test/
+
+# Secrets (never commit)
+.env
