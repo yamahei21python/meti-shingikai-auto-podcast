@@ -38,6 +38,40 @@ from shared import (
 
 setup_logging()
 
+# === Auth-error detection (Phase 1) ===
+# When NotebookLM auth dies mid-run, every remaining item fails the same
+# way (observed 2026-10-26: items 2 and 3 burned retry counts on a dead
+# session). Detect the signature, stop the run, and leave the remaining
+# items pending WITHOUT consuming their retry counts.
+AUTH_ERROR_MARKERS = (
+    "authentication error",
+    "authentication expired",
+    "re-authenticate",
+    "signed-out page",
+    "not authenticated",
+)
+AUTH_ERROR_HIT = False
+
+
+def note_auth_error(text: str) -> bool:
+    """Record (and report) whether text carries the NotebookLM auth-death signature."""
+    global AUTH_ERROR_HIT
+    if not text:
+        return False
+    low = text.lower()
+    if any(marker in low for marker in AUTH_ERROR_MARKERS):
+        AUTH_ERROR_HIT = True
+        return True
+    return False
+
+
+def print_summary(target: int, success: int, failed: int, auth_aborted: int) -> None:
+    """Machine-readable run summary; the workflow surfaces it in the job summary."""
+    print(
+        f"SUMMARY: target={target} success={success} "
+        f"failed={failed} auth_aborted={auth_aborted}"
+    )
+
 
 def generate_summary_report(notebook_id: str, target_path: str) -> bool:
     """
@@ -130,6 +164,10 @@ def generate_summary_report(notebook_id: str, target_path: str) -> bool:
 
         # Smart error detection for rate limits and quotas (mirrors generate_audio)
         error_msg = gen_res.stderr or gen_res.stdout or "unknown"
+        if note_auth_error(error_msg):
+            logger.error(f"CRITICAL: NotebookLM auth error detected: {error_msg.strip()}")
+            logger.error("Aborting to protect remaining items' retry counts.")
+            return False
         error_lower = error_msg.lower()
         is_quota_error = (
             "rate limited" in error_lower
@@ -198,6 +236,9 @@ def generate_summary_report(notebook_id: str, target_path: str) -> bool:
                 logger.error("Report download reported success but file not found")
         else:
             logger.error(f"Report download failed: {dl_res.stderr}")
+            if note_auth_error(dl_res.stderr or ""):
+                logger.error("CRITICAL: NotebookLM auth error on report download. Aborting.")
+                return False
 
         if attempt < max_report_retries:
             wait_time = 30 * attempt
@@ -208,7 +249,7 @@ def generate_summary_report(notebook_id: str, target_path: str) -> bool:
     return False
 
 
-def process_single_item(item: tuple) -> bool:
+def process_single_item(item: tuple) -> str:
     """
     Process a single pending item.
 
@@ -216,16 +257,25 @@ def process_single_item(item: tuple) -> bool:
         item: Database row (id, title, url, date, pdf_urls)
 
     Returns:
-        True if both MP3 and MD succeeded
+        "done" if both MP3 and MD succeeded, "auth_error" if NotebookLM
+        auth died (retry count NOT consumed), otherwise "failed".
     """
     item_id, title, url, date_str, pdf_urls_json = item
     logger.info(f"Processing: {title} ({date_str})")
+
+    # Initialise before try so cleanup never hits unbound variables.
+    mp3_success = False
+    md_success = False
+    notebook_identifier = None
+    output_temp = None
+    md_temp = None
 
     try:
         # Prepare filenames
         formatted_date = format_date_yyyymmdd(date_str)
         sanitized_title = sanitize_filename(title)
         notebook_name = f"{formatted_date}_{sanitized_title}"
+        notebook_identifier = notebook_name
         # Use item_id in temp names to avoid collisions if multiple articles on same day
         output_temp = f"temp_{formatted_date}_{item_id}.mp3"
         md_temp = f"temp_{formatted_date}_{item_id}_summary.md"
@@ -251,9 +301,7 @@ def process_single_item(item: tuple) -> bool:
             print(mp3_res.stdout)
         if mp3_res.returncode != 0:
             print(f"ERROR: {mp3_res.stderr}")
-
-        mp3_success = False
-        notebook_identifier = notebook_name
+        note_auth_error((mp3_res.stdout or "") + (mp3_res.stderr or ""))
 
         if mp3_res.returncode == 0 and os.path.exists(output_temp):
             mp3_success = True
@@ -264,7 +312,6 @@ def process_single_item(item: tuple) -> bool:
                     break
 
         # === Step 2: Generate Summary MD (Only if MP3 succeeded) ===
-        md_success = False
         if mp3_success:
             md_success = generate_summary_report(
                 notebook_id=notebook_identifier, target_path=md_temp
@@ -311,22 +358,32 @@ def process_single_item(item: tuple) -> bool:
         md_success = False
 
     # === Cleanup Notebook (always run) ===
-    logger.info(f"Cleaning up Notebook: {notebook_identifier}")
-    run_notebooklm(["delete", "-n", notebook_identifier, "-y"])
+    if notebook_identifier:
+        logger.info(f"Cleaning up Notebook: {notebook_identifier}")
+        run_notebooklm(["delete", "-n", notebook_identifier, "-y"])
 
     if mp3_success and md_success:
-        return True
+        return "done"
     else:
         # Failed: Cleanup temp files
         logger.warning(f"FAILED: mp3={mp3_success}, md={md_success}")
-        if os.path.exists(output_temp):
+        if output_temp and os.path.exists(output_temp):
             os.remove(output_temp)
-        if os.path.exists(md_temp):
+        if md_temp and os.path.exists(md_temp):
             os.remove(md_temp)
-            
+
+        if AUTH_ERROR_HIT:
+            # Auth is dead: leave this item pending without burning a
+            # retry, and let main() abort the rest of the run.
+            logger.error(
+                "AUTH ABORT: NotebookLM authentication failed; "
+                "item left pending, retry count unchanged."
+            )
+            return "auth_error"
+
         # Increment retry count and auto-fail if it reaches maximum limit
         increment_retry_count(item_id)
-        return False
+        return "failed"
 
 
 def main():
@@ -349,6 +406,7 @@ def main():
             f"Daily generation quota exhausted ({DAILY_GENERATION_LIMIT}/{DAILY_GENERATION_LIMIT}). Skipping all items."
         )
         print("\n=== Worker Finished. Processed: 0 items (quota exhausted) ===")
+        print_summary(target=0, success=0, failed=0, auth_aborted=0)
         return
     logger.info(f"Daily quota remaining: {remaining}/{DAILY_GENERATION_LIMIT}")
 
@@ -358,10 +416,13 @@ def main():
 
     if not items:
         logger.info("No pending items in queue")
+        print_summary(target=0, success=0, failed=0, auth_aborted=0)
         return
 
     # Process items
-    processed_count = 0
+    success_count = 0
+    failed_count = 0
+    auth_aborted = 0
     for i, item in enumerate(items):
         # Re-check quota before each item (another worker might have consumed it)
         remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
@@ -375,10 +436,27 @@ def main():
             logger.info(f"Waiting {wait_sec}s between items (WAF mitigation)...")
             time.sleep(wait_sec)
 
-        if process_single_item(item):
-            processed_count += 1
+        result = process_single_item(item)
+        if result == "done":
+            success_count += 1
+        elif result == "auth_error":
+            # This item plus everything after it stays pending, untouched.
+            auth_aborted = len(items) - i
+            logger.error(
+                f"Aborting run on auth error. {auth_aborted} item(s) left pending "
+                "with retry counts unchanged."
+            )
+            break
+        else:
+            failed_count += 1
 
-    print(f"\n=== Worker Finished. Processed: {processed_count} items ===")
+    print(f"\n=== Worker Finished. Processed: {success_count} items ===")
+    print_summary(
+        target=len(items),
+        success=success_count,
+        failed=failed_count,
+        auth_aborted=auth_aborted,
+    )
 
 
 if __name__ == "__main__":
