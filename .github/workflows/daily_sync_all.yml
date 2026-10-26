@@ -2,7 +2,7 @@ name: Daily METI & OCCTO Sync
 
 on:
   schedule:
-    - cron: '30 20 * * *' # 日本時間 05:30 (毎日)
+    - cron: '0 18 * * *' # 日本時間 03:00 (GitHubの2-3時間遅延を見込み、実開始05:30狙い)
   workflow_dispatch: # 手動実行用
 
 jobs:
