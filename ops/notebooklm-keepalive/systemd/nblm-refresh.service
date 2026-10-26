@@ -1,0 +1,10 @@
+[Unit]
+Description=NotebookLM auth keepalive refresh (kenta profile)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/hatch/nblm-vm/refresh.sh
+
+[Install]
+WantedBy=multi-user.target
