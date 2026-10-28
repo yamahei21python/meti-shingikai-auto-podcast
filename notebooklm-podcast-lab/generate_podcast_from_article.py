@@ -67,13 +67,20 @@ def download_pdf_locally(client: NetworkClient, url: str, temp_dir: Path) -> Opt
     
     local_path = temp_dir / filename
     logger.info(f"Downloading PDF: {url} -> {local_path}")
-    
+
     res = client.fetch(url)
     if res and res.status_code == 200:
+        # Phase 2: an HTTP 200 is not enough — WAF/HTML error pages must
+        # not be counted as PDFs. Require the PDF magic bytes.
+        if res.content[:5] != b"%PDF-":
+            logger.error(
+                f"Downloaded content is not a PDF (first bytes: {res.content[:8]!r}): {url}"
+            )
+            return None
         with open(local_path, "wb") as f:
             f.write(res.content)
         return local_path
-    
+
     logger.error(f"Failed to download PDF: {url}")
     return None
 
@@ -309,15 +316,26 @@ def main():
         temp_dir = Path("temp_pdfs")
         temp_dir.mkdir(exist_ok=True)
         local_pdfs = []
-        
+
         for url in pdf_urls:
             local_path = download_pdf_locally(client, url, temp_dir)
             if local_path:
                 local_pdfs.append(str(local_path))
-        
-        if not local_pdfs:
-            logger.error("Failed to download any PDF documents")
-            sys.exit(1)
+
+        # Phase 2 completeness gate: NEVER generate from a partial set of
+        # materials (2026-10-26: an episode was published from 4 of 7 PDFs
+        # after WAF solver failures). Exit code 2 tells the worker to
+        # leave the item pending without consuming its retry count.
+        print(f"PDF_FETCH: expected={len(pdf_urls)} downloaded={len(local_pdfs)}")
+        if len(local_pdfs) < len(pdf_urls):
+            print(
+                f"PDF_INCOMPLETE: expected={len(pdf_urls)} downloaded={len(local_pdfs)}"
+            )
+            logger.error(
+                f"Incomplete materials: {len(local_pdfs)}/{len(pdf_urls)} PDFs. "
+                "Aborting before notebook creation; item stays pending."
+            )
+            sys.exit(2)
 
         # Step 2: Setup Notebook
         notebook_name = (

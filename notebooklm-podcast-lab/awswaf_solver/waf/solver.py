@@ -119,9 +119,30 @@ def _solve_bandwidth(difficulty: int) -> str:
     return base64.b64encode(b"\x00" * sz).decode()
 
 
+async def _resp_json(resp) -> dict:
+    """Parse a JSON response, tolerating non-UTF8 bytes.
+
+    rnet's resp.json()/text() decode strictly as UTF-8; the AWS WAF
+    challenge endpoints have been observed returning bodies whose first
+    byte is 0xf3 (invalid UTF-8), which crashed the solver with
+    'utf-8 codec can't decode byte 0xf3' (2026-10-26, 11 occurrences).
+    Fall back to a lenient bytes decode so one bad byte cannot kill it.
+    """
+    try:
+        return await resp.json()
+    except Exception:
+        raw = await resp.bytes()
+        return json.loads(raw.decode("utf-8", "ignore"))
+
+
 async def _discover(client: Client, site: str, ua: str) -> tuple[str, bool, dict | None]:
-    resp = await client.get(site, headers=_nav_headers(site, ua))
-    html = await resp.text()
+    hdrs = _nav_headers(site, ua)
+    # Ask for an uncompressed body: a compressed challenge page decoded as
+    # text is the suspected source of the 0xf3 decode crash.
+    hdrs["accept-encoding"] = "identity"
+    resp = await client.get(site, headers=hdrs)
+    raw = await resp.bytes()
+    html = raw.decode("utf-8", "ignore")
 
     m = RE_CHAL_SAME.search(html)
     if m:
@@ -135,6 +156,23 @@ async def _discover(client: Client, site: str, ua: str) -> tuple[str, bool, dict
             chal_url = m.group(1)
             same = False
         else:
+            # Keep evidence for the next diagnosis: what did the body
+            # actually start with, and how was it encoded?
+            try:
+                hdr_dump = {
+                    (k.decode() if isinstance(k, bytes) else k):
+                    (v.decode() if isinstance(v, bytes) else v)
+                    for k, v in resp.headers.items()
+                }
+            except Exception:
+                hdr_dump = {}
+            log.error(
+                "challenge URL not found",
+                status=str(getattr(resp, "status_code", "?")),
+                body_head=raw[:16].hex(),
+                content_encoding=hdr_dump.get("content-encoding"),
+                content_type=hdr_dump.get("content-type"),
+            )
             raise RuntimeError("challenge URL not found")
 
     goku = None
@@ -216,7 +254,7 @@ async def _do_verify(client: Client, chal_url: str, endpoint: str, body: str,
                      cookies: dict, hdrs: dict, content_type: str) -> dict:
     h = {**hdrs, "content-type": content_type}
     resp = await client.post(f"{chal_url}/{endpoint}", body=body, cookies=cookies, headers=h)
-    return await resp.json()
+    return await _resp_json(resp)
 
 
 async def solve(site: str, ua: str, proxy: str = None,
@@ -240,7 +278,7 @@ async def solve(site: str, ua: str, proxy: str = None,
         t_inp = time.time()
         resp = await client.get(f"{chal_url}/inputs?client=browser", cookies=cookies, headers=hdrs)
         inp_latency = round((time.time() - t_inp) * 1000, 1)
-        inputs = await resp.json()
+        inputs = await _resp_json(resp)
         challenge = inputs["challenge"]
         decoded = json.loads(base64.b64decode(challenge["input"]))
         ctype = decoded.get("challenge_type", "")

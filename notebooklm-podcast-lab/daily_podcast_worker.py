@@ -65,11 +65,12 @@ def note_auth_error(text: str) -> bool:
     return False
 
 
-def print_summary(target: int, success: int, failed: int, auth_aborted: int) -> None:
+def print_summary(target: int, success: int, failed: int, auth_aborted: int,
+                  incomplete: int = 0) -> None:
     """Machine-readable run summary; the workflow surfaces it in the job summary."""
     print(
         f"SUMMARY: target={target} success={success} "
-        f"failed={failed} auth_aborted={auth_aborted}"
+        f"failed={failed} auth_aborted={auth_aborted} incomplete={incomplete}"
     )
 
 
@@ -258,7 +259,8 @@ def process_single_item(item: tuple) -> str:
 
     Returns:
         "done" if both MP3 and MD succeeded, "auth_error" if NotebookLM
-        auth died (retry count NOT consumed), otherwise "failed".
+        auth died (retry count NOT consumed), "incomplete" if the source
+        PDFs were incomplete (retry count NOT consumed), otherwise "failed".
     """
     item_id, title, url, date_str, pdf_urls_json = item
     logger.info(f"Processing: {title} ({date_str})")
@@ -269,6 +271,7 @@ def process_single_item(item: tuple) -> str:
     notebook_identifier = None
     output_temp = None
     md_temp = None
+    pdf_incomplete = False
 
     try:
         # Prepare filenames
@@ -302,6 +305,8 @@ def process_single_item(item: tuple) -> str:
         if mp3_res.returncode != 0:
             print(f"ERROR: {mp3_res.stderr}")
         note_auth_error((mp3_res.stdout or "") + (mp3_res.stderr or ""))
+        if "PDF_INCOMPLETE:" in (mp3_res.stdout or "") + (mp3_res.stderr or ""):
+            pdf_incomplete = True
 
         if mp3_res.returncode == 0 and os.path.exists(output_temp):
             mp3_success = True
@@ -372,6 +377,16 @@ def process_single_item(item: tuple) -> str:
         if md_temp and os.path.exists(md_temp):
             os.remove(md_temp)
 
+        if pdf_incomplete:
+            # Phase 2: materials were incomplete (e.g. WAF solver outage).
+            # Nothing was generated; leave the item pending for tomorrow
+            # without burning a retry — an external fetch failure is not
+            # the item's fault (same rule as auth aborts).
+            logger.warning(
+                "PDF INCOMPLETE: item left pending, retry count unchanged."
+            )
+            return "incomplete"
+
         if AUTH_ERROR_HIT:
             # Auth is dead: leave this item pending without burning a
             # retry, and let main() abort the rest of the run.
@@ -423,6 +438,7 @@ def main():
     success_count = 0
     failed_count = 0
     auth_aborted = 0
+    incomplete_count = 0
     for i, item in enumerate(items):
         # Re-check quota before each item (another worker might have consumed it)
         remaining = get_remaining_quota(DAILY_GENERATION_LIMIT)
@@ -439,6 +455,8 @@ def main():
         result = process_single_item(item)
         if result == "done":
             success_count += 1
+        elif result == "incomplete":
+            incomplete_count += 1
         elif result == "auth_error":
             # This item plus everything after it stays pending, untouched.
             auth_aborted = len(items) - i
@@ -456,6 +474,7 @@ def main():
         success=success_count,
         failed=failed_count,
         auth_aborted=auth_aborted,
+        incomplete=incomplete_count,
     )
 
 
