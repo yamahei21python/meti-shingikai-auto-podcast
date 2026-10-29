@@ -87,6 +87,23 @@ def upload_to_r2(s3_client, local_path: Path, remote_key: str) -> bool:
         return False
 
 
+def r2_object_size(s3_client, remote_key: str):
+    """Return the object's size on R2, or None if it cannot be confirmed.
+
+    Phase 3: an RSS entry may only be published for an object whose
+    existence AND size are verified on R2 (previously, restored entries
+    were published with size 0 and no existence check at all).
+    """
+    if s3_client is None or not R2_BUCKET_NAME:
+        return None
+    try:
+        head = s3_client.head_object(Bucket=R2_BUCKET_NAME, Key=remote_key)
+        return int(head["ContentLength"])
+    except Exception as e:
+        logger.warning(f"R2 HEAD failed for {remote_key}: {e}")
+        return None
+
+
 def read_summary_md(md_path: Path) -> str:
     """Read summary markdown content."""
     if not md_path.exists():
@@ -258,14 +275,35 @@ def main():
 
     # Upload MP3s to R2
     podcast_entries = []
+    skipped_entries = 0
     for mp3_path in mp3_files:
         stem = mp3_path.stem
         remote_key = f"podcasts/{mp3_path.name}"
         r2_url = f"{R2_PUBLIC_URL}/{remote_key}" if R2_PUBLIC_URL else ""
 
-        # Upload
-        if s3 and R2_BUCKET_NAME:
-            upload_to_r2(s3, mp3_path, remote_key)
+        # Phase 3: publish only what is verified on R2. Upload first,
+        # then confirm the stored object's size with a HEAD request.
+        verified_size = None
+        if s3 and R2_BUCKET_NAME and R2_PUBLIC_URL:
+            if upload_to_r2(s3, mp3_path, remote_key):
+                verified_size = r2_object_size(s3, remote_key)
+            if verified_size is None:
+                # Upload failed — the object may still exist from an
+                # earlier run; only a HEAD can prove it.
+                verified_size = r2_object_size(s3, remote_key)
+        if verified_size is None:
+            if s3 and R2_BUCKET_NAME:
+                logger.error(
+                    f"RSS_SKIP: {remote_key} not verified on R2; entry omitted"
+                )
+                skipped_entries += 1
+                continue
+            # No R2 client at all (e.g. local dry run): keep legacy
+            # behaviour but say so loudly.
+            logger.warning(
+                f"R2 unavailable; publishing {remote_key} UNVERIFIED (legacy path)"
+            )
+            verified_size = mp3_path.stat().st_size
 
         # Match stem against DB title (handles date prefix + space/underscore diff)
         display_title, matched_db = extract_date_and_title(stem, db_items)
@@ -282,8 +320,9 @@ def main():
             original_url = fallback_db["url"]
             logger.info(f"Matched {stem} via r2_filename fallback")
 
-        # Get file size
-        size = mp3_path.stat().st_size
+        # Use the R2-verified size (falls back to local size only on the
+        # legacy no-client path above)
+        size = verified_size
 
         # Use actual podcast_date from DB, fallback to current time
         db_source = matched_db or fallback_db
@@ -332,6 +371,27 @@ def main():
         if r2_url in added_urls:
             continue
 
+        # Phase 3: verify the object actually exists on R2 and use its
+        # real size (previously every restored entry shipped size=0).
+        if r2_filename:
+            remote_key = f"podcasts/{r2_filename}"
+        else:
+            remote_key = f"podcasts/{date_prefix}{sanitized}.mp3"
+        if s3 and R2_BUCKET_NAME:
+            if not r2_url:
+                logger.error(f"RSS_SKIP: no R2 public URL for '{title}'; entry omitted")
+                skipped_entries += 1
+                continue
+            entry_size = r2_object_size(s3, remote_key)
+            if entry_size is None:
+                logger.error(
+                    f"RSS_SKIP: DB item '{title}' object {remote_key} not verified on R2; entry omitted"
+                )
+                skipped_entries += 1
+                continue
+        else:
+            entry_size = 0  # legacy unverified path (no R2 client)
+
         display_title = date_prefix + title
 
         # Find matching summary.md: prefer r2_filename-based lookup, then bidirectional title match
@@ -358,7 +418,7 @@ def main():
             "title": display_title,
             "url": r2_url,
             "description": description,
-            "size": 0,
+            "size": entry_size,
             "pub_date": item.get("podcast_date") or fallback_now,
             "original_url": item.get("url", ""),
         }
@@ -368,13 +428,27 @@ def main():
     # Sort by pub_date descending (to maintain perfect chronological order of publication)
     podcast_entries.sort(key=lambda x: _ensure_tz_aware(x.get("pub_date")), reverse=True)
 
+    # Safety: never overwrite a populated feed with an empty one.
+    if not podcast_entries and db_items:
+        logger.error(
+            "RSS_ABORT: 0 verified entries but DB has done items; "
+            "leaving the existing podcast.xml untouched."
+        )
+        print(f"RSS_SUMMARY: entries=0 skipped={skipped_entries} aborted=1")
+        sys.exit(1)
+
     # Generate RSS
     rss_xml = build_rss_feed(podcast_entries)
 
-    # Write to file
+    # Phase 3: atomic publish — write to a temp file in the same
+    # directory, then os.replace (a crash mid-write must not truncate
+    # the live feed).
     RSS_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RSS_OUTPUT_PATH.write_text(rss_xml, encoding="utf-8")
+    tmp_path = RSS_OUTPUT_PATH.with_name(RSS_OUTPUT_PATH.name + ".tmp")
+    tmp_path.write_text(rss_xml, encoding="utf-8")
+    os.replace(tmp_path, RSS_OUTPUT_PATH)
     logger.info(f"RSS feed written to: {RSS_OUTPUT_PATH} ({len(podcast_entries)} items)")
+    print(f"RSS_SUMMARY: entries={len(podcast_entries)} skipped={skipped_entries}")
 
     logger.info("=== Upload & RSS Complete ===")
 
