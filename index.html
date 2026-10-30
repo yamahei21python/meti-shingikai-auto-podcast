@@ -106,6 +106,12 @@
         let allItems = [];
         let currentIndex = 0;
         const BATCH_SIZE = 10;
+
+        // Phase 4: feed-supplied strings are escaped before they are
+        // interpolated into innerHTML anywhere below.
+        const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
         
         async function initFeed() {
             const root = document.getElementById('timeline-root');
@@ -175,7 +181,7 @@
                 
                 const formatLines = (text) => {
                     if (!text) return '';
-                    return text
+                    return esc(text)
                         .replace(/\* \*\*(.*?)\*\*/g, '<li class="text-slate-300 mb-0 ml-1 list-disc">$1</li>')
                         .replace(/\* (.*)/g, '<li class="text-slate-400 mb-0 ml-1 list-disc">$1</li>')
                         .replace(/\n/g, '<br>');
@@ -189,7 +195,7 @@
                         const lines = s.split('\n');
                         const head = lines[0];
                         const body = formatLines(lines.slice(1).join('\n'));
-                        return `<div class="mb-1"><h4 class="text-white font-bold mb-0 text-[14px]">${head}</h4><div>${body}</div></div>`;
+                        return `<div class="mb-1"><h4 class="text-white font-bold mb-0 text-[14px]">${esc(head)}</h4><div>${body}</div></div>`;
                     })
                     .join('');
 
@@ -203,16 +209,16 @@
                     <div class="lp-card group p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center gap-6 border-l-4 border-l-white/30 backdrop-blur-sm">
                         <div class="flex-1 w-full sm:w-auto">
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="text-[10px] font-bold text-white/50 tracking-widest uppercase">${pubDate}</span>
+                                <span class="text-[10px] font-bold text-white/50 tracking-widest uppercase">${esc(pubDate)}</span>
                                 <span class="h-1 w-1 rounded-full bg-white/20"></span>
-                                <a href="${originalLink}" target="_blank" class="text-[10px] font-bold text-sunset-peach uppercase tracking-widest hover:underline whitespace-nowrap">Original Link</a>
+                                <a href="${esc(originalLink)}" target="_blank" class="text-[10px] font-bold text-sunset-peach uppercase tracking-widest hover:underline whitespace-nowrap">Original Link</a>
                             </div>
-                            <h3 class="text-xl md:text-2xl font-bold text-slate-100 leading-tight mb-4 group-hover/title:text-white transition-colors">${title}</h3>
+                            <h3 class="text-xl md:text-2xl font-bold text-slate-100 leading-tight mb-4 group-hover/title:text-white transition-colors">${esc(title)}</h3>
                             
                             <div class="flex flex-wrap items-center gap-3">
                                 <div class="flex-1 min-w-[200px]">
                                     <audio controls class="w-full h-8 opacity-70 hover:opacity-100 transition-opacity">
-                                        <source src="${audioUrl}" type="audio/mpeg">
+                                        <source src="${esc(audioUrl)}" type="audio/mpeg">
                                     </audio>
                                 </div>
                                 <button class="expand-btn shrink-0 ${isLatest ? 'is-open' : ''} py-1.5 px-3" onclick="toggleAccordion(this)">

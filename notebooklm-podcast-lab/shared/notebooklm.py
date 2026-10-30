@@ -23,7 +23,13 @@ logger = get_logger("notebooklm")
 
 
 def init_auth() -> None:
-    """Initialize NotebookLM auth file if secret provided in ENV."""
+    """Initialize NotebookLM auth file if secret provided in ENV.
+
+    Phase 4: previously this returned early whenever auth.json existed,
+    so a rotated secret (keepalive sync) never replaced a stale file.
+    Now the file is refreshed whenever its content differs from the
+    secret provided in the environment.
+    """
     if not NOTEBOOKLM_AUTH_JSON:
         return
 
@@ -32,7 +38,10 @@ def init_auth() -> None:
     auth_path = os.path.join(auth_dir, "auth.json")
 
     if os.path.exists(auth_path):
-        return
+        with open(auth_path, encoding="utf-8") as f:
+            if f.read() == NOTEBOOKLM_AUTH_JSON:
+                return
+        logger.info("Auth file differs from provided secret; refreshing it")
 
     logger.info(f"Initializing NotebookLM auth at {auth_path}")
     if not os.path.exists(auth_dir):
@@ -47,7 +56,7 @@ def init_auth() -> None:
 
 
 def run_notebooklm(
-    args: list[str], capture: bool = True
+    args: list[str], capture: bool = True, timeout: int = 900
 ) -> subprocess.CompletedProcess:
     """
     Execute notebooklm command.
@@ -55,6 +64,11 @@ def run_notebooklm(
     Args:
         args: Command arguments
         capture: Capture output (default: True)
+        timeout: Seconds before the CLI is treated as hung (Phase 4:
+            previously there was no timeout, so a stuck CLI could block
+            the worker forever). A timeout returns returncode 124 with
+            an explanatory stderr instead of raising, so existing
+            callers keep working.
 
     Returns:
         CompletedProcess instance
@@ -72,12 +86,19 @@ def run_notebooklm(
 
     logger.debug(f"Executing: {' '.join(cmd)}")
 
-    return subprocess.run(
-        cmd,
-        capture_output=capture,
-        text=True,
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    )
+    try:
+        return subprocess.run(
+            cmd,
+            capture_output=capture,
+            text=True,
+            timeout=timeout,
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        )
+    except subprocess.TimeoutExpired:
+        logger.error(f"notebooklm command timed out after {timeout}s: {' '.join(args)}")
+        return subprocess.CompletedProcess(
+            cmd, 124, stdout="", stderr=f"notebooklm timed out after {timeout}s"
+        )
 
 
 def wait_for_task(

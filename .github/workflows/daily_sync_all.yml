@@ -5,6 +5,12 @@ on:
     - cron: '0 18 * * *' # 日本時間 03:00 (GitHubの2-3時間遅延を見込み、実開始05:30狙い)
   workflow_dispatch: # 手動実行用
 
+# Phase 4: never let two daily runs overlap (a manual dispatch during a
+# scheduled run could race on the DB, R2 and the push-back commit).
+concurrency:
+  group: daily-sync-all
+  cancel-in-progress: false
+
 jobs:
   sync-and-update:
     runs-on: ubuntu-24.04

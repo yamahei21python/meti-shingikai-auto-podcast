@@ -193,6 +193,8 @@ def main():
     from shared.waf_network import WafNetworkClient
     client = WafNetworkClient()
     conn = init_db()
+    meti_ok = False
+    occto_ok = False
 
     try:
         all_updates: list[CouncilUpdate] = []
@@ -201,6 +203,7 @@ def main():
         logger.info(f"Fetching METI: {METI_URL}")
         meti_soup = client.fetch_soup(METI_URL)
         if meti_soup:
+            meti_ok = True
             meti_items = parse_meti_updates(meti_soup)
             logger.info(f"METI: found {len(meti_items)} items")
             all_updates.extend(meti_items)
@@ -211,6 +214,7 @@ def main():
         logger.info(f"Fetching OCCTO: {OCCTO_URL}")
         occto_soup = client.fetch_soup(OCCTO_URL)
         if occto_soup:
+            occto_ok = True
             occto_items = parse_occto_updates(occto_soup)
             logger.info(f"OCCTO: found {len(occto_items)} items")
             all_updates.extend(occto_items)
@@ -246,6 +250,12 @@ def main():
     finally:
         client.close()
         conn.close()
+
+    # Phase 4: if BOTH sources failed, the run must not look successful —
+    # previously it logged the errors and still exited 0.
+    if not meti_ok and not occto_ok:
+        logger.error("SYNC_FAILED: both METI and OCCTO fetches failed")
+        sys.exit(1)
 
     logger.info("=== Sync Complete ===")
 

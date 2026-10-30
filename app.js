@@ -54,13 +54,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         items.forEach((item, index) => {
             const title = item.querySelector('title')?.textContent || 'Untitled Episode';
             const rawDate = item.querySelector('pubDate')?.textContent;
-            const pubDate = rawDate && !isNaN(new Date(rawDate)) 
-                ? new Date(rawDate).toLocaleDateString('ja-JP') 
+            const pubDate = rawDate && !isNaN(new Date(rawDate))
+                ? new Date(rawDate).toLocaleDateString('ja-JP')
                 : '不明な日付';
-            
+
             const description = item.querySelector('description')?.textContent || '';
-            const link = item.querySelector('link')?.textContent || '#';
-            
+            // Phase 4: the RSS <link> is the council source page, NOT the
+            // audio. "Listen Now" must point at the enclosure (MP3) URL;
+            // the source page gets its own link.
+            const sourceLink = item.querySelector('link')?.textContent || '#';
+            const audioUrl = item.querySelector('enclosure')?.getAttribute('url') || sourceLink;
+
             // Clean up description: remove markdown/HTML and limit length
             const preview = description
                 .replace(/<[^>]*>?/gm, '') // Remove HTML tags
@@ -68,35 +72,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .trim()
                 .slice(0, 120) + '...';
 
+            // Phase 4: build the card with DOM APIs and textContent so
+            // feed-supplied strings can never inject markup (previously
+            // title/preview/link were interpolated into innerHTML).
             const card = document.createElement('div');
             card.className = 'glass-card p-10 flex flex-col group reveal';
             card.style.animationDelay = `${index * 0.1}s`;
-            
-            card.innerHTML = `
-                <div class="flex items-center justify-between mb-6">
-                    <span class="text-xs font-bold text-primary tracking-widest uppercase bg-primary/10 px-3 py-1 rounded-full">
-                        ${pubDate}
-                    </span>
-                    <span class="text-text-dim text-xs">AI Analysis</span>
-                </div>
-                <h3 class="text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300">
-                    ${title}
-                </h3>
-                <p class="text-text-muted text-sm leading-relaxed mb-8 line-clamp-3">
-                    ${preview}
-                </p>
-                <div class="mt-auto flex items-center justify-between">
-                    <a href="${link}" target="_blank" class="btn btn-outline py-2 px-6 text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-bg-deep transition-all" aria-label="${title}を聴く">
-                        <i data-lucide="play" class="h-3 w-3 fill-current mr-2"></i> Listen Now
-                    </a>
-                    <div class="flex gap-2">
-                        <button class="p-2 rounded-full hover:bg-white/5 text-text-dim transition-colors" title="共有" aria-label="エピソードを共有">
-                            <i data-lucide="share-2" class="h-4 w-4"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            
+
+            const head = document.createElement('div');
+            head.className = 'flex items-center justify-between mb-6';
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'text-xs font-bold text-primary tracking-widest uppercase bg-primary/10 px-3 py-1 rounded-full';
+            dateSpan.textContent = pubDate;
+            const aiSpan = document.createElement('span');
+            aiSpan.className = 'text-text-dim text-xs';
+            aiSpan.textContent = 'AI Analysis';
+            head.append(dateSpan, aiSpan);
+
+            const h3 = document.createElement('h3');
+            h3.className = 'text-2xl font-bold mb-4 group-hover:text-primary transition-colors duration-300';
+            h3.textContent = title;
+
+            const p = document.createElement('p');
+            p.className = 'text-text-muted text-sm leading-relaxed mb-8 line-clamp-3';
+            p.textContent = preview;
+
+            const foot = document.createElement('div');
+            foot.className = 'mt-auto flex items-center justify-between';
+            const links = document.createElement('div');
+            links.className = 'flex items-center gap-3';
+            const listen = document.createElement('a');
+            listen.href = audioUrl;
+            listen.target = '_blank';
+            listen.className = 'btn btn-outline py-2 px-6 text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-bg-deep transition-all';
+            listen.setAttribute('aria-label', `${title}を聴く`);
+            const playIcon = document.createElement('i');
+            playIcon.setAttribute('data-lucide', 'play');
+            playIcon.className = 'h-3 w-3 fill-current mr-2';
+            listen.append(playIcon, document.createTextNode(' Listen Now'));
+            links.appendChild(listen);
+            if (sourceLink && sourceLink !== audioUrl) {
+                const src = document.createElement('a');
+                src.href = sourceLink;
+                src.target = '_blank';
+                src.className = 'text-xs font-bold uppercase tracking-widest text-text-dim hover:text-primary transition-colors';
+                src.textContent = '元資料';
+                links.appendChild(src);
+            }
+            const shareWrap = document.createElement('div');
+            shareWrap.className = 'flex gap-2';
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'p-2 rounded-full hover:bg-white/5 text-text-dim transition-colors';
+            shareBtn.title = '共有';
+            shareBtn.setAttribute('aria-label', 'エピソードを共有');
+            const shareIcon = document.createElement('i');
+            shareIcon.setAttribute('data-lucide', 'share-2');
+            shareIcon.className = 'h-4 w-4';
+            shareBtn.appendChild(shareIcon);
+            shareWrap.appendChild(shareBtn);
+            foot.append(links, shareWrap);
+
+            card.append(head, h3, p, foot);
             episodeGrid.appendChild(card);
         });
 

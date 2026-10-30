@@ -250,6 +250,15 @@ def generate_summary_report(notebook_id: str, target_path: str) -> bool:
     return False
 
 
+def _replace_file(src: str, dst: str) -> None:
+    """Atomically replace dst with src (same filesystem), falling back
+    to shutil.move across filesystems."""
+    try:
+        os.replace(src, dst)
+    except OSError:
+        shutil.move(src, dst)
+
+
 def process_single_item(item: tuple) -> str:
     """
     Process a single pending item.
@@ -299,7 +308,18 @@ def process_single_item(item: tuple) -> str:
             cmd.extend(["--pdfs", pdf_urls_json])
 
         logger.info(f"Executing: {' '.join(cmd)}")
-        mp3_res = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            # Phase 4: hang guard. The generator's own worst case is
+            # ~2.2h (source wait 1800s + audio wait 5400s + downloads);
+            # 3h only fires on a genuine hang.
+            mp3_res = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=3 * 60 * 60
+            )
+        except subprocess.TimeoutExpired:
+            logger.error("Generator subprocess timed out after 3h; treating as failure")
+            mp3_res = subprocess.CompletedProcess(
+                cmd, 124, stdout="", stderr="generator timed out after 3h"
+            )
         if mp3_res.stdout:
             print(mp3_res.stdout)
         if mp3_res.returncode != 0:
@@ -334,29 +354,37 @@ def process_single_item(item: tuple) -> str:
         )
 
         if mp3_success and md_success:
-            # Atomic move using shutil (safer for cross-filesystem moves)
-            if os.path.exists(final_mp3_path):
-                os.remove(final_mp3_path)
-            shutil.move(output_temp, final_mp3_path)
-
-            if os.path.exists(final_md_path):
-                os.remove(final_md_path)
-            shutil.move(md_temp, final_md_path)
-
-            # Save metadata JSON
-            meta_path = final_mp3_path.rsplit(".", 1)[0] + ".json"
-            with open(meta_path, "w", encoding="utf-8") as f:
-                json.dump(
-                    {"original_url": url, "title": title}, f, ensure_ascii=False, indent=2
+            # Phase 4: verify BOTH temp files before touching the finals,
+            # then swap with os.replace (atomic overwrite). The old code
+            # deleted the existing finals first, so a failed move could
+            # destroy an already-published episode's files.
+            mp3_ok = os.path.exists(output_temp) and os.path.getsize(output_temp) > 1024
+            md_ok = os.path.exists(md_temp) and os.path.getsize(md_temp) > 512
+            if not (mp3_ok and md_ok):
+                logger.error(
+                    f"Finalize aborted: temp files incomplete "
+                    f"(mp3_ok={mp3_ok}, md_ok={md_ok}); finals untouched"
                 )
+                mp3_success = False
+                md_success = False
+            else:
+                _replace_file(output_temp, final_mp3_path)
+                _replace_file(md_temp, final_md_path)
 
-            logger.info("COMPLETE: Both MP3 and MD saved with metadata")
-            update_status(item_id, "done", r2_filename=final_mp3_name)
-            increment_daily_quota()
+                # Save metadata JSON
+                meta_path = final_mp3_path.rsplit(".", 1)[0] + ".json"
+                with open(meta_path, "w", encoding="utf-8") as f:
+                    json.dump(
+                        {"original_url": url, "title": title}, f, ensure_ascii=False, indent=2
+                    )
 
-            # Output for workflow
-            print(f"PODCAST_ASSET_PATH={final_mp3_path}")
-            print(f"ORIGINAL_URL={url}")
+                logger.info("COMPLETE: Both MP3 and MD saved with metadata")
+                update_status(item_id, "done", r2_filename=final_mp3_name)
+                increment_daily_quota()
+
+                # Output for workflow
+                print(f"PODCAST_ASSET_PATH={final_mp3_path}")
+                print(f"ORIGINAL_URL={url}")
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
