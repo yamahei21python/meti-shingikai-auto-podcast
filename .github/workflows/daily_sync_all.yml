@@ -31,6 +31,17 @@ jobs:
       - name: Install libcurl-dev (for curl-cffi)
         run: sudo apt-get update && sudo apt-get install -y libcurl4-openssl-dev
 
+      - name: Get Date
+        id: get-date
+        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: Cache WAF Token
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/meti_awswaf_token.txt
+          key: awswaf-token-${{ runner.os }}-${{ steps.get-date.outputs.date }}
+          restore-keys: awswaf-token-${{ runner.os }}-
+
       - name: Setup Dependencies
         working-directory: notebooklm-podcast-lab
         run: |

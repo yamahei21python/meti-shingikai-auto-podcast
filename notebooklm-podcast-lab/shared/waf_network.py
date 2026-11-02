@@ -81,7 +81,7 @@ class WafNetworkClient:
     def __init__(self, ua: str = DEFAULT_UA, use_proxy: bool = False):
         self.ua = ua
         self.use_proxy = use_proxy
-        self.token: Optional[str] = None
+        self.token = load_cached_token()
         self._client = None
 
     def _ensure_client(self):
