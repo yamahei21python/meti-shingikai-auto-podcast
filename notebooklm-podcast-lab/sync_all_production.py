@@ -227,7 +227,17 @@ def main():
         # Filter out already-known URLs
         new_items = [u for u in all_updates if not is_url_in_db(conn, u.url)]
 
-        logger.info(f"Total: {len(all_updates)}, New: {len(new_items)}")
+        # Fix 5: Filter out pre-meeting announcements so they don't block
+        # the worker retry count. They will be picked up when updated with materials.
+        filtered_items = []
+        for u in new_items:
+            if any(u.title.endswith(suffix) for suffix in ["開催案内", "開催通知", "傍聴案内"]):
+                logger.info(f"Filtering pre-meeting announcement: {u.title}")
+                continue
+            filtered_items.append(u)
+        new_items = filtered_items
+
+        logger.info(f"Total: {len(all_updates)}, New (after filter): {len(new_items)}")
 
         # === Save to DB ===
         if new_items:

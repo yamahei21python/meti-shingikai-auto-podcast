@@ -325,7 +325,12 @@ def process_single_item(item: tuple) -> str:
         if mp3_res.returncode != 0:
             print(f"ERROR: {mp3_res.stderr}")
         note_auth_error((mp3_res.stdout or "") + (mp3_res.stderr or ""))
-        if "PDF_INCOMPLETE:" in (mp3_res.stdout or "") + (mp3_res.stderr or ""):
+        # PDF_INCOMPLETE: materials missing (download error).
+        # WAF_BLOCKED: item article blocked.
+        # PRE_MEETING_ANNOUNCEMENT: too early.
+        # All leave the item pending for a later retry WITHOUT burning the item's retry count.
+        output_str = (mp3_res.stdout or "") + (mp3_res.stderr or "")
+        if any(m in output_str for m in ["PDF_INCOMPLETE:", "WAF_BLOCKED:", "PRE_MEETING_ANNOUNCEMENT:"]):
             pdf_incomplete = True
 
         if mp3_res.returncode == 0 and os.path.exists(output_temp):

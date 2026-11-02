@@ -331,6 +331,36 @@ def main():
         # materials (2026-10-26: an episode was published from 4 of 7 PDFs
         # after WAF solver failures). Exit code 2 tells the worker to
         # leave the item pending without consuming its retry count.
+        
+        # Fix 6: Check for WAF_BLOCKED or Pre-meeting announcement
+        if not pdf_urls:
+            # Did we fetch a page at all?
+            if args.url:
+                # Was the fetch itself blocked? If no soup, fetch failed (possibly WAF)
+                if not soup:
+                     print("WAF_BLOCKED: Item stays pending.")
+                     sys.exit(2)
+                
+                # Check title/body text
+                text = soup.get_text()
+                for marker in ["開催案内", "開催通知", "傍聴案内"]:
+                    if marker in text:
+                        print("PRE_MEETING_ANNOUNCEMENT: Materials not posted yet; item stays pending.")
+                        sys.exit(2)
+
+            # Otherwise, just no materials
+            logger.error("No PDF links found")
+            sys.exit(1)
+
+        logger.info(f"Found {len(pdf_urls)} PDF documents")
+
+        # Phase 2 completeness gate (restored 2026-11-02 during Muse
+        # verification: the fix-6 edit had deleted this gate, which would
+        # have let a partial PDF set proceed to notebook creation).
+        # NEVER generate from a partial set of materials (2026-10-26: an
+        # episode was published from 4 of 7 PDFs after WAF solver
+        # failures). Exit code 2 tells the worker to leave the item
+        # pending without consuming its retry count.
         print(f"PDF_FETCH: expected={len(pdf_urls)} downloaded={len(local_pdfs)}")
         if len(local_pdfs) < len(pdf_urls):
             print(
