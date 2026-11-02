@@ -1,3 +1,4 @@
+from urllib.parse import urlsplit
 import re
 import json
 import time
@@ -120,19 +121,13 @@ def _solve_bandwidth(difficulty: int) -> str:
 
 
 async def _resp_json(resp) -> dict:
-    """Parse a JSON response, tolerating non-UTF8 bytes.
-
-    rnet's resp.json()/text() decode strictly as UTF-8; the AWS WAF
-    challenge endpoints have been observed returning bodies whose first
-    byte is 0xf3 (invalid UTF-8), which crashed the solver with
-    'utf-8 codec can't decode byte 0xf3' (2026-10-26, 11 occurrences).
-    Fall back to a lenient bytes decode so one bad byte cannot kill it.
-    """
+    """Parse a JSON response, tolerating non-UTF8 bytes."""
+    raw = await resp.bytes()
     try:
-        return await resp.json()
-    except Exception:
-        raw = await resp.bytes()
         return json.loads(raw.decode("utf-8", "ignore"))
+    except Exception as e:
+        log.error("failed to parse JSON", error=str(e), body_preview=raw[:32].hex())
+        raise RuntimeError("Failed to parse response JSON")
 
 
 async def _discover(client: Client, site: str, ua: str) -> tuple[str, bool, dict | None]:
@@ -146,7 +141,9 @@ async def _discover(client: Client, site: str, ua: str) -> tuple[str, bool, dict
 
     m = RE_CHAL_SAME.search(html)
     if m:
-        chal_url = f"{site}{m.group(1)}"
+        parts = urlsplit(site)
+        origin = f"{parts.scheme}://{parts.netloc}"
+        chal_url = f"{origin}{m.group(1)}"
         same = True
     else:
         m = RE_CHAL_EXT.search(html)
@@ -280,7 +277,13 @@ async def solve(site: str, ua: str, proxy: str = None,
         inp_latency = round((time.time() - t_inp) * 1000, 1)
         inputs = await _resp_json(resp)
         challenge = inputs["challenge"]
-        decoded = json.loads(base64.b64decode(challenge["input"]))
+        decoded_bytes = base64.b64decode(challenge["input"])
+        decoded_str = decoded_bytes.decode("utf-8", "ignore")
+        try:
+            decoded = json.loads(decoded_str)
+        except json.JSONDecodeError as e:
+            log.error("challenge input is not valid JSON", error=str(e), input_preview=decoded_str[:64])
+            raise RuntimeError("Challenge input decode error")
         ctype = decoded.get("challenge_type", "")
         difficulty = decoded.get("difficulty", 1)
         memory = decoded.get("memory", 128)
