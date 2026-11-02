@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+import random
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urljoin
@@ -317,7 +318,11 @@ def main():
         temp_dir.mkdir(exist_ok=True)
         local_pdfs = []
 
-        for url in pdf_urls:
+        for i, url in enumerate(pdf_urls):
+            if i > 0:
+                wait_time = 2.0 + random.uniform(0.5, 1.0)
+                logger.info(f"Pacing: waiting {wait_time:.2f}s before next PDF download...")
+                time.sleep(wait_time)
             local_path = download_pdf_locally(client, url, temp_dir)
             if local_path:
                 local_pdfs.append(str(local_path))
